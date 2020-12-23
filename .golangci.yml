@@ -1,0 +1,21 @@
+run:
+  timeout: 5m
+
+linters:
+  enable-all: true
+  disable:
+    - dupl # allow duplication
+    - funlen # allow long functions
+    - gomnd # allow some magic numbers
+    - wsl # unwanted amount of whitespace
+    - godox # allow TODOs
+    - interfacer # deprecated by the author for having too many false positives
+    - gocognit # allow higher cognitive complexity
+    - testpackage # unwanted convention
+    - nestif # allow deep nesting
+    - unparam # allow constant parameters
+    - goerr113 # allow "dynamic" errors
+    - dogsled # allow blank identifiers
+    - gocyclo # allow complex functions
+    - nlreturn # allow return/break without whitespace
+    - exhaustivestruct # don't require exhaustive fields in struct initializers

@@ -1,0 +1,5 @@
+# paths are relative to this file
+
+../
+../vendor
+../node_modules
