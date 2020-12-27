@@ -21,7 +21,7 @@ type Pattern struct {
 //
 //  Singleton resources must not have a user-provided or system-generated ID; their
 //  resource name includes the name of their parent followed by one static-segment.
-func (p *Pattern) IsSingleton() bool {
+func (p Pattern) IsSingleton() bool {
 	return len(p.Segments) > 2 && !p.Segments[len(p.Segments)-1].Variable
 }
 
@@ -29,7 +29,7 @@ func (p *Pattern) IsSingleton() bool {
 //
 // For example, the pattern `publishers/{publisher}`
 // is an ancestor of the pattern `publishers/{publisher}/books/{book}`.
-func (p *Pattern) IsAncestorOf(child *Pattern) bool {
+func (p Pattern) IsAncestorOf(child Pattern) bool {
 	if len(p.Segments) >= len(child.Segments) {
 		return false
 	}
@@ -39,7 +39,7 @@ func (p *Pattern) IsAncestorOf(child *Pattern) bool {
 // Wildcard returns a wildcard representation of the pattern.
 //
 // For example, the wildcard representation of the pattern `resources/{resource}` is `resources/*`.
-func (p *Pattern) Wildcard() string {
+func (p Pattern) Wildcard() string {
 	var parts []string
 	for _, segment := range p.Segments {
 		if segment.Variable {
@@ -54,7 +54,7 @@ func (p *Pattern) Wildcard() string {
 // NonVariableLen returns the non-variable length of the pattern, i.e. the length not counting variable segments.
 //
 // For example, the non-variable length of the pattern `resources/{resource}` is is 10.
-func (p *Pattern) NonVariableLen() int {
+func (p Pattern) NonVariableLen() int {
 	result := len(p.Segments) - 1 // slashes
 	for _, s := range p.Segments {
 		if !s.Variable {
