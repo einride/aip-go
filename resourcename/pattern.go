@@ -73,14 +73,14 @@ func (p *Pattern) NonVariableLen() int {
 //     Template = Segment { "/" Segment } ;
 //     Segment = LITERAL | Variable ;
 //     Variable = "{" LITERAL "}" ;
-func ParsePattern(s string) (*Pattern, error) {
+func ParsePattern(s string) (Pattern, error) {
 	if len(s) == 0 {
-		return nil, fmt.Errorf("parse pattern: empty")
+		return Pattern{}, fmt.Errorf("parse pattern: empty")
 	}
 	result := Pattern{StringVal: s}
 	for _, value := range strings.Split(s, "/") {
 		if len(value) == 0 {
-			return nil, fmt.Errorf("parse pattern: invalid format")
+			return Pattern{}, fmt.Errorf("parse pattern: invalid format")
 		}
 		segment := Segment{
 			Variable: value[0] == '{' && value[len(value)-1] == '}',
@@ -91,5 +91,5 @@ func ParsePattern(s string) (*Pattern, error) {
 		}
 		result.Segments = append(result.Segments, segment)
 	}
-	return &result, nil
+	return result, nil
 }
