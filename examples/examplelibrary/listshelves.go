@@ -1,30 +1,3 @@
-# AIP Go
-
-Go SDK for implementing [Google API Improvement Proposals][google-aip] (AIP).
-
-[google-aip]: https://aip.dev/
-
-## Documentation
-
-See [https://aip.dev][google-aip] for the full AIP documentation.
-
-## Installing
-
-```bash
-$ go get -u go.einride.tech/aip
-```
-
-## Examples
-
-### [AIP-132][aip-132] (Standard method: List)
-
-- Use [`pagination.OffsetPageToken`][offset] to implement offset-based
-  pagination.
-
-[aip-132]: https://google.aip.dev/132
-[offset]: ./pagination/offsetpagetoken.go
-
-```go
 package examplelibrary
 
 import (
@@ -77,4 +50,3 @@ func (s *Server) ListShelves(
 	// Respond.
 	return response, nil
 }
-```
