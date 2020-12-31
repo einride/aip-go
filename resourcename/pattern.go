@@ -36,21 +36,6 @@ func (p Pattern) IsAncestorOf(child Pattern) bool {
 	return segmentsEqual(p.Segments, child.Segments[:len(p.Segments)])
 }
 
-// Wildcard returns a wildcard representation of the pattern.
-//
-// For example, the wildcard representation of the pattern `resources/{resource}` is `resources/*`.
-func (p Pattern) Wildcard() string {
-	var parts []string
-	for _, segment := range p.Segments {
-		if segment.Variable {
-			parts = append(parts, "*")
-		} else {
-			parts = append(parts, segment.Value)
-		}
-	}
-	return strings.Join(parts, "/")
-}
-
 // NonVariableLen returns the non-variable length of the pattern, i.e. the length not counting variable segments.
 //
 // For example, the non-variable length of the pattern `resources/{resource}` is is 10.
@@ -62,6 +47,72 @@ func (p Pattern) NonVariableLen() int {
 		}
 	}
 	return result
+}
+
+// VariableCount returns the number of variables in the pattern.
+func (p Pattern) VariableCount() int {
+	var result int
+	for _, s := range p.Segments {
+		if s.Variable {
+			result++
+		}
+	}
+	return result
+}
+
+// MarshalResourceName marshals a resource name from the pattern p given a list of values for the variables.
+func (p Pattern) MarshalResourceName(values ...string) (string, error) {
+	variableCount := p.VariableCount()
+	if len(values) != variableCount {
+		return "", fmt.Errorf(
+			"marshal resource name pattern `%s`: got %d values but expected %d",
+			p.StringVal,
+			len(values),
+			variableCount,
+		)
+	}
+	var variableLen int
+	for _, v := range values {
+		variableLen += len(v)
+	}
+	var name strings.Builder
+	name.Grow(p.NonVariableLen() + variableLen)
+	var iValue int
+	for iSegment, s := range p.Segments {
+		if s.Variable {
+			if values[iValue] == "" {
+				return "", fmt.Errorf(
+					"marshal resource name pattern `%s`: empty value for {%s}",
+					p.StringVal,
+					s.Value,
+				)
+			}
+			_, _ = name.WriteString(values[iValue])
+			iValue++
+		} else {
+			name.WriteString(s.Value)
+		}
+		isLastSegment := iSegment == len(p.Segments)-1
+		if !isLastSegment {
+			_ = name.WriteByte('/')
+		}
+	}
+	return name.String(), nil
+}
+
+// WildcardResourceName returns a wildcard resource name representation of the pattern.
+//
+// For example, the wildcard representation of the pattern `resources/{resource}` is `resources/*`.
+func (p Pattern) WildcardResourceName() string {
+	var parts []string
+	for _, segment := range p.Segments {
+		if segment.Variable {
+			parts = append(parts, "*")
+		} else {
+			parts = append(parts, segment.Value)
+		}
+	}
+	return strings.Join(parts, "/")
 }
 
 // ParsePattern parses a resource name pattern string.
