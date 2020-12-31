@@ -61,16 +61,82 @@ func TestPattern_MarshalResourceName(t *testing.T) {
 	}
 }
 
-// nolint: gochecknoglobals
-var sink string
-
-func BenchmarkPattern_MarshalResourceName(b *testing.B) {
-	pattern, err := ParsePattern("publishers/{publisher}/books/{book}")
-	assert.NilError(b, err)
-	b.ResetTimer()
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		name, _ := pattern.MarshalResourceName("1", "2")
-		sink = name
+func TestPattern_ValidateResourceName(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name          string
+		pattern       string
+		input         string
+		errorContains string
+	}{
+		{
+			name:    "ok, no variables",
+			pattern: "singleton",
+			input:   "singleton",
+		},
+		{
+			name:    "ok, single-variable",
+			pattern: "publishers/{publisher}",
+			input:   "publishers/1",
+		},
+		{
+			name:    "ok, multi-variable",
+			pattern: "publishers/{publisher}/books/{book}",
+			input:   "publishers/1/books/2",
+		},
+		{
+			name:          "error, no variables",
+			pattern:       "singleton",
+			input:         "foo",
+			errorContains: "expected segment 1 to be `singleton` but got `foo`",
+		},
+		{
+			name:          "error, single variable, too short",
+			pattern:       "publishers/{publisher}",
+			input:         "publishers",
+			errorContains: "expected 2 segments but got 1",
+		},
+		{
+			name:          "error, single variable, too long",
+			pattern:       "publishers/{publisher}",
+			input:         "publishers/1/books",
+			errorContains: "expected 2 segments but got 3",
+		},
+		{
+			name:          "error, single variable, empty",
+			pattern:       "publishers/{publisher}",
+			input:         "publishers/",
+			errorContains: "segment {publisher} is empty",
+		},
+		{
+			name:          "error, multiple variables, too short",
+			pattern:       "publishers/{publisher}/books/{book}",
+			input:         "publishers/1",
+			errorContains: "expected 4 segments but got 2",
+		},
+		{
+			name:          "error, multiple variables, too long",
+			pattern:       "publishers/{publisher}/books/{book}",
+			input:         "publishers/1/books/2/foo",
+			errorContains: "expected 4 segments but got 5",
+		},
+		{
+			name:          "error, multiple variables, empty",
+			pattern:       "publishers/{publisher}/books/{book}",
+			input:         "publishers//books/1",
+			errorContains: "segment {publisher} is empty",
+		},
+	} {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			pattern, err := ParsePattern(tt.pattern)
+			assert.NilError(t, err)
+			if err := pattern.ValidateResourceName(tt.input); tt.errorContains != "" {
+				assert.ErrorContains(t, err, tt.errorContains)
+			} else {
+				assert.NilError(t, err)
+			}
+		})
 	}
 }

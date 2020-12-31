@@ -60,6 +60,55 @@ func (p Pattern) VariableCount() int {
 	return result
 }
 
+// ValidateResourceName validates a resource name against the pattern p.
+func (p Pattern) ValidateResourceName(name string) error {
+	nameSegmentsCount := strings.Count(name, "/") + 1
+	if len(p.Segments) != nameSegmentsCount {
+		return fmt.Errorf(
+			"validate resource name `%s` against pattern `%s`: expected %d segments but got %d",
+			name,
+			p.StringVal,
+			len(p.Segments),
+			nameSegmentsCount,
+		)
+	}
+	remainingName := name
+	for i, segment := range p.Segments {
+		indexOfNextSlash := strings.IndexRune(remainingName, '/')
+		isFinalNameSegment := indexOfNextSlash == -1
+		var currSegmentValue string
+		if isFinalNameSegment {
+			currSegmentValue = remainingName
+			remainingName = ""
+		} else {
+			currSegmentValue = remainingName[:indexOfNextSlash]
+			remainingName = remainingName[indexOfNextSlash+1:]
+		}
+		if segment.Variable {
+			if currSegmentValue == "" {
+				return fmt.Errorf(
+					"validate resource name `%s` against pattern `%s`: segment {%s} is empty",
+					name,
+					p.StringVal,
+					segment.Value,
+				)
+			}
+			continue
+		}
+		if segment.Value != currSegmentValue {
+			return fmt.Errorf(
+				"validate resource name `%s` against pattern `%s`: expected segment %d to be `%s` but got `%s`",
+				name,
+				p.StringVal,
+				i+1,
+				segment.Value,
+				currSegmentValue,
+			)
+		}
+	}
+	return nil
+}
+
 // MarshalResourceName marshals a resource name from the pattern p given a list of values for the variables.
 func (p Pattern) MarshalResourceName(values ...string) (string, error) {
 	variableCount := p.VariableCount()
