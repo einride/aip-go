@@ -1,4 +1,4 @@
-package resourcename
+package aipreflect
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestPattern_MarshalResourceName(t *testing.T) {
+func TestResourceNamePatternDescriptor_MarshalResourceName(t *testing.T) {
 	t.Parallel()
 	for _, tt := range []struct {
 		name          string
@@ -48,7 +48,7 @@ func TestPattern_MarshalResourceName(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			pattern, err := ParsePattern(tt.pattern)
+			pattern, err := NewResourceNamePatternDescriptor(tt.pattern)
 			assert.NilError(t, err)
 			actual, err := pattern.MarshalResourceName(tt.values...)
 			assert.Equal(t, tt.expected, actual)
@@ -61,7 +61,7 @@ func TestPattern_MarshalResourceName(t *testing.T) {
 	}
 }
 
-func TestPattern_ValidateResourceName(t *testing.T) {
+func TestResourceNamePatternDescriptor_ValidateResourceName(t *testing.T) {
 	t.Parallel()
 	for _, tt := range []struct {
 		name          string
@@ -130,7 +130,7 @@ func TestPattern_ValidateResourceName(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			pattern, err := ParsePattern(tt.pattern)
+			pattern, err := NewResourceNamePatternDescriptor(tt.pattern)
 			assert.NilError(t, err)
 			if err := pattern.ValidateResourceName(tt.input); tt.errorContains != "" {
 				assert.ErrorContains(t, err, tt.errorContains)

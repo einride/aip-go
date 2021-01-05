@@ -1,18 +1,48 @@
-package resourcename
+package aipreflect
 
 import (
 	"fmt"
 	"strings"
 )
 
-// Pattern represents a resource name pattern.
+// ResourceNamePatternDescriptor describes a resource name pattern.
 //
 // Example: `publishers/{publisher}/books/{book}`.
-type Pattern struct {
-	// StringVal is the literal string value of the pattern.
-	StringVal string
-	// Segments contains each Segment in the parsed pattern.
-	Segments []Segment
+type ResourceNamePatternDescriptor struct {
+	// Pattern is the string value of the pattern.
+	Pattern string
+	// Segments are the individual segments in the pattern.
+	Segments []ResourceNameSegmentDescriptor
+}
+
+// NewResourceNamePatternDescriptor creates a resource name pattern descriptorn from a resource name pattern.
+//
+// Pattern syntax from the documentation:
+//
+//   The path pattern must follow the syntax, which aligns with HTTP binding syntax:
+//
+//     Template = Segment { "/" Segment } ;
+//     Segment = LITERAL | Variable ;
+//     Variable = "{" LITERAL "}" ;
+func NewResourceNamePatternDescriptor(pattern string) (*ResourceNamePatternDescriptor, error) {
+	if len(pattern) == 0 {
+		return nil, fmt.Errorf("pattern is empty")
+	}
+	result := ResourceNamePatternDescriptor{Pattern: pattern}
+	for _, value := range strings.Split(pattern, "/") {
+		if len(value) == 0 {
+			return nil, fmt.Errorf("invalid format")
+		}
+		segment := ResourceNameSegmentDescriptor{
+			Variable: value[0] == '{' && value[len(value)-1] == '}',
+			Value:    value,
+		}
+		if segment.Variable {
+			segment.Value = segment.Value[1 : len(segment.Value)-1]
+		}
+		result.Segments = append(result.Segments, segment)
+	}
+	return &result, nil
 }
 
 // IsSingleton returns true if the pattern is a singleton pattern.
@@ -21,7 +51,7 @@ type Pattern struct {
 //
 //  Singleton resources must not have a user-provided or system-generated ID; their
 //  resource name includes the name of their parent followed by one static-segment.
-func (p Pattern) IsSingleton() bool {
+func (p ResourceNamePatternDescriptor) IsSingleton() bool {
 	return len(p.Segments) > 2 && !p.Segments[len(p.Segments)-1].Variable
 }
 
@@ -29,7 +59,7 @@ func (p Pattern) IsSingleton() bool {
 //
 // For example, the pattern `publishers/{publisher}`
 // is an ancestor of the pattern `publishers/{publisher}/books/{book}`.
-func (p Pattern) IsAncestorOf(child Pattern) bool {
+func (p ResourceNamePatternDescriptor) IsAncestorOf(child ResourceNamePatternDescriptor) bool {
 	if len(p.Segments) >= len(child.Segments) {
 		return false
 	}
@@ -39,7 +69,7 @@ func (p Pattern) IsAncestorOf(child Pattern) bool {
 // NonVariableLen returns the non-variable length of the pattern, i.e. the length not counting variable segments.
 //
 // For example, the non-variable length of the pattern `resources/{resource}` is is 10.
-func (p Pattern) NonVariableLen() int {
+func (p ResourceNamePatternDescriptor) NonVariableLen() int {
 	result := len(p.Segments) - 1 // slashes
 	for _, s := range p.Segments {
 		if !s.Variable {
@@ -50,7 +80,7 @@ func (p Pattern) NonVariableLen() int {
 }
 
 // VariableCount returns the number of variables in the pattern.
-func (p Pattern) VariableCount() int {
+func (p ResourceNamePatternDescriptor) VariableCount() int {
 	var result int
 	for _, s := range p.Segments {
 		if s.Variable {
@@ -61,13 +91,13 @@ func (p Pattern) VariableCount() int {
 }
 
 // ValidateResourceName validates a resource name against the pattern p.
-func (p Pattern) ValidateResourceName(name string) error {
+func (p ResourceNamePatternDescriptor) ValidateResourceName(name string) error {
 	nameSegmentsCount := strings.Count(name, "/") + 1
 	if len(p.Segments) != nameSegmentsCount {
 		return fmt.Errorf(
 			"validate resource name `%s` against pattern `%s`: expected %d segments but got %d",
 			name,
-			p.StringVal,
+			p.Pattern,
 			len(p.Segments),
 			nameSegmentsCount,
 		)
@@ -89,7 +119,7 @@ func (p Pattern) ValidateResourceName(name string) error {
 				return fmt.Errorf(
 					"validate resource name `%s` against pattern `%s`: segment {%s} is empty",
 					name,
-					p.StringVal,
+					p.Pattern,
 					segment.Value,
 				)
 			}
@@ -99,7 +129,7 @@ func (p Pattern) ValidateResourceName(name string) error {
 			return fmt.Errorf(
 				"validate resource name `%s` against pattern `%s`: expected segment %d to be `%s` but got `%s`",
 				name,
-				p.StringVal,
+				p.Pattern,
 				i+1,
 				segment.Value,
 				currSegmentValue,
@@ -110,12 +140,12 @@ func (p Pattern) ValidateResourceName(name string) error {
 }
 
 // MarshalResourceName marshals a resource name from the pattern p given a list of values for the variables.
-func (p Pattern) MarshalResourceName(values ...string) (string, error) {
+func (p ResourceNamePatternDescriptor) MarshalResourceName(values ...string) (string, error) {
 	variableCount := p.VariableCount()
 	if len(values) != variableCount {
 		return "", fmt.Errorf(
 			"marshal resource name pattern `%s`: got %d values but expected %d",
-			p.StringVal,
+			p.Pattern,
 			len(values),
 			variableCount,
 		)
@@ -132,7 +162,7 @@ func (p Pattern) MarshalResourceName(values ...string) (string, error) {
 			if values[iValue] == "" {
 				return "", fmt.Errorf(
 					"marshal resource name pattern `%s`: empty value for {%s}",
-					p.StringVal,
+					p.Pattern,
 					s.Value,
 				)
 			}
@@ -152,7 +182,7 @@ func (p Pattern) MarshalResourceName(values ...string) (string, error) {
 // WildcardResourceName returns a wildcard resource name representation of the pattern.
 //
 // For example, the wildcard representation of the pattern `resources/{resource}` is `resources/*`.
-func (p Pattern) WildcardResourceName() string {
+func (p ResourceNamePatternDescriptor) WildcardResourceName() string {
 	var parts []string
 	for _, segment := range p.Segments {
 		if segment.Variable {
@@ -164,32 +194,14 @@ func (p Pattern) WildcardResourceName() string {
 	return strings.Join(parts, "/")
 }
 
-// ParsePattern parses a resource name pattern string.
-//
-// Pattern syntax from the documentation:
-//
-//   The path pattern must follow the syntax, which aligns with HTTP binding syntax:
-//
-//     Template = Segment { "/" Segment } ;
-//     Segment = LITERAL | Variable ;
-//     Variable = "{" LITERAL "}" ;
-func ParsePattern(s string) (Pattern, error) {
-	if len(s) == 0 {
-		return Pattern{}, fmt.Errorf("parse pattern: empty")
+func segmentsEqual(s1, s2 []ResourceNameSegmentDescriptor) bool {
+	if len(s1) != len(s2) {
+		return false
 	}
-	result := Pattern{StringVal: s}
-	for _, value := range strings.Split(s, "/") {
-		if len(value) == 0 {
-			return Pattern{}, fmt.Errorf("parse pattern: invalid format")
+	for i := range s1 {
+		if s1[i] != s2[i] {
+			return false
 		}
-		segment := Segment{
-			Variable: value[0] == '{' && value[len(value)-1] == '}',
-			Value:    value,
-		}
-		if segment.Variable {
-			segment.Value = segment.Value[1 : len(segment.Value)-1]
-		}
-		result.Segments = append(result.Segments, segment)
 	}
-	return result, nil
+	return true
 }
