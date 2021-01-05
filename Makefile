@@ -16,12 +16,20 @@ include tools/goreview/rules.mk
 include tools/prettier/rules.mk
 include tools/semantic-release/rules.mk
 
+go_module_dirs := \
+	. \
+	storage/spanner
+
 .PHONY: go-mod-tidy
 go-mod-tidy:
 	$(info [$@] tidying Go module files...)
-	@go mod tidy -v
+	@for dir in $(go_module_dirs); do \
+		cd $$dir && go mod tidy -v; \
+	done
 
 .PHONY: go-test
 go-test:
 	$(info [$@] running Go tests...)
-	@go test -count 1 -cover -race ./...
+	@for dir in $(go_module_dirs); do \
+		cd $$dir && go test -count 1 -cover -race ./...; \
+	done
