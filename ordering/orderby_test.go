@@ -70,77 +70,6 @@ func TestOrderBy_UnmarshalString(t *testing.T) {
 	}
 }
 
-func TestOrderBy_IsValidForMessage(t *testing.T) {
-	t.Parallel()
-	for _, tt := range []struct {
-		name    string
-		orderBy OrderBy
-		message proto.Message
-		isValid bool
-	}{
-		{
-			name:    "valid empty",
-			orderBy: OrderBy{},
-			message: &library.Book{},
-			isValid: true,
-		},
-
-		{
-			name: "valid single",
-			orderBy: OrderBy{
-				Fields: []Field{
-					{Path: "name"},
-					{Path: "author"},
-				},
-			},
-			message: &library.Book{},
-			isValid: true,
-		},
-
-		{
-			name: "invalid single",
-			orderBy: OrderBy{
-				Fields: []Field{
-					{Path: "name"},
-					{Path: "foo"},
-				},
-			},
-			message: &library.Book{},
-			isValid: false,
-		},
-
-		{
-			name: "valid nested",
-			orderBy: OrderBy{
-				Fields: []Field{
-					{Path: "name"},
-					{Path: "book.name"},
-				},
-			},
-			message: &library.CreateBookRequest{},
-			isValid: true,
-		},
-
-		{
-			name: "invalid nested",
-			orderBy: OrderBy{
-				Fields: []Field{
-					{Path: "name"},
-					{Path: "book.foo"},
-				},
-			},
-			message: &library.CreateBookRequest{},
-			isValid: false,
-		},
-	} {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.isValid, tt.orderBy.IsValidForMessage(tt.message))
-		})
-	}
-}
-
 func TestOrderBy_ValidateForPaths(t *testing.T) {
 	t.Parallel()
 	for _, tt := range []struct {
@@ -208,6 +137,78 @@ func TestOrderBy_ValidateForPaths(t *testing.T) {
 				assert.ErrorContains(t, tt.orderBy.ValidateForPaths(tt.paths...), tt.errorContains)
 			} else {
 				assert.NilError(t, tt.orderBy.ValidateForPaths(tt.paths...))
+			}
+		})
+	}
+}
+
+func TestOrderBy_ValidateForMessage(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name          string
+		orderBy       OrderBy
+		message       proto.Message
+		errorContains string
+	}{
+		{
+			name:    "valid empty",
+			orderBy: OrderBy{},
+			message: &library.Book{},
+		},
+
+		{
+			name: "valid single",
+			orderBy: OrderBy{
+				Fields: []Field{
+					{Path: "name"},
+					{Path: "author"},
+				},
+			},
+			message: &library.Book{},
+		},
+
+		{
+			name: "invalid single",
+			orderBy: OrderBy{
+				Fields: []Field{
+					{Path: "name"},
+					{Path: "foo"},
+				},
+			},
+			message:       &library.Book{},
+			errorContains: "invalid field path: foo",
+		},
+
+		{
+			name: "valid nested",
+			orderBy: OrderBy{
+				Fields: []Field{
+					{Path: "name"},
+					{Path: "book.name"},
+				},
+			},
+			message: &library.CreateBookRequest{},
+		},
+
+		{
+			name: "invalid nested",
+			orderBy: OrderBy{
+				Fields: []Field{
+					{Path: "name"},
+					{Path: "book.foo"},
+				},
+			},
+			message:       &library.CreateBookRequest{},
+			errorContains: "invalid field path: book.foo",
+		},
+	} {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if tt.errorContains != "" {
+				assert.ErrorContains(t, tt.orderBy.ValidateForMessage(tt.message), tt.errorContains)
+			} else {
+				assert.NilError(t, tt.orderBy.ValidateForMessage(tt.message))
 			}
 		})
 	}

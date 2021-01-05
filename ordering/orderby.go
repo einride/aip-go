@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"go.einride.tech/aip/fieldmask"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
@@ -14,33 +15,6 @@ import (
 type OrderBy struct {
 	// Fields are the fields to order by.
 	Fields []Field
-}
-
-// IsValidForMessage reports whether all the ordering paths are syntactically valid and
-// refer to known fields in the specified message type.
-func (o OrderBy) IsValidForMessage(m proto.Message) bool {
-	mask := fieldmaskpb.FieldMask{
-		Paths: make([]string, 0, len(o.Fields)),
-	}
-	for _, field := range o.Fields {
-		mask.Paths = append(mask.Paths, field.Path)
-	}
-	return mask.IsValid(m)
-}
-
-// ValidateForPaths validates that the ordering paths are syntactically valid and refer to one of the provided paths.
-func (o OrderBy) ValidateForPaths(paths ...string) error {
-FieldLoop:
-	for _, field := range o.Fields {
-		// Assumption that len(paths) is short enough that O(n^2) is not a problem.
-		for _, path := range paths {
-			if field.Path == path {
-				continue FieldLoop
-			}
-		}
-		return fmt.Errorf("invalid field path: %s", field.Path)
-	}
-	return nil
 }
 
 // Field represents a single ordering field.
@@ -96,6 +70,33 @@ func (o *OrderBy) UnmarshalString(s string) error {
 		default:
 			return fmt.Errorf("unmarshal order by '%s': invalid format", s)
 		}
+	}
+	return nil
+}
+
+// ValidateForMessage validates that the ordering paths are syntactically valid and
+// refer to known fields in the specified message type.
+func (o OrderBy) ValidateForMessage(m proto.Message) error {
+	fm := fieldmaskpb.FieldMask{
+		Paths: make([]string, 0, len(o.Fields)),
+	}
+	for _, field := range o.Fields {
+		fm.Paths = append(fm.Paths, field.Path)
+	}
+	return fieldmask.Validate(&fm, m)
+}
+
+// ValidateForPaths validates that the ordering paths are syntactically valid and refer to one of the provided paths.
+func (o OrderBy) ValidateForPaths(paths ...string) error {
+FieldLoop:
+	for _, field := range o.Fields {
+		// Assumption that len(paths) is short enough that O(n^2) is not a problem.
+		for _, path := range paths {
+			if field.Path == path {
+				continue FieldLoop
+			}
+		}
+		return fmt.Errorf("invalid field path: %s", field.Path)
 	}
 	return nil
 }
