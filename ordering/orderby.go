@@ -28,9 +28,8 @@ func (o OrderBy) IsValidForMessage(m proto.Message) bool {
 	return mask.IsValid(m)
 }
 
-// IsValidForPaths reports whether all the ordering paths are syntactically valid and
-// refer to one of the provided paths.
-func (o OrderBy) IsValidForPaths(paths ...string) bool {
+// ValidateForPaths validates that the ordering paths are syntactically valid and refer to one of the provided paths.
+func (o OrderBy) ValidateForPaths(paths ...string) error {
 FieldLoop:
 	for _, field := range o.Fields {
 		// Assumption that len(paths) is short enough that O(n^2) is not a problem.
@@ -39,9 +38,9 @@ FieldLoop:
 				continue FieldLoop
 			}
 		}
-		return false
+		return fmt.Errorf("invalid field path: %s", field.Path)
 	}
-	return true
+	return nil
 }
 
 // Field represents a single ordering field.

@@ -141,19 +141,18 @@ func TestOrderBy_IsValidForMessage(t *testing.T) {
 	}
 }
 
-func TestOrderBy_IsValidForPaths(t *testing.T) {
+func TestOrderBy_ValidateForPaths(t *testing.T) {
 	t.Parallel()
 	for _, tt := range []struct {
-		name    string
-		orderBy OrderBy
-		paths   []string
-		isValid bool
+		name          string
+		orderBy       OrderBy
+		paths         []string
+		errorContains string
 	}{
 		{
 			name:    "valid empty",
 			orderBy: OrderBy{},
 			paths:   []string{},
-			isValid: true,
 		},
 
 		{
@@ -164,8 +163,7 @@ func TestOrderBy_IsValidForPaths(t *testing.T) {
 					{Path: "author"},
 				},
 			},
-			paths:   []string{"name", "author", "read"},
-			isValid: true,
+			paths: []string{"name", "author", "read"},
 		},
 
 		{
@@ -176,8 +174,8 @@ func TestOrderBy_IsValidForPaths(t *testing.T) {
 					{Path: "foo"},
 				},
 			},
-			paths:   []string{"name", "author", "read"},
-			isValid: false,
+			paths:         []string{"name", "author", "read"},
+			errorContains: "invalid field path: foo",
 		},
 
 		{
@@ -188,8 +186,7 @@ func TestOrderBy_IsValidForPaths(t *testing.T) {
 					{Path: "book.name"},
 				},
 			},
-			paths:   []string{"name", "book.name", "book.author", "book.read"},
-			isValid: true,
+			paths: []string{"name", "book.name", "book.author", "book.read"},
 		},
 
 		{
@@ -200,14 +197,18 @@ func TestOrderBy_IsValidForPaths(t *testing.T) {
 					{Path: "book.foo"},
 				},
 			},
-			paths:   []string{"name", "book.name", "book.author", "book.read"},
-			isValid: false,
+			paths:         []string{"name", "book.name", "book.author", "book.read"},
+			errorContains: "invalid field path: book.foo",
 		},
 	} {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tt.isValid, tt.orderBy.IsValidForPaths(tt.paths...))
+			if tt.errorContains != "" {
+				assert.ErrorContains(t, tt.orderBy.ValidateForPaths(tt.paths...), tt.errorContains)
+			} else {
+				assert.NilError(t, tt.orderBy.ValidateForPaths(tt.paths...))
+			}
 		})
 	}
 }
