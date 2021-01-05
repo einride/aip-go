@@ -1,4 +1,4 @@
-package resourcetype
+package aipreflect
 
 import (
 	"fmt"
@@ -7,24 +7,11 @@ import (
 	"unicode/utf8"
 )
 
-// ParseName parses a resource type name string.
-func ParseName(s string) (Name, error) {
-	parts := strings.Split(s, "/")
-	if len(parts) != 2 {
-		return Name{}, fmt.Errorf("parse resource type name: invalid format")
-	}
-	name := Name{
-		ServiceName: parts[0],
-		Type:        parts[1],
-	}
-	if err := name.Validate(); err != nil {
-		return Name{}, fmt.Errorf("parse resource type name: %w", err)
-	}
-	return name, nil
-}
+// ResourceType represents a resource type name.
+type ResourceType string
 
-// Name represents a resource type name.
-type Name struct {
+// ResourceTypeDescriptor describes a resource type.
+type ResourceTypeDescriptor struct {
 	// ServiceName is the the name defined in the resource's service configuration.
 	//
 	// This usually (but not necessarily) matches the hostname that users use to call the service.
@@ -38,15 +25,36 @@ type Name struct {
 	Type string
 }
 
-// String returns the string representation of the service type name.
+// ParseName parses a resource type name string.
+func NewResourceTypeDescriptor(s string) (ResourceTypeDescriptor, error) {
+	parts := strings.Split(s, "/")
+	if len(parts) != 2 {
+		return ResourceTypeDescriptor{}, fmt.Errorf("invalid format")
+	}
+	name := ResourceTypeDescriptor{
+		ServiceName: parts[0],
+		Type:        parts[1],
+	}
+	if err := name.Validate(); err != nil {
+		return ResourceTypeDescriptor{}, err
+	}
+	return name, nil
+}
+
+// ResourceType returns the descriptor's resource type.
 //
 // For example: pubsub.googleapis.com/Topic.
-func (n Name) String() string {
-	return n.ServiceName + "/" + n.Type
+func (n ResourceTypeDescriptor) ResourceType() ResourceType {
+	return ResourceType(n.ServiceName + "/" + n.Type)
+}
+
+// String returns the string representation of the service type name.
+func (n ResourceTypeDescriptor) String() string {
+	return string(n.ResourceType())
 }
 
 // Validate the resource type name.
-func (n Name) Validate() error {
+func (n ResourceTypeDescriptor) Validate() error {
 	if err := n.validateServiceName(); err != nil {
 		return fmt.Errorf("validate resource type name: %w", err)
 	}
@@ -56,7 +64,7 @@ func (n Name) Validate() error {
 	return nil
 }
 
-func (n Name) validateServiceName() error {
+func (n ResourceTypeDescriptor) validateServiceName() error {
 	if n.ServiceName == "" {
 		return fmt.Errorf("service name: empty")
 	}
@@ -66,7 +74,7 @@ func (n Name) validateServiceName() error {
 	return nil
 }
 
-func (n Name) validateType() error {
+func (n ResourceTypeDescriptor) validateType() error {
 	if n.Type == "" {
 		return fmt.Errorf("type: is empty")
 	}
@@ -81,7 +89,7 @@ func (n Name) validateType() error {
 
 func isCamelCase(s string) bool {
 	for _, r := range s {
-		if !unicode.IsLetter(r) && !unicode.IsNumber(r) {
+		if !unicode.In(r, unicode.Letter, unicode.Digit) {
 			return false
 		}
 	}
