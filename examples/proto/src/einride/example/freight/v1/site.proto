@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package einride.example.freight.v1;
+
+option go_package = "go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1;examplefreightv1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/latlng.proto";
+
+// A site is a node in a [shipper][einride.example.freight.v1.Shipper]'s
+// transport network.
+message Site {
+  option (google.api.resource) = {
+    type: "freight-example.einride.tech/Site"
+    pattern: "shippers/{shipper}/sites/{site}"
+    singular: "site"
+    plural: "sites"
+  };
+  // The resource name of the site.
+  string name = 1;
+  // The creation timestamp of the site.
+  google.protobuf.Timestamp create_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The last update timestamp of the site.
+  //
+  // Updated when create/update/delete operation is performed.
+  google.protobuf.Timestamp update_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The deletion timestamp of the site.
+  google.protobuf.Timestamp delete_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The display name of the site.
+  string display_name = 5 [(google.api.field_behavior) = REQUIRED];
+  // The geographic location of the site.
+  google.type.LatLng lat_lng = 6;
+}

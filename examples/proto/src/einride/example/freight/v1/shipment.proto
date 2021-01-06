@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package einride.example.freight.v1;
+
+option go_package = "go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1;examplefreightv1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+// A shipment represents transportation of goods between an origin
+// [site][einride.example.freight.v1.Site] and a destination
+// [site][einride.example.freight.v1.Site].
+message Shipment {
+  option (google.api.resource) = {
+    type: "freight-example.einride.tech/Shipment"
+    pattern: "shippers/{shipper}/shipments/{shipment}"
+    singular: "shipment"
+    plural: "shipments"
+  };
+  // The resource name of the shipment.
+  string name = 1;
+  // The creation timestamp of the shipment.
+  google.protobuf.Timestamp create_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The last update timestamp of the shipment.
+  //
+  // Updated when create/update/delete operation is shipment.
+  google.protobuf.Timestamp update_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The deletion timestamp of the shipment.
+  google.protobuf.Timestamp delete_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The resource name of the origin site of the shipment.
+  string origin_site = 5 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "freight-example.einride.tech/Site"
+  ];
+  // The resource name of the destination site of the shipment.
+  string destination_site = 6 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "freight-example.einride.tech/Site"
+  ];
+  // The earliest pickup time of the shipment at the origin site.
+  google.protobuf.Timestamp pickup_earliest_time = 7 [(google.api.field_behavior) = REQUIRED];
+  // The latest pickup time of the shipment at the origin site.
+  google.protobuf.Timestamp pickup_latest_time = 8 [(google.api.field_behavior) = REQUIRED];
+  // The earliest delivery time of the shipment at the destination site.
+  google.protobuf.Timestamp delivery_earliest_time = 9 [(google.api.field_behavior) = REQUIRED];
+  // The latest delivery time of the shipment at the destination site.
+  google.protobuf.Timestamp delivery_latest_time = 10 [(google.api.field_behavior) = REQUIRED];
+}
