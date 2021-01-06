@@ -1,0 +1,12 @@
+version: v1beta1
+
+build:
+  roots:
+    - examples/proto/src
+    - examples/proto/api-common-protos
+
+lint:
+  use:
+    - DEFAULT
+  ignore:
+    - google

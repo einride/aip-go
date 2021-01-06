@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package einride.example.freight.v1;
+
+option go_package = "go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1;examplefreightv1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+// A shipper is a supplier or owner of goods to be transported.
+message Shipper {
+  option (google.api.resource) = {
+    type: "freight-example.einride.tech/Shipper"
+    pattern: "shippers/{shipper}"
+    singular: "shipper"
+    plural: "shippers"
+  };
+  // The resource name of the shipper.
+  string name = 1;
+  // The creation timestamp of the shipper.
+  google.protobuf.Timestamp create_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The last update timestamp of the shipper.
+  //
+  // Updated when create/update/delete operation is performed.
+  google.protobuf.Timestamp update_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The deletion timestamp of the shipper.
+  google.protobuf.Timestamp delete_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The display name of the shipper.
+  string display_name = 5 [(google.api.field_behavior) = REQUIRED];
+}
