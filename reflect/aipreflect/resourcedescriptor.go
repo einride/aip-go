@@ -21,6 +21,8 @@ type ResourceDescriptor struct {
 	Singular GrammaticalName
 	// Plural is the plural name of the resource type.
 	Plural GrammaticalName
+	// Methods are the resource's known methods.
+	Methods map[MethodType]protoreflect.FullName
 }
 
 // NewResourceDescriptor creates a new ResourceDescriptor from the provided resource descriptor message.

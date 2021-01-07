@@ -23,6 +23,7 @@ func TestNewResources(t *testing.T) {
 				examplefreightv1.File_einride_example_freight_v1_shipper_proto,
 				examplefreightv1.File_einride_example_freight_v1_site_proto,
 				examplefreightv1.File_einride_example_freight_v1_shipment_proto,
+				examplefreightv1.File_einride_example_freight_v1_freight_service_proto,
 			},
 			expected: map[aipreflect.ResourceTypeName]*aipreflect.ResourceDescriptor{
 				"freight-example.einride.tech/Shipper": {
@@ -42,6 +43,13 @@ func TestNewResources(t *testing.T) {
 					},
 					Singular: "shipper",
 					Plural:   "shippers",
+					Methods: map[aipreflect.MethodType]protoreflect.FullName{
+						"Get":    "einride.example.freight.v1.FreightService.GetShipper",
+						"List":   "einride.example.freight.v1.FreightService.ListShippers",
+						"Create": "einride.example.freight.v1.FreightService.CreateShipper",
+						"Update": "einride.example.freight.v1.FreightService.UpdateShipper",
+						"Delete": "einride.example.freight.v1.FreightService.DeleteShipper",
+					},
 				},
 
 				"freight-example.einride.tech/Shipment": {
@@ -66,6 +74,13 @@ func TestNewResources(t *testing.T) {
 					},
 					Singular: "shipment",
 					Plural:   "shipments",
+					Methods: map[aipreflect.MethodType]protoreflect.FullName{
+						"Get":    "einride.example.freight.v1.FreightService.GetShipment",
+						"List":   "einride.example.freight.v1.FreightService.ListShipments",
+						"Create": "einride.example.freight.v1.FreightService.CreateShipment",
+						"Update": "einride.example.freight.v1.FreightService.UpdateShipment",
+						"Delete": "einride.example.freight.v1.FreightService.DeleteShipment",
+					},
 				},
 
 				"freight-example.einride.tech/Site": {
@@ -90,6 +105,13 @@ func TestNewResources(t *testing.T) {
 					},
 					Singular: "site",
 					Plural:   "sites",
+					Methods: map[aipreflect.MethodType]protoreflect.FullName{
+						"Get":    "einride.example.freight.v1.FreightService.GetSite",
+						"List":   "einride.example.freight.v1.FreightService.ListSites",
+						"Create": "einride.example.freight.v1.FreightService.CreateSite",
+						"Update": "einride.example.freight.v1.FreightService.UpdateSite",
+						"Delete": "einride.example.freight.v1.FreightService.DeleteSite",
+					},
 				},
 			},
 		},
