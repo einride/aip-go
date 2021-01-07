@@ -40,6 +40,8 @@ func TestNewResources(t *testing.T) {
 							},
 						},
 					},
+					Singular: "shipper",
+					Plural:   "shippers",
 				},
 
 				"freight-example.einride.tech/Shipment": {
@@ -62,6 +64,8 @@ func TestNewResources(t *testing.T) {
 							},
 						},
 					},
+					Singular: "shipment",
+					Plural:   "shipments",
 				},
 
 				"freight-example.einride.tech/Site": {
@@ -84,6 +88,8 @@ func TestNewResources(t *testing.T) {
 							},
 						},
 					},
+					Singular: "site",
+					Plural:   "sites",
 				},
 			},
 		},
