@@ -7,14 +7,12 @@ import (
 
 // ResourceDescriptor describes a resource.
 type ResourceDescriptor struct {
-	// Descriptor is the original protobuf resource descriptor.
-	Descriptor *annotations.ResourceDescriptor
-	// File is the file that the resource descriptor is declared in.
-	File protoreflect.FileDescriptor
-	// Message is the message that the resource descriptor is declared in.
-	Message protoreflect.MessageDescriptor
-	// Type is the resource's type descriptor.
-	Type ResourceTypeDescriptor
+	// ParentFile is the path of the parent file that the resource descriptor is declared in.
+	ParentFile string
+	// Message is the full name of the message that the resource descriptor is declared in.
+	Message protoreflect.FullName
+	// Type is the resource's type name.
+	Type ResourceTypeName
 	// Names are the resource name descriptors for the resource.
 	Names []*ResourceNameDescriptor
 }
@@ -22,21 +20,19 @@ type ResourceDescriptor struct {
 // NewResourceDescriptor creates a new ResourceDescriptor from the provided resource descriptor message.
 func NewResourceDescriptor(descriptor *annotations.ResourceDescriptor) (*ResourceDescriptor, error) {
 	resource := &ResourceDescriptor{
-		Descriptor: descriptor,
+		Type: ResourceTypeName(descriptor.GetType()),
 	}
-	resourceType, err := NewResourceTypeDescriptor(descriptor.GetType())
-	if err != nil {
+	if err := resource.Type.Validate(); err != nil {
 		return nil, err
 	}
-	resource.Type = resourceType
 	resource.Names = make([]*ResourceNameDescriptor, 0, len(descriptor.GetPattern()))
 	for _, pattern := range descriptor.GetPattern() {
-		name, err := NewResourceNameDescriptor(pattern)
+		resourceName, err := NewResourceNameDescriptor(pattern)
 		if err != nil {
 			return nil, err
 		}
-		name.Resource = resource
-		resource.Names = append(resource.Names, name)
+		resourceName.Type = resource.Type
+		resource.Names = append(resource.Names, resourceName)
 	}
 	return resource, nil
 }

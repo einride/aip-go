@@ -9,8 +9,6 @@ import (
 //
 // Example: `publishers/{publisher}/books/{book}`.
 type ResourceNamePatternDescriptor struct {
-	// Pattern is the string value of the pattern.
-	Pattern string
 	// Segments are the individual segments in the pattern.
 	Segments []ResourceNameSegmentDescriptor
 }
@@ -24,14 +22,17 @@ type ResourceNamePatternDescriptor struct {
 //     Template = Segment { "/" Segment } ;
 //     Segment = LITERAL | Variable ;
 //     Variable = "{" LITERAL "}" ;
-func NewResourceNamePatternDescriptor(pattern string) (*ResourceNamePatternDescriptor, error) {
+func NewResourceNamePatternDescriptor(pattern string) (ResourceNamePatternDescriptor, error) {
 	if len(pattern) == 0 {
-		return nil, fmt.Errorf("pattern is empty")
+		return ResourceNamePatternDescriptor{}, fmt.Errorf("pattern is empty")
 	}
-	result := ResourceNamePatternDescriptor{Pattern: pattern}
-	for _, value := range strings.Split(pattern, "/") {
+	segments := strings.Split(pattern, "/")
+	result := ResourceNamePatternDescriptor{
+		Segments: make([]ResourceNameSegmentDescriptor, 0, len(segments)),
+	}
+	for _, value := range segments {
 		if len(value) == 0 {
-			return nil, fmt.Errorf("invalid format")
+			return ResourceNamePatternDescriptor{}, fmt.Errorf("invalid format")
 		}
 		segment := ResourceNameSegmentDescriptor{
 			Variable: value[0] == '{' && value[len(value)-1] == '}',
@@ -42,7 +43,62 @@ func NewResourceNamePatternDescriptor(pattern string) (*ResourceNamePatternDescr
 		}
 		result.Segments = append(result.Segments, segment)
 	}
-	return &result, nil
+	return result, nil
+}
+
+// Parent returns a descriptor for the resource name's closest parent.
+func (p ResourceNamePatternDescriptor) Parent() (ResourceNamePatternDescriptor, bool) {
+	switch {
+	case len(p.Segments) <= 2:
+		return ResourceNamePatternDescriptor{}, false
+	case p.IsSingleton():
+		return ResourceNamePatternDescriptor{Segments: p.Segments[:len(p.Segments)-1]}, true
+	default:
+		return ResourceNamePatternDescriptor{Segments: p.Segments[:len(p.Segments)-2]}, true
+	}
+}
+
+// Ancestors returns descriptors for the resource name's ancestors.
+func (p ResourceNamePatternDescriptor) Ancestors() []ResourceNamePatternDescriptor {
+	if len(p.Segments) <= 2 {
+		return nil
+	}
+	result := make([]ResourceNamePatternDescriptor, 0, len(p.Segments)/2)
+	for parent, ok := p.Parent(); ok; parent, ok = parent.Parent() {
+		result = append(result, parent)
+	}
+	return result
+}
+
+// String returns the string representation of the resource name pattern.
+func (p ResourceNamePatternDescriptor) String() string {
+	var s strings.Builder
+	s.Grow(p.Len())
+	for i, segment := range p.Segments {
+		if segment.Variable {
+			_, _ = s.WriteRune('{')
+			_, _ = s.WriteString(segment.Value)
+			_, _ = s.WriteRune('}')
+		} else {
+			_, _ = s.WriteString(segment.Value)
+		}
+		if i < len(p.Segments)-1 {
+			_, _ = s.WriteRune('/')
+		}
+	}
+	return s.String()
+}
+
+// Len returns the length of the resource name pattern.
+func (p ResourceNamePatternDescriptor) Len() int {
+	result := len(p.Segments) - 1 // for the slashes
+	for _, segment := range p.Segments {
+		result += len(segment.Value) // for the value
+		if segment.Variable {
+			result += 2 // for the variable braces
+		}
+	}
+	return result
 }
 
 // IsSingleton returns true if the pattern is a singleton pattern.
@@ -97,7 +153,7 @@ func (p ResourceNamePatternDescriptor) ValidateResourceName(name string) error {
 		return fmt.Errorf(
 			"validate resource name `%s` against pattern `%s`: expected %d segments but got %d",
 			name,
-			p.Pattern,
+			p,
 			len(p.Segments),
 			nameSegmentsCount,
 		)
@@ -119,7 +175,7 @@ func (p ResourceNamePatternDescriptor) ValidateResourceName(name string) error {
 				return fmt.Errorf(
 					"validate resource name `%s` against pattern `%s`: segment {%s} is empty",
 					name,
-					p.Pattern,
+					p,
 					segment.Value,
 				)
 			}
@@ -129,7 +185,7 @@ func (p ResourceNamePatternDescriptor) ValidateResourceName(name string) error {
 			return fmt.Errorf(
 				"validate resource name `%s` against pattern `%s`: expected segment %d to be `%s` but got `%s`",
 				name,
-				p.Pattern,
+				p,
 				i+1,
 				segment.Value,
 				currSegmentValue,
@@ -145,7 +201,7 @@ func (p ResourceNamePatternDescriptor) MarshalResourceName(values ...string) (st
 	if len(values) != variableCount {
 		return "", fmt.Errorf(
 			"marshal resource name pattern `%s`: got %d values but expected %d",
-			p.Pattern,
+			p,
 			len(values),
 			variableCount,
 		)
@@ -162,7 +218,7 @@ func (p ResourceNamePatternDescriptor) MarshalResourceName(values ...string) (st
 			if values[iValue] == "" {
 				return "", fmt.Errorf(
 					"marshal resource name pattern `%s`: empty value for {%s}",
-					p.Pattern,
+					p,
 					s.Value,
 				)
 			}
@@ -179,10 +235,10 @@ func (p ResourceNamePatternDescriptor) MarshalResourceName(values ...string) (st
 	return name.String(), nil
 }
 
-// WildcardResourceName returns a wildcard resource name representation of the pattern.
+// Wildcard returns a wildcard resource name representation of the pattern.
 //
 // For example, the wildcard representation of the pattern `resources/{resource}` is `resources/*`.
-func (p ResourceNamePatternDescriptor) WildcardResourceName() string {
+func (p ResourceNamePatternDescriptor) Wildcard() string {
 	var parts []string
 	for _, segment := range p.Segments {
 		if segment.Variable {

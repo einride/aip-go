@@ -1,5 +1,5 @@
 golangci_lint_cwd := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-golangci_lint_version := 1.33.0
+golangci_lint_version := 1.34.1
 golangci_lint := $(golangci_lint_cwd)/$(golangci_lint_version)/golangci-lint
 
 ifeq ($(shell uname),Linux)

@@ -6,16 +6,6 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestResourceTypeDescriptor(t *testing.T) {
-	t.Parallel()
-	t.Run("can be used as map key", func(t *testing.T) {
-		t.Parallel()
-		m := map[ResourceTypeDescriptor]string{}
-		m[ResourceTypeDescriptor{ServiceName: "pubsub.googleapis.com", Type: "Topic"}] = "test"
-		assert.Equal(t, "test", m[ResourceTypeDescriptor{ServiceName: "pubsub.googleapis.com", Type: "Topic"}])
-	})
-}
-
 func TestResourceTypeDescriptor_String(t *testing.T) {
 	t.Parallel()
 	const expected = "pubsub.googleapis.com/Topic"
