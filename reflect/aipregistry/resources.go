@@ -34,7 +34,8 @@ func NewResources(files *protoregistry.Files) (*Resources, error) {
 	if responseErr != nil {
 		return nil, responseErr
 	}
-	registry.updateAncestries()
+	registry.inferAncestries()
+	registry.inferMethods(files)
 	return registry, nil
 }
 
@@ -57,7 +58,7 @@ func (r *Resources) RangeResources(f func(*aipreflect.ResourceDescriptor) bool) 
 	}
 }
 
-func (r *Resources) updateAncestries() {
+func (r *Resources) inferAncestries() {
 	for _, resource := range r.resourcesByType {
 		for _, name := range resource.Names {
 			ancestorPatterns := name.Pattern.Ancestors()
@@ -72,6 +73,50 @@ func (r *Resources) updateAncestries() {
 				ancestorResourceType := ancestor.Type
 				name.Ancestors = append(name.Ancestors, ancestorResourceType)
 			}
+		}
+	}
+}
+
+func (r *Resources) inferMethods(files *protoregistry.Files) {
+	methodTypes := []aipreflect.MethodType{
+		aipreflect.MethodTypeGet,
+		aipreflect.MethodTypeList,
+		aipreflect.MethodTypeCreate,
+		aipreflect.MethodTypeUpdate,
+		aipreflect.MethodTypeDelete,
+		aipreflect.MethodTypeUndelete,
+		aipreflect.MethodTypeBatchGet,
+		aipreflect.MethodTypeBatchCreate,
+		aipreflect.MethodTypeBatchUpdate,
+		aipreflect.MethodTypeBatchDelete,
+		aipreflect.MethodTypeSearch,
+	}
+	for _, resource := range r.resourcesByType {
+		resource.Methods = make(map[aipreflect.MethodType]protoreflect.FullName)
+		for _, methodType := range methodTypes {
+			methodName, err := resource.InferMethodName(methodType)
+			if err != nil {
+				continue
+			}
+			file, err := files.FindFileByPath(resource.ParentFile)
+			if err != nil {
+				continue
+			}
+			resource, methodType := resource, methodType
+			files.RangeFilesByPackage(file.Package(), func(packageFile protoreflect.FileDescriptor) bool {
+				for i := 0; i < packageFile.Services().Len(); i++ {
+					service := packageFile.Services().Get(i)
+					for j := 0; j < service.Methods().Len(); j++ {
+						method := service.Methods().Get(j)
+						if method.Name() != methodName {
+							continue
+						}
+						resource.Methods[methodType] = method.FullName()
+						return false
+					}
+				}
+				return true
+			})
 		}
 	}
 }
@@ -99,7 +144,7 @@ func (r *Resources) registerFile(file protoreflect.FileDescriptor) (err error) {
 func (r *Resources) registerMessage(message protoreflect.MessageDescriptor) (err error) {
 	descriptor := proto.GetExtension(message.Options(), annotations.E_Resource).(*annotations.ResourceDescriptor)
 	if descriptor == nil {
-		return fmt.Errorf("register %s: %w", message.FullName(), err)
+		return nil
 	}
 	resource, err := aipreflect.NewResourceDescriptor(descriptor)
 	if err != nil {
