@@ -140,3 +140,66 @@ func TestResourceNamePatternDescriptor_ValidateResourceName(t *testing.T) {
 		})
 	}
 }
+
+func TestResourceNamePatternDescriptor_Ancestors(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name     string
+		pattern  string
+		expected []ResourceNamePatternDescriptor
+	}{
+		{
+			name:     "top-level",
+			pattern:  "publishers/{publisher}",
+			expected: nil,
+		},
+
+		{
+			name:     "top-level, singleton",
+			pattern:  "singleton",
+			expected: nil,
+		},
+
+		{
+			name:    "child",
+			pattern: "publishers/{publisher}/books/{book}",
+			expected: []ResourceNamePatternDescriptor{
+				{
+					Segments: []ResourceNameSegmentDescriptor{
+						{Value: "publishers"},
+						{Value: "publisher", Variable: true},
+					},
+				},
+			},
+		},
+
+		{
+			name:    "child, singleton",
+			pattern: "publishers/{publisher}/books/{book}/options",
+			expected: []ResourceNamePatternDescriptor{
+				{
+					Segments: []ResourceNameSegmentDescriptor{
+						{Value: "publishers"},
+						{Value: "publisher", Variable: true},
+						{Value: "books"},
+						{Value: "book", Variable: true},
+					},
+				},
+				{
+					Segments: []ResourceNameSegmentDescriptor{
+						{Value: "publishers"},
+						{Value: "publisher", Variable: true},
+					},
+				},
+			},
+		},
+	} {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			pattern, err := NewResourceNamePatternDescriptor(tt.pattern)
+			assert.NilError(t, err)
+			assert.DeepEqual(t, tt.expected, pattern.Ancestors())
+		})
+	}
+}
