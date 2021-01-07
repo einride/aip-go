@@ -4,3 +4,7 @@ plugins:
   - name: go
     out: examples/proto/gen
     opt: module=go.einride.tech/aip/examples/proto/gen
+
+  - name: go-grpc
+    out: examples/proto/gen
+    opt: module=go.einride.tech/aip/examples/proto/gen,require_unimplemented_servers=false
