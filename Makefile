@@ -5,6 +5,7 @@ all: \
 	prettier-markdown \
 	buf-lint \
 	buf-generate \
+	go-generate \
 	go-lint \
 	go-review \
 	go-test \
@@ -22,20 +23,29 @@ include tools/protoc-gen-go-grpc/rules.mk
 include tools/protoc-gen-go/rules.mk
 include tools/protoc/rules.mk
 include tools/semantic-release/rules.mk
+include tools/stringer/rules.mk
 
 .PHONY: examples/proto/api-common-protos
 examples/proto/api-common-protos:
 	@git submodule update --init --recursive $@
 
-.PHONY: go-mod-tidy
-go-mod-tidy:
-	$(info [$@] tidying Go module files...)
-	@go mod tidy -v
+.PHONY: go-generate
+go-generate: \
+	reflect/aipreflect/methodtype_string.go
+
+%_string.go: %.go $(stringer)
+	$(info [stringer] generating $@ from $<)
+	@go generate ./$<
 
 .PHONY: go-test
 go-test:
 	$(info [$@] running Go tests...)
 	@go test -count 1 -cover -race ./...
+
+.PHONY: go-mod-tidy
+go-mod-tidy:
+	$(info [$@] tidying Go module files...)
+	@go mod tidy -v
 
 .PHONY: api-linter-lint
 api-linter-lint: $(api_linter_wrapper)
