@@ -22,34 +22,59 @@ message Shipment {
     singular: "shipment"
     plural: "shipments"
   };
+
   // The resource name of the shipment.
   string name = 1;
+
   // The creation timestamp of the shipment.
   google.protobuf.Timestamp create_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // The last update timestamp of the shipment.
   //
   // Updated when create/update/delete operation is shipment.
   google.protobuf.Timestamp update_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // The deletion timestamp of the shipment.
   google.protobuf.Timestamp delete_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // The resource name of the origin site of the shipment.
   // Format: shippers/{shipper}/sites/{site}
   string origin_site = 5 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference).type = "freight-example.einride.tech/Site"
   ];
+
   // The resource name of the destination site of the shipment.
   // Format: shippers/{shipper}/sites/{site}
   string destination_site = 6 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference).type = "freight-example.einride.tech/Site"
   ];
+
   // The earliest pickup time of the shipment at the origin site.
   google.protobuf.Timestamp pickup_earliest_time = 7 [(google.api.field_behavior) = REQUIRED];
+
   // The latest pickup time of the shipment at the origin site.
   google.protobuf.Timestamp pickup_latest_time = 8 [(google.api.field_behavior) = REQUIRED];
+
   // The earliest delivery time of the shipment at the destination site.
   google.protobuf.Timestamp delivery_earliest_time = 9 [(google.api.field_behavior) = REQUIRED];
+
   // The latest delivery time of the shipment at the destination site.
   google.protobuf.Timestamp delivery_latest_time = 10 [(google.api.field_behavior) = REQUIRED];
+
+  // The line items of the shipment.
+  repeated LineItem line_items = 11;
+}
+
+// A shipment line item.
+message LineItem {
+  // The title of the line item.
+  string title = 1;
+  // The quantity of the line item.
+  float quantity = 2;
+  // The weight of the line item in kilograms.
+  float weight_kg = 3;
+  // The volume of the line item in cubic meters.
+  float volume_m3 = 4;
 }
