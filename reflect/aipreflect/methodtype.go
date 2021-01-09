@@ -1,53 +1,65 @@
 package aipreflect
 
+import "google.golang.org/protobuf/reflect/protoreflect"
+
 // MethodType is an AIP method type.
-type MethodType string
+type MethodType int
+
+//go:generate stringer -type MethodType -trimprefix MethodType
 
 const (
+	// MethodTypeNone represents no method type.
+	MethodTypeNone MethodType = iota
+
 	// MethodTypeGet is the method type of the AIP standard Get method.
 	// See: https://google.aip.dev/131 (Standard methods: Get).
-	MethodTypeGet MethodType = "Get"
+	MethodTypeGet
 
 	// MethodTypeList is the method type of the AIP standard List method.
 	// See: https://google.aip.dev/132 (Standard methods: List).
-	MethodTypeList MethodType = "List"
+	MethodTypeList
 
 	// MethodTypeCreate is the method type of the AIP standard Create method.
 	// See: https://google.aip.dev/133 (Standard methods: Create).
-	MethodTypeCreate MethodType = "Create"
+	MethodTypeCreate
 
 	// MethodTypeUpdate is the method type of the AIP standard Update method.
 	// See: https://google.aip.dev/133 (Standard methods: Update).
-	MethodTypeUpdate MethodType = "Update"
+	MethodTypeUpdate
 
 	// MethodTypeDelete is the method type of the AIP standard Delete method.
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
-	MethodTypeDelete MethodType = "Delete"
-
-	// MethodTypeSearch is the method type of the custom AIP method for searching a resource collection.
-	// See: https://google.aip.dev/136 (Custom methods).
-	MethodTypeSearch MethodType = "Search"
+	MethodTypeDelete
 
 	// MethodTypeUndelete is the method type of the AIP Undelete method for soft delete.
 	// See: https://google.aip.dev/164 (Soft delete).
-	MethodTypeUndelete MethodType = "Undelete"
+	MethodTypeUndelete
 
 	// MethodTypeBatchGet is the method type of the AIP standard BatchGet method.
 	// See: https://google.aip.dev/231 (Batch methods: Get).
-	MethodTypeBatchGet MethodType = "BatchGet"
+	MethodTypeBatchGet
 
 	// MethodTypeBatchCreate is the method type of the AIP standard BatchCreate method.
 	// See: https://google.aip.dev/233 (Batch methods: Create).
-	MethodTypeBatchCreate MethodType = "BatchCreate"
+	MethodTypeBatchCreate
 
 	// MethodTypeBatchUpdate is the method type of the AIP standard BatchUpdate method.
 	// See: https://google.aip.dev/234 (Batch methods: Update).
-	MethodTypeBatchUpdate MethodType = "BatchUpdate"
+	MethodTypeBatchUpdate
 
 	// MethodTypeBatchDelete is the method type of the AIP standard BatchDelete method.
 	// See: https://google.aip.dev/235 (Batch methods: Delete).
-	MethodTypeBatchDelete MethodType = "BatchDelete"
+	MethodTypeBatchDelete
+
+	// MethodTypeSearch is the method type of the custom AIP method for searching a resource collection.
+	// See: https://google.aip.dev/136 (Custom methods).
+	MethodTypeSearch
 )
+
+// NamePrefix returns the method type's method name prefix.
+func (s MethodType) NamePrefix() protoreflect.Name {
+	return protoreflect.Name(s.String())
+}
 
 // IsPlural returns true if the method type relates to a plurality of resources.
 func (s MethodType) IsPlural() bool {
@@ -59,11 +71,12 @@ func (s MethodType) IsPlural() bool {
 		MethodTypeBatchUpdate,
 		MethodTypeBatchDelete:
 		return true
-	case MethodTypeCreate,
-		MethodTypeDelete,
+	case MethodTypeNone,
 		MethodTypeGet,
-		MethodTypeUndelete,
-		MethodTypeUpdate:
+		MethodTypeCreate,
+		MethodTypeUpdate,
+		MethodTypeDelete,
+		MethodTypeUndelete:
 		return false
 	}
 	return false

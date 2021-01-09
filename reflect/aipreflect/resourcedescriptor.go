@@ -63,10 +63,10 @@ func (r *ResourceDescriptor) InferMethodName(t MethodType) (protoreflect.Name, e
 		if r.Plural == "" {
 			return "", fmt.Errorf("infer %s method name %s: plural not specified", r.Type, t)
 		}
-		return protoreflect.Name(t) + protoreflect.Name(r.Plural.UpperCamelCase()), nil
+		return t.NamePrefix() + protoreflect.Name(r.Plural.UpperCamelCase()), nil
 	}
 	if r.Singular == "" {
 		return "", fmt.Errorf("infer %s method name %s: singular not specified", r.Type, t)
 	}
-	return protoreflect.Name(t) + protoreflect.Name(r.Singular.UpperCamelCase()), nil
+	return t.NamePrefix() + protoreflect.Name(r.Singular.UpperCamelCase()), nil
 }
