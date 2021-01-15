@@ -42,6 +42,6 @@ func ExampleServer_ListShelves() {
 	// Output:
 	// shelves/0001 Sci-Fi
 	// shelves/0002 Horror
-	// PP-BAwEBD09mZnNldFBhZ2VUb2tlbgH_ggABAgEGT2Zmc2V0AQQAAQ9SZXF1ZXN0Q2hlY2tzdW0BBgAAAAv_ggEEAfyaywRCAA==
+	// Nv-BAwEBCVBhZ2VUb2tlbgH_ggABAgEGT2Zmc2V0AQQAAQ9SZXF1ZXN0Q2hlY2tzdW0BBgAAAAv_ggEEAfyaywRCAA==
 	// shelves/0003 Romance
 }
