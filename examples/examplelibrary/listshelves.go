@@ -26,8 +26,8 @@ func (s *Server) ListShelves(
 	case request.PageSize > maxPageSize:
 		request.PageSize = maxPageSize
 	}
-	// Use pagination.OffsetPageToken for offset-based page tokens.
-	pageToken, err := pagination.ParseOffsetPageToken(request)
+	// Use pagination.PageToken for offset-based page tokens.
+	pageToken, err := pagination.ParsePageToken(request)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page token")
 	}

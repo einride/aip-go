@@ -18,11 +18,11 @@ $ go get -u go.einride.tech/aip
 
 ### [AIP-132][aip-132] (Standard method: List)
 
-- Use [`pagination.OffsetPageToken`][offset] to implement offset-based
+- Use [`pagination.PageToken`][pagetoken] to implement offset-based
   pagination.
 
 [aip-132]: https://google.aip.dev/132
-[offset]: ./pagination/offsetpagetoken.go
+[pagetoken]: ./pagination/pagetoken.go
 
 ```go
 package examplelibrary
@@ -53,8 +53,8 @@ func (s *Server) ListShelves(
 	case request.PageSize > maxPageSize:
 		request.PageSize = maxPageSize
 	}
-	// Use pagination.OffsetPageToken for offset-based page tokens.
-	pageToken, err := pagination.ParseOffsetPageToken(request)
+	// Use pagination.PageToken for offset-based page tokens.
+	pageToken, err := pagination.ParsePageToken(request)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page token")
 	}
