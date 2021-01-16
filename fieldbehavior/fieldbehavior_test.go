@@ -31,17 +31,43 @@ func TestValidateRequiredFieldsWithMask(t *testing.T) {
 	t.Parallel()
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
-		assert.NilError(t, ValidateRequiredFieldsWithMask(&library.Book{Name: "testbook"}, nil))
+		assert.NilError(
+			t,
+			ValidateRequiredFieldsWithMask(
+				&library.Book{Name: "testbook"},
+				nil,
+			),
+		)
+	})
+	t.Run("ok - empty mask", func(t *testing.T) {
+		t.Parallel()
+		assert.NilError(
+			t,
+			ValidateRequiredFieldsWithMask(
+				&library.Book{},
+				nil,
+			),
+		)
 	})
 	t.Run("missing field", func(t *testing.T) {
 		t.Parallel()
-		assert.Error(t, ValidateRequiredFieldsWithMask(&library.Book{}, nil), "missing required field: name")
+		assert.Error(
+			t,
+			ValidateRequiredFieldsWithMask(
+				&library.Book{},
+				&fieldmaskpb.FieldMask{Paths: []string{"*"}},
+			),
+			"missing required field: name",
+		)
 	})
 	t.Run("missing but not in mask", func(t *testing.T) {
 		t.Parallel()
 		assert.NilError(
 			t,
-			ValidateRequiredFieldsWithMask(&library.Book{}, &fieldmaskpb.FieldMask{Paths: []string{"author"}}),
+			ValidateRequiredFieldsWithMask(
+				&library.Book{},
+				&fieldmaskpb.FieldMask{Paths: []string{"author"}},
+			),
 		)
 	})
 	t.Run("missing nested", func(t *testing.T) {
@@ -53,7 +79,7 @@ func TestValidateRequiredFieldsWithMask(t *testing.T) {
 					Name: "testname",
 					Book: &library.Book{},
 				},
-				nil,
+				&fieldmaskpb.FieldMask{Paths: []string{"book.name"}},
 			),
 			"missing required field: book.name",
 		)
@@ -70,6 +96,7 @@ func TestValidateRequiredFieldsWithMask(t *testing.T) {
 			),
 		)
 	})
+
 	t.Run("support maps", func(t *testing.T) {
 		t.Parallel()
 		assert.NilError(

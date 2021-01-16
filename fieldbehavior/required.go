@@ -12,7 +12,11 @@ import (
 // ValidateRequiredFields returns a validation error if any field annotated as required does not have a value.
 // See: https://aip.dev/203
 func ValidateRequiredFields(m proto.Message) error {
-	return validateRequiredFields(m.ProtoReflect(), nil, "")
+	return validateRequiredFields(
+		m.ProtoReflect(),
+		&fieldmaskpb.FieldMask{Paths: []string{"*"}},
+		"",
+	)
 }
 
 func ValidateRequiredFieldsWithMask(m proto.Message, mask *fieldmaskpb.FieldMask) error {
@@ -20,6 +24,12 @@ func ValidateRequiredFieldsWithMask(m proto.Message, mask *fieldmaskpb.FieldMask
 }
 
 func validateRequiredFields(reflectMessage protoreflect.Message, mask *fieldmaskpb.FieldMask, path string) error {
+	// If no paths are provided, the field mask should be treated to be equivalent
+	// to all fields set on the wire. This means that no required fields can be missing,
+	// since if they were missing they're not set on the wire.
+	if len(mask.GetPaths()) == 0 {
+		return nil
+	}
 	for i := 0; i < reflectMessage.Descriptor().Fields().Len(); i++ {
 		field := reflectMessage.Descriptor().Fields().Get(i)
 		currPath := path
@@ -28,8 +38,7 @@ func validateRequiredFields(reflectMessage protoreflect.Message, mask *fieldmask
 		}
 		currPath += string(field.Name())
 		if !isMessageFieldPresent(reflectMessage, field) {
-			if Has(field, annotations.FieldBehavior_REQUIRED) &&
-				(len(mask.GetPaths()) == 0 || hasPath(mask, currPath)) {
+			if Has(field, annotations.FieldBehavior_REQUIRED) && hasPath(mask, currPath) {
 				return fmt.Errorf("missing required field: %s", currPath)
 			}
 		} else if field.Kind() == protoreflect.MessageKind {
@@ -69,7 +78,7 @@ func validateRequiredFields(reflectMessage protoreflect.Message, mask *fieldmask
 
 func hasPath(mask *fieldmaskpb.FieldMask, needle string) bool {
 	for _, straw := range mask.GetPaths() {
-		if straw == needle {
+		if straw == "*" || straw == needle {
 			return true
 		}
 	}
