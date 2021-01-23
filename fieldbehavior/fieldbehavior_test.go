@@ -3,6 +3,7 @@ package fieldbehavior
 import (
 	"testing"
 
+	examplefreightv1 "go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/genproto/googleapis/example/library/v1"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -66,6 +67,20 @@ func TestValidateRequiredFieldsWithMask(t *testing.T) {
 					Book: &library.Book{},
 				},
 				&fieldmaskpb.FieldMask{Paths: []string{"book.author"}},
+			),
+		)
+	})
+	t.Run("support maps", func(t *testing.T) {
+		t.Parallel()
+		assert.NilError(
+			t,
+			ValidateRequiredFieldsWithMask(
+				&examplefreightv1.Shipment{
+					Annotations: map[string]string{
+						"x": "y",
+					},
+				},
+				&fieldmaskpb.FieldMask{Paths: []string{"annotations"}},
 			),
 		)
 	})
