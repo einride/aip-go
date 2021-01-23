@@ -27,21 +27,40 @@ func validateRequiredFields(reflectMessage protoreflect.Message, mask *fieldmask
 			currPath += "."
 		}
 		currPath += string(field.Name())
-		if !isPresent(reflectMessage, field) {
+		if !isMessageFieldPresent(reflectMessage, field) {
 			if Has(field, annotations.FieldBehavior_REQUIRED) &&
 				(len(mask.GetPaths()) == 0 || hasPath(mask, currPath)) {
 				return fmt.Errorf("missing required field: %s", currPath)
 			}
 		} else if field.Kind() == protoreflect.MessageKind {
 			value := reflectMessage.Get(field)
-			if field.Cardinality() == protoreflect.Repeated {
+			switch {
+			case field.IsList():
 				for i := 0; i < value.List().Len(); i++ {
 					if err := validateRequiredFields(value.List().Get(i).Message(), mask, currPath); err != nil {
 						return err
 					}
 				}
-			} else if err := validateRequiredFields(value.Message(), mask, currPath); err != nil {
-				return err
+			case field.IsMap():
+				if field.MapValue().Kind() != protoreflect.MessageKind {
+					continue
+				}
+				var mapErr error
+				value.Map().Range(func(key protoreflect.MapKey, value protoreflect.Value) bool {
+					if err := validateRequiredFields(value.Message(), mask, currPath); err != nil {
+						mapErr = err
+						return false
+					}
+
+					return true
+				})
+				if mapErr != nil {
+					return mapErr
+				}
+			default:
+				if err := validateRequiredFields(value.Message(), mask, currPath); err != nil {
+					return err
+				}
 			}
 		}
 	}

@@ -48,7 +48,7 @@ func CopyFields(dst, src proto.Message, behaviorsToCopy ...annotations.FieldBeha
 		dstField := dstReflect.Descriptor().Fields().Get(i)
 		if hasAnyBehavior(Get(dstField), behaviorsToCopy) {
 			srcField := srcReflect.Descriptor().Fields().Get(i)
-			if isPresent(srcReflect, srcField) {
+			if isMessageFieldPresent(srcReflect, srcField) {
 				dstReflect.Set(dstField, srcReflect.Get(srcField))
 			} else {
 				dstReflect.Clear(dstField)
@@ -57,13 +57,19 @@ func CopyFields(dst, src proto.Message, behaviorsToCopy ...annotations.FieldBeha
 	}
 }
 
-func isPresent(m protoreflect.Message, f protoreflect.FieldDescriptor) bool {
-	v := m.Get(f)
+func isMessageFieldPresent(m protoreflect.Message, f protoreflect.FieldDescriptor) bool {
+	return isPresent(m.Get(f), f)
+}
+
+func isPresent(v protoreflect.Value, f protoreflect.FieldDescriptor) bool {
 	if !v.IsValid() {
 		return false
 	}
 	if f.IsList() {
 		return v.List().Len() > 0
+	}
+	if f.IsMap() {
+		return v.Map().Len() > 0
 	}
 	switch f.Kind() {
 	case protoreflect.EnumKind:

@@ -65,6 +65,9 @@ message Shipment {
 
   // The line items of the shipment.
   repeated LineItem line_items = 11;
+
+  // Annotations of the shipment.
+  map<string,string> annotations = 12;
 }
 
 // A shipment line item.
