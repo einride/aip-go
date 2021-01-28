@@ -52,7 +52,7 @@ func TestParseOffsetPageToken(t *testing.T) {
 		request := &library.ListBooksRequest{
 			Name:     "shelves/1",
 			PageSize: 10,
-			PageToken: gobEncode(&PageToken{
+			PageToken: EncodePageTokenStruct(&PageToken{
 				Offset:          100,
 				RequestChecksum: 1234, // invalid
 			}),

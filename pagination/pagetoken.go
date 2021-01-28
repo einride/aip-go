@@ -38,7 +38,7 @@ func ParsePageToken(request Request) (_ PageToken, err error) {
 		}, nil
 	}
 	var pageToken PageToken
-	if err := gobDecode(request.GetPageToken(), &pageToken); err != nil {
+	if err := DecodePageTokenStruct(request.GetPageToken(), &pageToken); err != nil {
 		return PageToken{}, err
 	}
 	if pageToken.RequestChecksum != requestChecksum {
@@ -57,5 +57,5 @@ func (p PageToken) Next(request Request) PageToken {
 
 // String returns a string representation of the page token.
 func (p PageToken) String() string {
-	return gobEncode(&p)
+	return EncodePageTokenStruct(&p)
 }
