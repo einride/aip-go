@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package einride.example.syntax.v1;
+
+option go_package = "go.einride.tech/aip/examples/proto/gen/einride/example/syntax/v1;syntaxv1";
+option java_multiple_files = true;
+option java_outer_classname = "SyntaxProto";
+option java_package = "tech.einride.example.syntax.v1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+message Message {
+  double double = 1;
+  float float = 2;
+  int32 int32 = 3;
+  int64 int64 = 4;
+  uint32 uint32 = 5;
+  uint64 uint64 = 6;
+  sint32 sint32 = 7;
+  sint64 sint64 = 8;
+  fixed32 fixed32 = 9;
+  fixed64 fixed64 = 10;
+  sfixed32 sfixed32 = 11;
+  sfixed64 sfixed64 = 12;
+  bool bool = 13;
+  string string = 14;
+  bytes bytes = 15;
+  Enum enum = 16;
+  Message message = 17;
+
+  repeated double repeated_double = 18;
+  repeated float repeated_float = 19;
+  repeated int32 repeated_int32 = 20;
+  repeated int64 repeated_int64 = 21;
+  repeated uint32 repeated_uint32 = 22;
+  repeated uint64 repeated_uint64 = 23;
+  repeated sint32 repeated_sint32 = 24;
+  repeated sint64 repeated_sint64 = 25;
+  repeated fixed32 repeated_fixed32 = 26;
+  repeated fixed64 repeated_fixed64 = 27;
+  repeated sfixed32 repeated_sfixed32 = 28;
+  repeated sfixed64 repeated_sfixed64 = 29;
+  repeated bool repeated_bool = 30;
+  repeated string repeated_string = 31;
+  repeated bytes repeated_bytes = 32;
+  repeated Enum repeated_enum = 33;
+  repeated Message repeated_message = 34;
+
+  map<string, string> map_string_string = 35;
+  map<string, Message> map_string_message = 36;
+
+  oneof oneof {
+    string oneof_string = 37;
+    Enum oneof_enum = 38;
+    Message oneof_message1 = 39;
+    Message oneof_message2 = 40;
+  }
+}
+
+enum Enum {
+  ENUM_UNSPECIFIED = 0;
+  ENUM_ONE = 1;
+  ENUM_TWO = 2;
+}
