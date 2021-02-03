@@ -46,6 +46,16 @@ func Update(mask *fieldmaskpb.FieldMask, dst, src proto.Message) {
 }
 
 func updateWireSetFields(dst, src protoreflect.Message) {
+	// handle oneof fields that have changed between src and dst
+	oneofs := dst.Descriptor().Oneofs()
+	for i := 0; i < oneofs.Len(); i++ {
+		oneof := oneofs.Get(i)
+		whichDst := dst.WhichOneof(oneof)
+		whichSrc := src.WhichOneof(oneof)
+		if whichDst != whichSrc && whichSrc != nil {
+			dst.Set(whichSrc, src.Get(whichSrc))
+		}
+	}
 	src.Range(func(field protoreflect.FieldDescriptor, value protoreflect.Value) bool {
 		if isMessage(field) {
 			updateWireSetFields(dst.Get(field).Message(), value.Message())
