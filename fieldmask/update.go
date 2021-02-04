@@ -12,6 +12,8 @@ import (
 // Update updates fields in dst with values from src according to the provided field mask.
 // Nested messages are recursively updated in the same manner.
 // Repeated fields and maps are copied by reference from src to dst.
+// Field mask paths referring to Individual entries in maps or
+// repeated fields are ignored.
 //
 // If no update mask is provided, only non-zero values of src are copied to dst.
 // If the special value "*" is provided as the field mask, a full replacement of all fields in dst is done.
@@ -47,11 +49,18 @@ func Update(mask *fieldmaskpb.FieldMask, dst, src proto.Message) {
 
 func updateWireSetFields(dst, src protoreflect.Message) {
 	src.Range(func(field protoreflect.FieldDescriptor, value protoreflect.Value) bool {
-		if isMessage(field) {
+		switch {
+		case field.IsList():
+			dst.Set(field, value)
+		case field.IsMap():
+			dst.Set(field, value)
+		case field.Message() != nil && !dst.Has(field):
+			dst.Set(field, value)
+		case field.Message() != nil:
 			updateWireSetFields(dst.Get(field).Message(), value.Message())
-			return true
+		default:
+			dst.Set(field, value)
 		}
-		dst.Set(field, value)
 		return true
 	})
 }
@@ -62,21 +71,34 @@ func updateNamedField(dst, src protoreflect.Message, segments []string) {
 	}
 	field := src.Descriptor().Fields().ByName(protoreflect.Name(segments[0]))
 	if field == nil {
-		return // no known field by that name
+		// no known field by that name
+		return
 	}
-	// a field in this message
+	// a named field in this message
 	if len(segments) == 1 {
-		dst.Set(field, src.Get(field))
+		if !src.Has(field) {
+			dst.Set(field, src.NewField(field))
+		} else {
+			dst.Set(field, src.Get(field))
+		}
 		return
 	}
-	if !isMessage(field) {
-		// not a message so can not have a field with that name
-		return
-	}
-	updateNamedField(dst.Get(field).Message(), src.Get(field).Message(), segments[1:])
-}
 
-func isMessage(field protoreflect.FieldDescriptor) bool {
-	return (field.Kind() == protoreflect.MessageKind || field.Kind() == protoreflect.GroupKind) &&
-		!field.IsMap() && !field.IsList()
+	// a named field in a nested message
+	switch {
+	case field.IsList(), field.IsMap():
+		// nested fields in repeated or map not supported
+		return
+	case field.Message() != nil:
+		// if message field is not set, allocate an empty value
+		if !dst.Has(field) {
+			dst.Set(field, dst.NewField(field))
+		}
+		if !src.Has(field) {
+			src.Set(field, src.NewField(field))
+		}
+		updateNamedField(dst.Get(field).Message(), src.Get(field).Message(), segments[1:])
+	default:
+		return
+	}
 }
