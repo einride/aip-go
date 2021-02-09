@@ -12,6 +12,13 @@ import (
 // Validate validates that the paths in the provided field mask are syntactically valid and
 // refer to known fields in the specified message type.
 func Validate(fm *fieldmaskpb.FieldMask, m proto.Message) error {
+	// special case for '*'
+	if stringsContain("*", fm.GetPaths()) {
+		if len(fm.GetPaths()) != 1 {
+			return fmt.Errorf("invalid field path: '*' must not be used with other paths")
+		}
+		return nil
+	}
 	md0 := m.ProtoReflect().Descriptor()
 	for _, path := range fm.GetPaths() {
 		md := md0
@@ -44,6 +51,15 @@ func Validate(fm *fieldmaskpb.FieldMask, m proto.Message) error {
 		}
 	}
 	return nil
+}
+
+func stringsContain(str string, ss []string) bool {
+	for _, s := range ss {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }
 
 func rangeFields(path string, f func(field string) bool) bool {

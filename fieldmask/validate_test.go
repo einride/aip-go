@@ -18,6 +18,21 @@ func TestValidate(t *testing.T) {
 		errorContains string
 	}{
 		{
+			name:    "valid nil",
+			message: &library.Book{},
+		},
+		{
+			name:      "valid *",
+			fieldMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
+			message:   &library.Book{},
+		},
+		{
+			name:          "invalid *",
+			fieldMask:     &fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+			message:       &library.Book{},
+			errorContains: "invalid field path: '*' must not be used with other paths",
+		},
+		{
 			name:      "valid empty",
 			fieldMask: &fieldmaskpb.FieldMask{},
 			message:   &library.Book{},
