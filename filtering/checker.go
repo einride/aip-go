@@ -9,34 +9,36 @@ import (
 )
 
 type Checker struct {
-	parsedExpr   *expr.ParsedExpr
 	declarations *Declarations
-	types        map[int64]*expr.Type
+	expr         *expr.Expr
+	sourceInfo   *expr.SourceInfo
+	typeMap      map[int64]*expr.Type
 }
 
-func (c *Checker) Init(parsedExpr *expr.ParsedExpr, declarations *Declarations) {
+func (c *Checker) Init(exp *expr.Expr, sourceInfo *expr.SourceInfo, declarations *Declarations) {
 	*c = Checker{
-		parsedExpr:   parsedExpr,
+		expr:         exp,
 		declarations: declarations,
-		types:        make(map[int64]*expr.Type, len(parsedExpr.SourceInfo.Positions)),
+		sourceInfo:   sourceInfo,
+		typeMap:      make(map[int64]*expr.Type, len(sourceInfo.Positions)),
 	}
 }
 
 func (c *Checker) Check() (*expr.CheckedExpr, error) {
-	if err := c.checkExpr(c.parsedExpr.Expr); err != nil {
+	if err := c.checkExpr(c.expr); err != nil {
 		return nil, err
 	}
-	resultType, ok := c.getType(c.parsedExpr.Expr)
+	resultType, ok := c.getType(c.expr)
 	if !ok {
-		return nil, c.errorf(c.parsedExpr.Expr, "unknown result type")
+		return nil, c.errorf(c.expr, "unknown result type")
 	}
 	if !proto.Equal(resultType, TypeBool) {
-		return nil, c.errorf(c.parsedExpr.Expr, "non-bool result type")
+		return nil, c.errorf(c.expr, "non-bool result type")
 	}
 	return &expr.CheckedExpr{
-		TypeMap:    c.types,
-		SourceInfo: c.parsedExpr.SourceInfo,
-		Expr:       c.parsedExpr.Expr,
+		TypeMap:    c.typeMap,
+		SourceInfo: c.sourceInfo,
+		Expr:       c.expr,
 	}, nil
 }
 
@@ -208,33 +210,31 @@ func (c *Checker) checkBoolLiteral(e *expr.Expr) error {
 	return c.setType(e, TypeBool)
 }
 
-func (c *Checker) errorf(e *expr.Expr, format string, args ...interface{}) error {
+func (c *Checker) errorf(_ *expr.Expr, format string, args ...interface{}) error {
+	// TODO: Include the provided expr.
 	return &typeError{
-		expr:       e,
-		parsedExpr: c.parsedExpr,
-		message:    fmt.Sprintf(format, args...),
+		message: fmt.Sprintf(format, args...),
 	}
 }
 
-func (c *Checker) wrapf(err error, e *expr.Expr, format string, args ...interface{}) error {
+func (c *Checker) wrapf(err error, _ *expr.Expr, format string, args ...interface{}) error {
+	// TODO: Include the provided expr.
 	return &typeError{
-		expr:       e,
-		parsedExpr: c.parsedExpr,
-		message:    fmt.Sprintf(format, args...),
-		err:        err,
+		message: fmt.Sprintf(format, args...),
+		err:     err,
 	}
 }
 
 func (c *Checker) setType(e *expr.Expr, t *expr.Type) error {
-	if existingT, ok := c.types[e.Id]; ok && !proto.Equal(t, existingT) {
+	if existingT, ok := c.typeMap[e.Id]; ok && !proto.Equal(t, existingT) {
 		return c.errorf(e, "type conflict between %s and %s", t, existingT)
 	}
-	c.types[e.Id] = t
+	c.typeMap[e.Id] = t
 	return nil
 }
 
 func (c *Checker) getType(e *expr.Expr) (*expr.Type, bool) {
-	t, ok := c.types[e.Id]
+	t, ok := c.typeMap[e.Id]
 	if !ok {
 		return nil, false
 	}

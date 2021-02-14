@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 type filterError interface {
@@ -90,10 +88,8 @@ func (p *parseError) Error() string {
 }
 
 type typeError struct {
-	expr       *expr.Expr
-	parsedExpr *expr.ParsedExpr
-	message    string
-	err        error
+	message string
+	err     error
 }
 
 func (t *typeError) Error() string {
