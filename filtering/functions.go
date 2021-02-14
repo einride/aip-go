@@ -66,9 +66,8 @@ func StandardFunctionDuration() *expr.Decl {
 // Has overloads.
 const (
 	FunctionOverloadHasString          = FunctionHas + "_string"
-	FunctionOverloadHasMap             = FunctionHas + "_map"
 	FunctionOverloadHasMapStringString = FunctionHas + "_map_string_string"
-	FunctionOverloadHasList            = FunctionHas + "_list"
+	FunctionOverloadHasListString      = FunctionHas + "_list_string"
 )
 
 // StandardFunctionHas returns a declaration for the standard `:` function and all its standard overloads.
@@ -78,6 +77,7 @@ func StandardFunctionHas() *expr.Decl {
 		NewFunctionOverload(FunctionOverloadHasString, TypeBool, TypeString, TypeString),
 		// TODO: Remove this after implementing support for type parameters.
 		NewFunctionOverload(FunctionOverloadHasMapStringString, TypeBool, TypeMap(TypeString, TypeString), TypeString),
+		NewFunctionOverload(FunctionOverloadHasListString, TypeBool, TypeList(TypeString), TypeString),
 	)
 }
 
