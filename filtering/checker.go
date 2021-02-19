@@ -136,10 +136,7 @@ func (c *Checker) checkCallExpr(e *expr.Expr) (err error) {
 	if err := c.checkCallExprBuiltinFunctionOverloads(e, functionOverload); err != nil {
 		return err
 	}
-	if err := c.setType(e, functionOverload.ResultType); err != nil {
-		return err
-	}
-	return nil
+	return c.setType(e, functionOverload.ResultType)
 }
 
 func (c *Checker) resolveCallExprFunctionOverload(
