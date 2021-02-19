@@ -16,10 +16,11 @@ linters:
     - unparam # allow constant parameters
     - goerr113 # allow "dynamic" errors
     - dogsled # allow blank identifiers
-    - gocyclo # allow complex functions
+    - cyclop # allow complex functions
     - nlreturn # allow return/break without whitespace
     - exhaustivestruct # don't require exhaustive fields in struct initializers
     - forbidigo # allow Printfs (e.g. in examples)
     - exhaustive # don't enforce exhaustive switches
     - wrapcheck # don't enforce wrapping
     - gochecknoglobals # allow globals in this project
+    - thelper # false positives
