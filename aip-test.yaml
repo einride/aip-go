@@ -1,0 +1,7 @@
+packages:
+  - path: go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1
+    services:
+      - name: FreightService
+        out:
+          name: freightsvc
+          path: ./examples/freightsvc
