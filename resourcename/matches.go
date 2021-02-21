@@ -1,7 +1,7 @@
 package resourcename
 
-// Matches reports whether the specified resource name matches the specified resource name pattern.
-func Matches(name, pattern string) bool {
+// Match reports whether the specified resource name matches the specified resource name pattern.
+func Match(pattern, name string) bool {
 	var nameScanner, patternScanner Scanner
 	nameScanner.Init(name)
 	patternScanner.Init(pattern)
