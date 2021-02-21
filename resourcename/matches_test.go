@@ -73,7 +73,7 @@ func TestMatches(t *testing.T) {
 		tt := tt
 		t.Run(tt.test, func(t *testing.T) {
 			t.Parallel()
-			assert.Assert(t, Matches(tt.name, tt.pattern) == tt.expected)
+			assert.Assert(t, Match(tt.pattern, tt.name) == tt.expected)
 		})
 	}
 }
