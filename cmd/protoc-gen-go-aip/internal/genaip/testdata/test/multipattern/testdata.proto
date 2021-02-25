@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package test.multipattern;
+
+option go_package = "go.einride.tech/aip/cmd/protoc-gen-go-aip/internal/genaip/testdata/test/multipattern;multipattern";
+
+import "google/api/resource.proto";
+
+message Book {
+  option (google.api.resource) = {
+    type: "test1.testdata/Book"
+    singular: "book"
+    plural: "books"
+    pattern: "shelves/{shelf}/books/{book}"
+    pattern: "publishers/{publisher}/books/{book}"
+    history: FUTURE_MULTI_PATTERN
+  };
+
+  // The resource name of the book.
+  string name = 1;
+}

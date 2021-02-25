@@ -2,7 +2,7 @@ package resourcename
 
 // RangeParents iterates over all parents of the provided resource name.
 // The iteration order is from root ancestor down to the closest parent.
-// Collection segments are included in the iteration, so as to not require knowing the pattern.
+// Collection segments are included in the iteration, to not require knowing the pattern.
 // For full resource names, the service is omitted.
 func RangeParents(name string, fn func(parent string) bool) {
 	var sc Scanner

@@ -1,0 +1,7 @@
+version: v1beta1
+
+plugins:
+  - name: go-aip
+    out: .
+    opt: module=go.einride.tech/aip/cmd/protoc-gen-go-aip/internal/genaip/testdata
+    path: ../../../../../build/protoc-gen-go-aip
