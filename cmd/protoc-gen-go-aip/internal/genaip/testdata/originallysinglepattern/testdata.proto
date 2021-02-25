@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package testdata.originallysinglepattern;
+
+option go_package = "go.einride.tech/aip/cmd/protoc-gen-go-aip/internal/genaip/testdata/originallysinglepattern;originallysinglepattern";
+
+import "google/api/resource.proto";
+
+message Book {
+  option (google.api.resource) = {
+    type: "test1.testdata/Book"
+    singular: "book"
+    plural: "books"
+    pattern: "shelves/{shelf}/books/{book}"
+    pattern: "publishers/{publisher}/books/{book}"
+    history: ORIGINALLY_SINGLE_PATTERN
+  };
+
+  // The resource name of the book.
+  string name = 1;
+}

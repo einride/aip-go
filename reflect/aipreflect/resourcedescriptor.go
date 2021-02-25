@@ -21,6 +21,8 @@ type ResourceDescriptor struct {
 	Singular GrammaticalName
 	// Plural is the plural name of the resource type.
 	Plural GrammaticalName
+	// History is the history of the resource's name patterns.
+	History annotations.ResourceDescriptor_History
 	// Methods are the resource's known methods.
 	Methods map[MethodType]protoreflect.FullName
 }
@@ -31,6 +33,7 @@ func NewResourceDescriptor(descriptor *annotations.ResourceDescriptor) (*Resourc
 		Type:     ResourceTypeName(descriptor.GetType()),
 		Singular: GrammaticalName(descriptor.GetSingular()),
 		Plural:   GrammaticalName(descriptor.GetPlural()),
+		History:  descriptor.History,
 	}
 	if err := resource.Type.Validate(); err != nil {
 		return nil, err
