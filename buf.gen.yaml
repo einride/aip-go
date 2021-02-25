@@ -1,13 +1,18 @@
 version: v1beta1
 
 plugins:
-  - name: gapic-validator
-    out: .
-
   - name: go
     out: proto/gen
     opt: module=go.einride.tech/aip/proto/gen
+    path: ./build/protoc-gen-go
 
   - name: go-grpc
     out: proto/gen
-    opt: module=go.einride.tech/aip/proto/gen,require_unimplemented_servers=false
+    opt:
+      - module=go.einride.tech/aip/proto/gen
+      - require_unimplemented_servers=false
+
+  - name: go-aip
+    out: proto/gen
+    opt: module=go.einride.tech/aip/proto/gen
+    path: ./build/protoc-gen-go-aip

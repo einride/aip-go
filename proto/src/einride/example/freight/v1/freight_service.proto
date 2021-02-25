@@ -127,6 +127,14 @@ service FreightService {
     option (google.api.method_signature) = "name";
   }
 
+  // Batch get sites.
+  // See: https://google.aip.dev/231 (Batch methods: Get).
+  rpc BatchGetSites(BatchGetSitesRequest) returns (BatchGetSitesResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=shippers/*}/sites:batchGet"
+    };
+  }
+
   // Get a shipment.
   // See: https://google.aip.dev/131 (Standard methods: Get).
   rpc GetShipment(GetShipmentRequest) returns (Shipment) {
@@ -316,6 +324,35 @@ message DeleteSiteRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference).type = "freight-example.einride.tech/Site"
   ];
+}
+
+// Request message for FreightService.BatchGetSites.
+message BatchGetSitesRequest {
+  // The parent resource shared by all sites being retrieved.
+  // If this is set, the parent of all of the sites specified in `names`
+  // must match this field.
+  // Format: `shippers/{shipper}`
+  string parent = 1 [
+    (google.api.resource_reference) = {
+      type: "freight-example.einride.tech/Shipper"
+    }
+  ];
+
+  // The names of the sites to retrieve.
+  // A maximum of 1000 sites can be retrieved in a batch.
+  // Format: `shippers/{shipper}/sites/{site}`
+  repeated string names = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "freight-example.einride.tech/Site"
+    }
+  ];
+}
+
+// Response message for FreightService.BatchGetSites.
+message BatchGetSitesResponse {
+  // Sites requested.
+  repeated Site sites = 1;
 }
 
 // Request message for FreightService.GetShipment.

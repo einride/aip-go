@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 )
 
-// GrammaticalName is the grammatical name for the singular or plural form of resource resource type.
+// GrammaticalName is the grammatical name for the singular or plural form of resource type.
 // Grammatical names must be URL-safe and use lowerCamelCase.
 type GrammaticalName string // e.g. "userEvents"
 

@@ -1,6 +1,7 @@
 buf_cwd := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 buf_version := 0.48.2
 buf := $(buf_cwd)/$(buf_version)/buf
+export PATH := $(dir $(buf)):$(PATH)
 
 buf_bin_url := https://github.com/bufbuild/buf/releases/download/v$(buf_version)/buf-$(shell uname -s)-$(shell uname -m)
 

@@ -19,8 +19,10 @@ linters:
     - cyclop # allow complex functions
     - nlreturn # allow return/break without whitespace
     - exhaustivestruct # don't require exhaustive fields in struct initializers
-    - forbidigo # allow Printfs (e.g. in examples)
+    - forbidigo # allow Printfs (e.g. in test)
     - exhaustive # don't enforce exhaustive switches
     - wrapcheck # don't enforce wrapping
     - gochecknoglobals # allow globals in this project
     - thelper # false positives
+    - tagliatelle # false positives
+    - forcetypeassert # not useful for proto.GetExtension
