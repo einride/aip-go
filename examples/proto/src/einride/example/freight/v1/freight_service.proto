@@ -256,7 +256,6 @@ message ListSitesRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
       type: "freight-example.einride.tech/Shipper"
-      child_type: "freight-example.einride.tech/Site"
     }
   ];
 
@@ -290,7 +289,7 @@ message CreateSiteRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "freight-example.einride.tech/Shipper"
+      type: "freight-example.einride.tech/Shipper"
     }
   ];
   // The site to create.
@@ -336,7 +335,6 @@ message ListShipmentsRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
       type: "freight-example.einride.tech/Shipper"
-      child_type: "freight-example.einride.tech/Shipment"
     }
   ];
 
@@ -370,7 +368,7 @@ message CreateShipmentRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "freight-example.einride.tech/Shipper"
+      type: "freight-example.einride.tech/Shipper"
     }
   ];
   // The shipment to create.

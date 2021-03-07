@@ -4,6 +4,9 @@ plugins:
   - name: gapic-validator
     out: .
 
+  - name: go-aip-lint
+    out: .
+
   - name: go
     out: examples/proto/gen
     opt: module=go.einride.tech/aip/examples/proto/gen

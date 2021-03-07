@@ -54,7 +54,8 @@ func (p *ParentValidator) UnaryServerInterceptor(
 	parentResourceReference := proto.GetExtension(
 		parentField.Options(), annotations.E_ResourceReference,
 	).(*annotations.ResourceReference)
-	if parentResourceReference.GetChildType() == "" {
+	if parentResourceReference == nil ||
+		parentResourceReference.GetChildType() == "" && parentResourceReference.GetType() == "" {
 		return handler(ctx, request)
 	}
 	parent := protoReflectRequest.Get(parentField).String()
@@ -97,7 +98,12 @@ func (p *ParentValidator) validateParent(
 		resourceDescriptor := proto.GetExtension(
 			fieldMessage.Options(), annotations.E_Resource,
 		).(*annotations.ResourceDescriptor)
-		if resourceDescriptor.GetType() != parentResourceReference.GetChildType() {
+		if resourceDescriptor == nil {
+			return true
+		}
+		if parentResourceReference.GetChildType() != "" &&
+			resourceDescriptor.GetType() != parentResourceReference.GetChildType() {
+			// Edge case: The response message contains a different type of resource than the specified child type.
 			return true
 		}
 		listValue := value.List()
