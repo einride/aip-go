@@ -1,4 +1,4 @@
-package rules
+package aip4231
 
 import (
 	"go.einride.tech/aip/lint"
@@ -7,18 +7,18 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type AIP4231ResourceReferenceAnnotation struct{}
+type ResourceReferenceAnnotation struct{}
 
 var (
-	_ lint.Rule      = &AIP4231ResourceReferenceAnnotation{}
-	_ lint.FieldRule = &AIP4231ResourceReferenceAnnotation{}
+	_ lint.Rule      = &ResourceReferenceAnnotation{}
+	_ lint.FieldRule = &ResourceReferenceAnnotation{}
 )
 
-func (r *AIP4231ResourceReferenceAnnotation) RuleID() string {
+func (r *ResourceReferenceAnnotation) RuleID() string {
 	return "go.einride.tech/aip::4231::resource-reference-annotation"
 }
 
-func (r *AIP4231ResourceReferenceAnnotation) LintField(field *protogen.Field) ([]*lint.Problem, error) {
+func (r *ResourceReferenceAnnotation) LintField(field *protogen.Field) ([]*lint.Problem, error) {
 	resourceReference, ok := proto.GetExtension(
 		field.Desc.Options(), annotations.E_ResourceReference,
 	).(*annotations.ResourceReference)
