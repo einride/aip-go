@@ -2,7 +2,7 @@ package resourcename
 
 import "strings"
 
-// Sprintf formats resource name variables according to a pattern and returns the resulting string.
+// Sprint formats resource name variables according to a pattern and returns the resulting string.
 func Sprint(pattern string, variables ...string) string {
 	var length, segments int
 	var patternScanner Scanner
