@@ -12,6 +12,7 @@ all: \
 	go-mod-tidy \
 	git-verify-nodiff
 
+include tools/aip-go/rules.mk
 include tools/api-linter/rules.mk
 include tools/buf/rules.mk
 include tools/commitlint/rules.mk
@@ -65,7 +66,8 @@ buf-lint: $(buf) examples/proto/api-common-protos
 protoc_plugins := \
 	$(protoc_gen_go) \
 	$(protoc_gen_go_grpc) \
-	$(protoc_gen_gapic_validator)
+	$(protoc_gen_gapic_validator) \
+	$(protoc_gen_go_aip_lint)
 
 .PHONY: buf-generate
 buf-generate: $(buf) $(protoc) $(protoc_plugins) examples/proto/api-common-protos
