@@ -26,8 +26,8 @@ include tools/protoc/rules.mk
 include tools/semantic-release/rules.mk
 include tools/stringer/rules.mk
 
-.PHONY: examples/proto/api-common-protos
-examples/proto/api-common-protos:
+.PHONY: proto/api-common-protos
+proto/api-common-protos:
 	@git submodule update --init --recursive $@
 
 .PHONY: go-generate
@@ -53,12 +53,12 @@ api-linter-lint: $(api_linter_wrapper)
 	$(info [$@] linting APIs...)
 	@$(api_linter_wrapper) \
 		--config api-linter.yaml \
-		-I examples/proto/api-common-protos \
-		-I examples/proto/src \
-		$(shell find examples/proto/src -type f -name '*.proto' | cut -d '/' -f 4-)
+		-I proto/api-common-protos \
+		-I proto/src \
+		$(shell find proto/src -type f -name '*.proto' | cut -d '/' -f 4-)
 
 .PHONY: buf-lint
-buf-lint: $(buf) examples/proto/api-common-protos
+buf-lint: $(buf) proto/api-common-protos
 	$(info [$@] linting protobuf schemas...)
 	@$(buf) lint
 
@@ -68,7 +68,7 @@ protoc_plugins := \
 	$(protoc_gen_gapic_validator)
 
 .PHONY: buf-generate
-buf-generate: $(buf) $(protoc) $(protoc_plugins) examples/proto/api-common-protos
+buf-generate: $(buf) $(protoc) $(protoc_plugins) proto/api-common-protos
 	$(info [$@] generating protobuf stubs...)
-	@rm -rf examples/proto/gen
-	@$(buf) generate --path examples/proto/src/einride
+	@rm -rf proto/gen
+	@$(buf) generate --path proto/src/einride
