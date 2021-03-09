@@ -3,7 +3,7 @@ package aipregistry
 import (
 	"testing"
 
-	examplefreightv1 "go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1"
+	examplefreightv1 "go.einride.tech/aip/proto/gen/einride/example/freight/v1"
 	"go.einride.tech/aip/reflect/aipreflect"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"

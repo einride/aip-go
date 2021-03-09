@@ -3,7 +3,7 @@ package fieldbehavior
 import (
 	"testing"
 
-	examplefreightv1 "go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1"
+	examplefreightv1 "go.einride.tech/aip/proto/gen/einride/example/freight/v1"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/genproto/googleapis/example/library/v1"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"

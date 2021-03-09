@@ -3,7 +3,7 @@ package filtering
 import (
 	"testing"
 
-	syntaxv1 "go.einride.tech/aip/examples/proto/gen/einride/example/syntax/v1"
+	syntaxv1 "go.einride.tech/aip/proto/gen/einride/example/syntax/v1"
 	"gotest.tools/v3/assert"
 )
 

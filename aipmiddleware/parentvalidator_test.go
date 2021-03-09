@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	examplefreightv1 "go.einride.tech/aip/examples/proto/gen/einride/example/freight/v1"
+	examplefreightv1 "go.einride.tech/aip/proto/gen/einride/example/freight/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

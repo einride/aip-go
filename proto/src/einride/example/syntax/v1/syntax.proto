@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package einride.example.syntax.v1;
 
-option go_package = "go.einride.tech/aip/examples/proto/gen/einride/example/syntax/v1;syntaxv1";
+option go_package = "go.einride.tech/aip/proto/gen/einride/example/syntax/v1;syntaxv1";
 option java_multiple_files = true;
 option java_outer_classname = "SyntaxProto";
 option java_package = "tech.einride.example.syntax.v1";

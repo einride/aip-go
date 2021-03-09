@@ -3,7 +3,7 @@ package fieldmask
 import (
 	"testing"
 
-	syntaxv1 "go.einride.tech/aip/examples/proto/gen/einride/example/syntax/v1"
+	syntaxv1 "go.einride.tech/aip/proto/gen/einride/example/syntax/v1"
 	"google.golang.org/genproto/googleapis/example/library/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
