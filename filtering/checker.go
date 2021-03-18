@@ -166,7 +166,16 @@ func (c *Checker) resolveCallExprFunctionOverload(
 		}
 		// TODO: Add support for type parameters.
 	}
-	return nil, c.errorf(e, "no matching overload found")
+	var argTypes []string
+	for _, arg := range callExpr.GetArgs() {
+		t, ok := c.getType(arg)
+		if !ok {
+			argTypes = append(argTypes, "UNKNOWN")
+		} else {
+			argTypes = append(argTypes, t.String())
+		}
+	}
+	return nil, c.errorf(e, "no matching overload found for calling '%s' with %s", callExpr.GetFunction(), argTypes)
 }
 
 func (c *Checker) checkCallExprBuiltinFunctionOverloads(
