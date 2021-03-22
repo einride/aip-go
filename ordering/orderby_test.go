@@ -183,7 +183,7 @@ func TestOrderBy_ValidateForMessage(t *testing.T) {
 			name: "valid nested",
 			orderBy: OrderBy{
 				Fields: []Field{
-					{Path: "name"},
+					{Path: "parent"},
 					{Path: "book.name"},
 				},
 			},
@@ -194,7 +194,7 @@ func TestOrderBy_ValidateForMessage(t *testing.T) {
 			name: "invalid nested",
 			orderBy: OrderBy{
 				Fields: []Field{
-					{Path: "name"},
+					{Path: "parent"},
 					{Path: "book.foo"},
 				},
 			},

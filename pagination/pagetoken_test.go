@@ -12,13 +12,13 @@ func TestParseOffsetPageToken(t *testing.T) {
 	t.Run("valid checksums", func(t *testing.T) {
 		t.Parallel()
 		request1 := &library.ListBooksRequest{
-			Name:     "shelves/1",
+			Parent:   "shelves/1",
 			PageSize: 10,
 		}
 		pageToken1, err := ParsePageToken(request1)
 		assert.NilError(t, err)
 		request2 := &library.ListBooksRequest{
-			Name:      "shelves/1",
+			Parent:    "shelves/1",
 			PageSize:  20,
 			PageToken: pageToken1.Next(request1).String(),
 		}
@@ -26,7 +26,7 @@ func TestParseOffsetPageToken(t *testing.T) {
 		assert.NilError(t, err)
 		assert.Equal(t, int64(10), pageToken2.Offset)
 		request3 := &library.ListBooksRequest{
-			Name:      "shelves/1",
+			Parent:    "shelves/1",
 			PageSize:  30,
 			PageToken: pageToken2.Next(request2).String(),
 		}
@@ -38,7 +38,7 @@ func TestParseOffsetPageToken(t *testing.T) {
 	t.Run("invalid format", func(t *testing.T) {
 		t.Parallel()
 		request := &library.ListBooksRequest{
-			Name:      "shelves/1",
+			Parent:    "shelves/1",
 			PageSize:  10,
 			PageToken: "invalid",
 		}
@@ -50,7 +50,7 @@ func TestParseOffsetPageToken(t *testing.T) {
 	t.Run("invalid checksum", func(t *testing.T) {
 		t.Parallel()
 		request := &library.ListBooksRequest{
-			Name:     "shelves/1",
+			Parent:   "shelves/1",
 			PageSize: 10,
 			PageToken: EncodePageTokenStruct(&PageToken{
 				Offset:          100,

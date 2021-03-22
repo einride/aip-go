@@ -18,12 +18,12 @@ func TestCalculateRequestChecksum(t *testing.T) {
 		{
 			name: "same request",
 			request1: &library.ListBooksRequest{
-				Name:      "shelves/1",
+				Parent:    "shelves/1",
 				PageSize:  100,
 				PageToken: "token",
 			},
 			request2: &library.ListBooksRequest{
-				Name:      "shelves/1",
+				Parent:    "shelves/1",
 				PageSize:  100,
 				PageToken: "token",
 			},
@@ -32,12 +32,12 @@ func TestCalculateRequestChecksum(t *testing.T) {
 		{
 			name: "different parents",
 			request1: &library.ListBooksRequest{
-				Name:      "shelves/1",
+				Parent:    "shelves/1",
 				PageSize:  100,
 				PageToken: "token",
 			},
 			request2: &library.ListBooksRequest{
-				Name:      "shelves/2",
+				Parent:    "shelves/2",
 				PageSize:  100,
 				PageToken: "token",
 			},
@@ -46,12 +46,12 @@ func TestCalculateRequestChecksum(t *testing.T) {
 		{
 			name: "different page sizes",
 			request1: &library.ListBooksRequest{
-				Name:      "shelves/1",
+				Parent:    "shelves/1",
 				PageSize:  100,
 				PageToken: "token",
 			},
 			request2: &library.ListBooksRequest{
-				Name:      "shelves/1",
+				Parent:    "shelves/1",
 				PageSize:  200,
 				PageToken: "token",
 			},
@@ -60,12 +60,12 @@ func TestCalculateRequestChecksum(t *testing.T) {
 		{
 			name: "different page tokens",
 			request1: &library.ListBooksRequest{
-				Name:      "shelves/1",
+				Parent:    "shelves/1",
 				PageSize:  100,
 				PageToken: "token",
 			},
 			request2: &library.ListBooksRequest{
-				Name:      "shelves/1",
+				Parent:    "shelves/1",
 				PageSize:  100,
 				PageToken: "token2",
 			},

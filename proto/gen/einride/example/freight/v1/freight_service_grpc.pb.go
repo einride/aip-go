@@ -11,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // FreightServiceClient is the client API for FreightService service.
@@ -322,7 +323,7 @@ type UnsafeFreightServiceServer interface {
 }
 
 func RegisterFreightServiceServer(s grpc.ServiceRegistrar, srv FreightServiceServer) {
-	s.RegisterService(&_FreightService_serviceDesc, srv)
+	s.RegisterService(&FreightService_ServiceDesc, srv)
 }
 
 func _FreightService_GetShipper_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -595,7 +596,10 @@ func _FreightService_DeleteShipment_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-var _FreightService_serviceDesc = grpc.ServiceDesc{
+// FreightService_ServiceDesc is the grpc.ServiceDesc for FreightService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var FreightService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "einride.example.freight.v1.FreightService",
 	HandlerType: (*FreightServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
