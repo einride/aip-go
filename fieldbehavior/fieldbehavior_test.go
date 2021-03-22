@@ -13,8 +13,8 @@ import (
 
 func TestValidateRequiredFields(t *testing.T) {
 	t.Parallel()
-	assert.NilError(t, ValidateRequiredFields(&library.Book{Name: "testbook"}))
-	assert.Error(t, ValidateRequiredFields(&library.Book{}), "missing required field: name")
+	assert.NilError(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{Name: "testbook"}))
+	assert.Error(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{}), "missing required field: name")
 }
 
 func TestCopyFields(t *testing.T) {
@@ -54,7 +54,7 @@ func TestValidateRequiredFieldsWithMask(t *testing.T) {
 		assert.Error(
 			t,
 			ValidateRequiredFieldsWithMask(
-				&library.Book{},
+				&examplefreightv1.GetShipmentRequest{},
 				&fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			),
 			"missing required field: name",
@@ -75,13 +75,12 @@ func TestValidateRequiredFieldsWithMask(t *testing.T) {
 		assert.Error(
 			t,
 			ValidateRequiredFieldsWithMask(
-				&library.UpdateBookRequest{
-					Name: "testname",
-					Book: &library.Book{},
+				&examplefreightv1.UpdateShipmentRequest{
+					Shipment: &examplefreightv1.Shipment{},
 				},
-				&fieldmaskpb.FieldMask{Paths: []string{"book.name"}},
+				&fieldmaskpb.FieldMask{Paths: []string{"shipment.origin_site"}},
 			),
-			"missing required field: book.name",
+			"missing required field: shipment.origin_site",
 		)
 	})
 	t.Run("missing nested not in mask", func(t *testing.T) {

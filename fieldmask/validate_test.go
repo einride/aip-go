@@ -58,7 +58,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid nested",
 			fieldMask: &fieldmaskpb.FieldMask{
-				Paths: []string{"name", "book.name"},
+				Paths: []string{"parent", "book.name"},
 			},
 			message: &library.CreateBookRequest{},
 		},
@@ -66,7 +66,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid nested",
 			fieldMask: &fieldmaskpb.FieldMask{
-				Paths: []string{"name", "book.foo"},
+				Paths: []string{"parent", "book.foo"},
 			},
 			message:       &library.CreateBookRequest{},
 			errorContains: "invalid field path: book.foo",
