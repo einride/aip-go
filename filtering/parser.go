@@ -86,10 +86,11 @@ func (p *Parser) ParseExpression() (_ *expr.Expr, err error) {
 			break
 		}
 	}
-	if len(sequences) == 1 {
-		return sequences[0], nil
+	exp := sequences[0]
+	for _, seq := range sequences[1:] {
+		exp = parsedExpression(p.nextID(start), exp, seq)
 	}
-	return parsedExpression(p.nextID(start), sequences...), nil
+	return exp, nil
 }
 
 // ParseSequence parses a Sequence.
