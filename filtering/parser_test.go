@@ -56,6 +56,14 @@ func TestParser(t *testing.T) {
 				GreaterEquals(Text("a"), Int(100)),
 			),
 		},
+		{
+			filter: "a OR b OR c",
+			expected: Or(
+				Text("a"),
+				Text("b"),
+				Text("c"),
+			),
+		},
 
 		{
 			filter:   "NOT (a OR b)",
@@ -251,7 +259,20 @@ func TestParser(t *testing.T) {
 					protocmp.Transform(),
 					protocmp.IgnoreFields(&expr.Expr{}, "id"),
 				)
+				assertUniqueExprIDs(t, actual.Expr)
 			}
 		})
 	}
+}
+
+func assertUniqueExprIDs(t *testing.T, exp *expr.Expr) {
+	t.Helper()
+	seenIDs := make(map[int64]struct{})
+	Walk(func(currExpr, parentExpr *expr.Expr) bool {
+		if _, ok := seenIDs[currExpr.Id]; ok {
+			t.Fatalf("duplicate expression ID '%d' for expr %v", currExpr.Id, currExpr)
+		}
+		seenIDs[currExpr.Id] = struct{}{}
+		return true
+	}, exp)
 }
