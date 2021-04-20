@@ -6,32 +6,37 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestEncodePageTokenStruct(t *testing.T) {
-	t.Parallel()
-	const expected = "Kv-BAwEBCXBhZ2VUb2tlbgH_ggABAgEDSW50AQQAAQZTdHJpbmcBDAAAAAr_ggFUAQNmb28A"
-	type pageToken struct {
-		Int    int
-		String string
-	}
-	token := pageToken{
-		Int:    42,
-		String: "foo",
-	}
-	assert.Equal(t, expected, EncodePageTokenStruct(&token))
-}
-
-func TestDecodePageTokenStruct(t *testing.T) {
+func Test_PageTokenStruct(t *testing.T) {
 	t.Parallel()
 	type pageToken struct {
 		Int    int
 		String string
 	}
-	var actual pageToken
-	const input = "Kv-BAwEBCXBhZ2VUb2tlbgH_ggABAgEDSW50AQQAAQZTdHJpbmcBDAAAAAr_ggFUAQNmb28A"
-	assert.NilError(t, DecodePageTokenStruct(input, &actual))
-	expected := pageToken{
-		Int:    42,
-		String: "foo",
+	for _, tt := range []struct {
+		name string
+		in   pageToken
+	}{
+		{
+			name: "all set",
+			in: pageToken{
+				Int:    42,
+				String: "foo",
+			},
+		},
+		{
+			name: "default value",
+			in: pageToken{
+				String: "foo",
+			},
+		},
+	} {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			str := EncodePageTokenStruct(tt.in)
+			var out pageToken
+			assert.NilError(t, DecodePageTokenStruct(str, &out), str)
+			assert.Equal(t, tt.in, out)
+		})
 	}
-	assert.Equal(t, expected, actual)
 }
