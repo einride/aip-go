@@ -29,12 +29,12 @@ func applyMacros(exp *expr.Expr, sourceInfo *expr.SourceInfo, macros ...Macro) {
 		}
 		for _, macro := range macros {
 			macro(cursor)
+			nextID = cursor.nextID
 			if cursor.replaced {
 				// Don't traverse children of replaced expr.
 				return false
 			}
 		}
-		nextID = cursor.nextID
 		return true
 	}, exp)
 }
