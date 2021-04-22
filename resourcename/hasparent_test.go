@@ -22,6 +22,13 @@ func TestHasParent(t *testing.T) {
 		},
 
 		{
+			test:     "not parent of self",
+			name:     "shippers/1/sites/1/settings",
+			parent:   "shippers/1/sites/1/settings",
+			expected: false,
+		},
+
+		{
 			test:     "empty parent",
 			name:     "shippers/1/sites/1",
 			parent:   "",
@@ -53,6 +60,13 @@ func TestHasParent(t *testing.T) {
 			test:     "full child",
 			name:     "//freight-example.einride.tech/shippers/1/sites/1",
 			parent:   "shippers/-",
+			expected: true,
+		},
+
+		{
+			test:     "full parent",
+			name:     "shippers/1/sites/1",
+			parent:   "//freight-example.einride.tech/shippers/-",
 			expected: true,
 		},
 
