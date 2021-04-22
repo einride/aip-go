@@ -49,6 +49,16 @@ func (s *Scanner) Scan() bool {
 	return true
 }
 
+// Start returns the start index (inclusive) of the current segment.
+func (s *Scanner) Start() int {
+	return s.start
+}
+
+// End returns the end index (exclusive) of the current segment.
+func (s *Scanner) End() int {
+	return s.end
+}
+
 // Segment returns the current segment.
 func (s *Scanner) Segment() Segment {
 	return Segment(s.name[s.start:s.end])
