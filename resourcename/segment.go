@@ -31,7 +31,7 @@ func (s Segment) Literal() Literal {
 
 // IsWildcard reports whether the segment is a wildcard.
 func (s Segment) IsWildcard() bool {
-	return s == "-"
+	return s == Wildcard
 }
 
 // Literal is the literal part of a resource name segment.
