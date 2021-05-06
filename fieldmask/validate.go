@@ -13,7 +13,7 @@ import (
 // refer to known fields in the specified message type.
 func Validate(fm *fieldmaskpb.FieldMask, m proto.Message) error {
 	// special case for '*'
-	if stringsContain("*", fm.GetPaths()) {
+	if stringsContain(WildcardPath, fm.GetPaths()) {
 		if len(fm.GetPaths()) != 1 {
 			return fmt.Errorf("invalid field path: '*' must not be used with other paths")
 		}
