@@ -36,7 +36,7 @@ func Update(mask *fieldmaskpb.FieldMask, dst, src proto.Message) {
 		updateWireSetFields(dstReflect, srcReflect)
 	// Special-case: Update mask is [*].
 	// Do a full replacement of all fields.
-	case len(mask.GetPaths()) == 1 && mask.GetPaths()[0] == "*":
+	case IsFullReplacement(mask):
 		proto.Reset(dst)
 		proto.Merge(dst, src)
 	default:
