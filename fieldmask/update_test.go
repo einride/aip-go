@@ -713,7 +713,7 @@ func TestUpdate(t *testing.T) {
 					},
 				},
 				expected: &syntaxv1.Message{
-					Oneof: &syntaxv1.Message_OneofMessage2{},
+					Oneof: nil,
 				},
 			},
 			{
@@ -766,6 +766,23 @@ func TestUpdate(t *testing.T) {
 					Oneof: &syntaxv1.Message_OneofMessage2{
 						OneofMessage2: &syntaxv1.Message{},
 					},
+				},
+			},
+			{
+				name: "message: src nil",
+				paths: []string{
+					"message",
+				},
+				src: &syntaxv1.Message{
+					Message: nil,
+				},
+				dst: &syntaxv1.Message{
+					Message: &syntaxv1.Message{
+						Int32: 23,
+					},
+				},
+				expected: &syntaxv1.Message{
+					Message: nil,
 				},
 			},
 		} {

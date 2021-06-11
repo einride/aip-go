@@ -77,7 +77,7 @@ func updateNamedField(dst, src protoreflect.Message, segments []string) {
 	// a named field in this message
 	if len(segments) == 1 {
 		if !src.Has(field) {
-			dst.Set(field, src.NewField(field))
+			dst.Clear(field)
 		} else {
 			dst.Set(field, src.Get(field))
 		}
