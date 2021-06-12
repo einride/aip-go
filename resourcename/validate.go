@@ -5,8 +5,7 @@ import (
 	"unicode"
 )
 
-// Validate that a resource name conforms to the restrictions outlined in AIP-122,
-// primarily that each segment must be a valid DNS name.
+// Validate that a resource name conforms to the restrictions outlined in AIP-122.
 // See: https://google.aip.dev/122
 func Validate(name string) error {
 	if name == "" {
@@ -35,8 +34,7 @@ func Validate(name string) error {
 	return nil
 }
 
-// ValidatePattern that a resource name pattern conforms to the restrictions outlined in AIP-122,
-// primarily that each segment must be a valid DNS name.
+// ValidatePattern that a resource name pattern conforms to the restrictions outlined in AIP-122.
 // See: https://google.aip.dev/122
 func ValidatePattern(pattern string) error {
 	if pattern == "" {
