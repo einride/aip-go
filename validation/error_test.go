@@ -28,8 +28,8 @@ func TestError_Error(t *testing.T) {
 		{Field: "baz", Description: "test2"},
 	})
 	assert.Error(t, err, `field violation on multiple fields:
-	foo.bar: test
-	baz: test2`)
+ | foo.bar: test
+ | baz: test2`)
 }
 
 func TestError_GRPCStatus(t *testing.T) {
