@@ -7,6 +7,6 @@ require (
 	github.com/google/uuid v1.2.0
 	google.golang.org/genproto v0.0.0-20210319143718-93e7006c17a6
 	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/protobuf v1.27.0
 	gotest.tools/v3 v3.0.3
 )
