@@ -83,6 +83,55 @@ func TestHasParent(t *testing.T) {
 			parent:   "//freight-example.einride.tech/shippers/-",
 			expected: false,
 		},
+
+		{
+			test:     "revisioned child",
+			name:     "shippers/1/sites/1@beef",
+			parent:   "shippers/1/sites/1",
+			expected: true,
+		},
+
+		{
+			test:     "revisioned child with other revision",
+			name:     "shippers/1/sites/1@beef",
+			parent:   "shippers/1/sites/1@dead",
+			expected: false,
+		},
+
+		{
+			test:     "identical revisioned child",
+			name:     "shippers/1/sites/1@beef",
+			parent:   "shippers/1/sites/1@beef",
+			expected: false,
+		},
+
+		{
+			test:     "revisioned parent",
+			parent:   "datasets/1@beef",
+			name:     "datasets/1@beef/tables/1",
+			expected: true,
+		},
+
+		{
+			test:     "revisioned parent with non-revisoned child",
+			parent:   "datasets/1@beef",
+			name:     "datasets/1/tables/1",
+			expected: false,
+		},
+
+		{
+			test:     "revisioned parent with non-matching revision child",
+			parent:   "datasets/1@beef",
+			name:     "datasets/1@dead/tables/1",
+			expected: false,
+		},
+
+		{
+			test:     "non-revisioned parent with revisioned child",
+			parent:   "datasets/1",
+			name:     "datasets/1@beef/tables/1",
+			expected: true,
+		},
 	} {
 		tt := tt
 		t.Run(tt.test, func(t *testing.T) {
