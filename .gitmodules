@@ -1,3 +1,0 @@
-[submodule "proto/api-common-protos"]
-	path = proto/api-common-protos
-	url = https://github.com/googleapis/api-common-protos

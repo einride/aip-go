@@ -22,13 +22,8 @@ include tools/goreview/rules.mk
 include tools/prettier/rules.mk
 include tools/protoc-gen-go-grpc/rules.mk
 include tools/protoc-gen-go/rules.mk
-include tools/protoc/rules.mk
 include tools/semantic-release/rules.mk
 include tools/stringer/rules.mk
-
-.PHONY: proto/api-common-protos
-proto/api-common-protos:
-	@git submodule update --init --recursive $@
 
 .PHONY: go-generate
 go-generate: \
@@ -48,27 +43,34 @@ go-mod-tidy:
 	$(info [$@] tidying Go module files...)
 	@go mod tidy -v
 
-.PHONY: api-linter-lint
-api-linter-lint: $(api_linter_wrapper)
-	$(info [$@] linting APIs...)
-	@$(api_linter_wrapper) \
-		--config api-linter.yaml \
-		-I proto/api-common-protos \
-		-I proto/src \
-		$(shell find proto/src -type f -name '*.proto' | cut -d '/' -f 4-)
+.PHONY: proto/gen/descriptor.pb
+proto/gen/descriptor.pb: $(buf)
+	$(info [$@] generating proto descriptor...)
+	@mkdir -p $(dir $@)
+	@$(buf) build -o $@
 
 .PHONY: buf-lint
-buf-lint: $(buf) proto/api-common-protos
+buf-lint: $(buf)
 	$(info [$@] linting protobuf schemas...)
 	@$(buf) lint
 
+.PHONY: api-linter-lint
+api-linter-lint: $(api_linter_wrapper) proto/gen/descriptor.pb
+	$(info [$@] linting APIs...)
+	@$(api_linter_wrapper) \
+		--config api-linter.yaml \
+		--descriptor-set-in proto/gen/descriptor.pb \
+		-I proto/src \
+		$(shell find proto/src -type f -name '*.proto' | cut -d '/' -f 4-)
+
 protoc_plugins := \
 	$(protoc_gen_go) \
+	$(protoc_gen_go_aip) \
 	$(protoc_gen_go_grpc) \
 	$(protoc_gen_gapic_validator)
 
 .PHONY: buf-generate
-buf-generate: $(buf) $(protoc) $(protoc_plugins) proto/api-common-protos
+buf-generate: $(buf) $(protoc) $(protoc_plugins)
 	$(info [$@] generating protobuf stubs...)
 	@rm -rf proto/gen
 	@$(buf) generate --path proto/src/einride
