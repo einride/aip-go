@@ -1,9 +1,13 @@
 version: v1beta1
 
+name: buf.build/einride/aip
+
+deps:
+  - buf.build/beta/googleapis
+
 build:
   roots:
     - proto/src
-    - proto/api-common-protos
 
 lint:
   use:
