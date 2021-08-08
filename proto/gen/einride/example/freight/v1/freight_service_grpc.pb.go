@@ -50,6 +50,9 @@ type FreightServiceClient interface {
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteSite(ctx context.Context, in *DeleteSiteRequest, opts ...grpc.CallOption) (*Site, error)
+	// Batch get sites.
+	// See: https://google.aip.dev/231 (Batch methods: Get).
+	BatchGetSites(ctx context.Context, in *BatchGetSitesRequest, opts ...grpc.CallOption) (*BatchGetSitesResponse, error)
 	// Get a shipment.
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetShipment(ctx context.Context, in *GetShipmentRequest, opts ...grpc.CallOption) (*Shipment, error)
@@ -166,6 +169,15 @@ func (c *freightServiceClient) DeleteSite(ctx context.Context, in *DeleteSiteReq
 	return out, nil
 }
 
+func (c *freightServiceClient) BatchGetSites(ctx context.Context, in *BatchGetSitesRequest, opts ...grpc.CallOption) (*BatchGetSitesResponse, error) {
+	out := new(BatchGetSitesResponse)
+	err := c.cc.Invoke(ctx, "/einride.example.freight.v1.FreightService/BatchGetSites", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *freightServiceClient) GetShipment(ctx context.Context, in *GetShipmentRequest, opts ...grpc.CallOption) (*Shipment, error) {
 	out := new(Shipment)
 	err := c.cc.Invoke(ctx, "/einride.example.freight.v1.FreightService/GetShipment", in, out, opts...)
@@ -247,6 +259,9 @@ type FreightServiceServer interface {
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteSite(context.Context, *DeleteSiteRequest) (*Site, error)
+	// Batch get sites.
+	// See: https://google.aip.dev/231 (Batch methods: Get).
+	BatchGetSites(context.Context, *BatchGetSitesRequest) (*BatchGetSitesResponse, error)
 	// Get a shipment.
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetShipment(context.Context, *GetShipmentRequest) (*Shipment, error)
@@ -298,6 +313,9 @@ func (UnimplementedFreightServiceServer) UpdateSite(context.Context, *UpdateSite
 }
 func (UnimplementedFreightServiceServer) DeleteSite(context.Context, *DeleteSiteRequest) (*Site, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSite not implemented")
+}
+func (UnimplementedFreightServiceServer) BatchGetSites(context.Context, *BatchGetSitesRequest) (*BatchGetSitesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchGetSites not implemented")
 }
 func (UnimplementedFreightServiceServer) GetShipment(context.Context, *GetShipmentRequest) (*Shipment, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetShipment not implemented")
@@ -506,6 +524,24 @@ func _FreightService_DeleteSite_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FreightService_BatchGetSites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchGetSitesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FreightServiceServer).BatchGetSites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/einride.example.freight.v1.FreightService/BatchGetSites",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FreightServiceServer).BatchGetSites(ctx, req.(*BatchGetSitesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FreightService_GetShipment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetShipmentRequest)
 	if err := dec(in); err != nil {
@@ -642,6 +678,10 @@ var FreightService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteSite",
 			Handler:    _FreightService_DeleteSite_Handler,
+		},
+		{
+			MethodName: "BatchGetSites",
+			Handler:    _FreightService_BatchGetSites_Handler,
 		},
 		{
 			MethodName: "GetShipment",
