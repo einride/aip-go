@@ -49,7 +49,8 @@ func TestValidateResourceReferences(t *testing.T) {
 				OriginSite:      "shippers/1",
 				DestinationSite: "shippers/1/sites/2",
 			},
-			errorContains: "value shippers/1 of field origin_site is not a valid resource reference",
+			errorContains: "value 'shippers/1' of field origin_site is not a valid resource reference" +
+				" for freight-example.einride.tech/Site",
 		},
 
 		{
@@ -60,7 +61,8 @@ func TestValidateResourceReferences(t *testing.T) {
 					DestinationSite: "shippers/1/sites/2",
 				},
 			},
-			errorContains: "value shippers/1 of field shipment.origin_site is not a valid resource reference",
+			errorContains: "value 'shippers/1' of field shipment.origin_site is not a valid resource reference" +
+				" for freight-example.einride.tech/Site",
 		},
 
 		{
@@ -71,7 +73,8 @@ func TestValidateResourceReferences(t *testing.T) {
 					"shippers/1",
 				},
 			},
-			errorContains: "value shippers/1 of field names[1] is not a valid resource reference",
+			errorContains: "value 'shippers/1' of field names[1] is not a valid resource reference" +
+				" for freight-example.einride.tech/Site",
 		},
 	} {
 		tt := tt
