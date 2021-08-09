@@ -7,7 +7,12 @@ import (
 
 // Sscan scans a resource name, storing successive segments into successive variables
 // as determined by the provided pattern.
-func Sscan(name, pattern string, variables ...*string) error {
+func Sscan(name, pattern string, variables ...*string) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("parse resource name '%s' with pattern '%s': %w", name, pattern, err)
+		}
+	}()
 	var nameScanner, patternScanner Scanner
 	nameScanner.Init(name)
 	patternScanner.Init(pattern)

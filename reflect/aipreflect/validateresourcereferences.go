@@ -59,7 +59,7 @@ func ValidateResourceReferences(message proto.Message) error {
 					}
 				}
 				errValidate = fmt.Errorf(
-					"value %s of field %s is not a valid resource reference for %s",
+					"value '%s' of field %s is not a valid resource reference for %s",
 					fieldValue,
 					// trim the message type from the path
 					strings.TrimLeft(strings.TrimLeftFunc(values.Path.String(), func(r rune) bool {
