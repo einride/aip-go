@@ -300,7 +300,7 @@ func (r *resourceNameCodeGenerator) generateMultiPatternParseMethod(g *protogen.
 }
 
 func (r *resourceNameCodeGenerator) SinglePatternStructName() string {
-	return aipreflect.ResourceTypeName(r.resource.Type).Type() + "ResourceName"
+	return aipreflect.ResourceType(r.resource.Type).Type() + "ResourceName"
 }
 
 func (r *resourceNameCodeGenerator) StructName(pattern string) string {
@@ -327,5 +327,5 @@ func (r *resourceNameCodeGenerator) MultiPatternStructName(pattern string) strin
 }
 
 func (r *resourceNameCodeGenerator) MultiPatternInterfaceName() string {
-	return aipreflect.ResourceTypeName(r.resource.Type).Type() + "MultiPatternResourceName"
+	return aipreflect.ResourceType(r.resource.Type).Type() + "MultiPatternResourceName"
 }
