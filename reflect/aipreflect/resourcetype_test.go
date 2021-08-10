@@ -32,9 +32,9 @@ func TestResourceTypeName_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if tt.errorContains != "" {
-				assert.ErrorContains(t, ResourceTypeName(tt.name).Validate(), tt.errorContains)
+				assert.ErrorContains(t, ResourceType(tt.name).Validate(), tt.errorContains)
 			} else {
-				assert.NilError(t, ResourceTypeName(tt.name).Validate())
+				assert.NilError(t, ResourceType(tt.name).Validate())
 			}
 		})
 	}

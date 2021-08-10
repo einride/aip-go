@@ -7,11 +7,11 @@ import (
 	"unicode/utf8"
 )
 
-// ResourceTypeName represents a resource type name.
-type ResourceTypeName string // e.g. pubsub.googleapis.com/Topic.
+// ResourceType represents a resource type name.
+type ResourceType string // e.g. pubsub.googleapis.com/Topic.
 
 // Validate checks that the resource type name is syntactically valid.
-func (n ResourceTypeName) Validate() error {
+func (n ResourceType) Validate() error {
 	if strings.Count(string(n), "/") != 1 {
 		return fmt.Errorf("validate resource type name '%s': invalid format", n)
 	}
@@ -25,7 +25,7 @@ func (n ResourceTypeName) Validate() error {
 }
 
 // ServiceName returns the service name of the resource type name.
-func (n ResourceTypeName) ServiceName() string {
+func (n ResourceType) ServiceName() string {
 	if i := strings.LastIndexByte(string(n), '/'); i >= 0 {
 		return string(n[:i])
 	}
@@ -33,7 +33,7 @@ func (n ResourceTypeName) ServiceName() string {
 }
 
 // Type returns the type of the resource type name.
-func (n ResourceTypeName) Type() string {
+func (n ResourceType) Type() string {
 	if i := strings.LastIndexByte(string(n), '/'); i >= 0 {
 		return string(n[i+1:])
 	}
