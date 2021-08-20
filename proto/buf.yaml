@@ -1,20 +1,14 @@
-version: v1beta1
+version: v1
 
 name: buf.build/einride/aip
 
 deps:
-  - buf.build/beta/googleapis
-
-build:
-  roots:
-    - proto/src
+  - buf.build/googleapis/googleapis
 
 lint:
   use:
     - DEFAULT
-  service_suffix: Service
   except:
-    # Allow AIP methods to return resources.
     - RPC_RESPONSE_STANDARD_NAME
     - RPC_REQUEST_RESPONSE_UNIQUE
   ignore:

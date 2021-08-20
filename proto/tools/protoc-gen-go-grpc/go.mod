@@ -1,4 +1,4 @@
-module tools/grpc-go
+module tools/protoc-gen-go-grpc
 
 go 1.14
 

@@ -5,7 +5,7 @@
 // 	protoc v3.17.3
 // source: einride/example/freight/v1/site.proto
 
-package examplefreightv1
+package freightv1
 
 import (
 	fmt "fmt"

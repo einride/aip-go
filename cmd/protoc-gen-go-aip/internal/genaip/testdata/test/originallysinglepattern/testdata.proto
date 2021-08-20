@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package test.originallysinglepattern;
 
-option go_package = "go.einride.tech/aip/cmd/protoc-gen-go-aip/internal/genaip/testdata/test/originallysinglepattern;originallysinglepattern";
-
 import "google/api/resource.proto";
 
 message Book {
