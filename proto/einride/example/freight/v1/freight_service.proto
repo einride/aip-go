@@ -2,11 +2,6 @@ syntax = "proto3";
 
 package einride.example.freight.v1;
 
-option go_package = "go.einride.tech/aip/proto/gen/einride/example/freight/v1;examplefreightv1";
-option java_multiple_files = true;
-option java_outer_classname = "FreightServiceProto";
-option java_package = "tech.einride.example.freight.v1";
-
 import "einride/example/freight/v1/shipment.proto";
 import "einride/example/freight/v1/shipper.proto";
 import "einride/example/freight/v1/site.proto";
@@ -15,7 +10,6 @@ import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/field_mask.proto";
-import "google/protobuf/timestamp.proto";
 
 // This API represents a simple freight service.
 //

@@ -2,12 +2,6 @@ syntax = "proto3";
 
 package einride.example.freight.v1;
 
-option go_package = "go.einride.tech/aip/proto/gen/einride/example/freight/v1;examplefreightv1";
-option java_multiple_files = true;
-option java_outer_classname = "ShipmentProto";
-option java_package = "tech.einride.example.freight.v1";
-
-import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
@@ -67,7 +61,7 @@ message Shipment {
   repeated LineItem line_items = 11;
 
   // Annotations of the shipment.
-  map<string,string> annotations = 12;
+  map<string, string> annotations = 12;
 }
 
 // A shipment line item.
