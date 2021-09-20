@@ -3,6 +3,7 @@ package pagination
 import (
 	"testing"
 
+	freightv1 "go.einride.tech/aip/proto/gen/einride/example/freight/v1"
 	"google.golang.org/genproto/googleapis/example/library/v1"
 	"gotest.tools/v3/assert"
 )
@@ -68,6 +69,20 @@ func TestCalculateRequestChecksum(t *testing.T) {
 				Parent:    "shelves/1",
 				PageSize:  100,
 				PageToken: "token2",
+			},
+			equal: true,
+		},
+		{
+			name: "different skips",
+			request1: &freightv1.ListSitesRequest{
+				Parent:   "shippers/1",
+				PageSize: 100,
+				Skip:     0,
+			},
+			request2: &freightv1.ListSitesRequest{
+				Parent:   "shippers/1",
+				PageSize: 100,
+				Skip:     30,
 			},
 			equal: true,
 		},
