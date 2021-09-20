@@ -271,6 +271,14 @@ message ListSitesRequest {
   // [ListSitesResponse.next_page_token][einride.example.freight.v1.ListSitesResponse.next_page_token]
   // returned from the previous call to `ListSites` method.
   string page_token = 3;
+
+  // Number of resource to skip in the request.
+  // * A request with no page token and a skip value of 30 returns a single
+  //   page of results starting with the 31st result.
+  // * A request with a page token corresponding to the 51st result (because the
+  //   first 50 results were returned on the first page) and a skip value of 30
+  //   returns a single page of results starting with the 81st result.
+  int32 skip = 4;
 }
 
 // Response message for FreightService.ListSites.
