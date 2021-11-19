@@ -15,7 +15,9 @@ func TestValidateUserSettable(t *testing.T) {
 		{id: "abcd"},
 		{id: "abcd-efgh-1234"},
 		{id: "abc", errorContains: "must be between 4 and 63 characters"},
-		{id: "-abc", errorContains: "must not start with a hyphen"},
+		{id: "-abc", errorContains: "must begin with a letter"},
+		{id: "abc-", errorContains: "must end with a letter or number"},
+		{id: "123-abc", errorContains: "must begin with a letter"},
 		{id: "daf1cb3e-f33b-43f1-81cc-e65fda51efa5", errorContains: "must not be a valid UUIDv4"},
 		{id: "abcd/efgh", errorContains: "must only contain lowercase, numbers and hyphens"},
 	} {
