@@ -164,11 +164,16 @@ func (d *Declarations) declareEnumIdent(name string, enumType protoreflect.EnumT
 	if err := d.declareIdent(name, enumIdentType); err != nil {
 		return err
 	}
-	if err := d.declareFunction(
+	for _, fn := range []string{
 		FunctionEquals,
-		NewFunctionOverload(FunctionEquals+"_"+enumIdentType.GetMessageType(), TypeBool, enumIdentType, enumIdentType),
-	); err != nil {
-		return err
+		FunctionNotEquals,
+	} {
+		if err := d.declareFunction(
+			fn,
+			NewFunctionOverload(fn+"_"+enumIdentType.GetMessageType(), TypeBool, enumIdentType, enumIdentType),
+		); err != nil {
+			return err
+		}
 	}
 	values := enumType.Descriptor().Values()
 	for i := 0; i < values.Len(); i++ {
