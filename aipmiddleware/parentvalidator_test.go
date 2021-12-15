@@ -9,6 +9,7 @@ import (
 	examplefreightv1 "go.einride.tech/aip/proto/gen/einride/example/freight/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
@@ -188,7 +189,11 @@ func TestParentValidator(t *testing.T) {
 				grpcServer.GracefulStop()
 			}()
 			t.Cleanup(wg.Wait)
-			conn, err := grpc.DialContext(ctx, lis.Addr().String(), grpc.WithInsecure())
+			conn, err := grpc.DialContext(
+				ctx,
+				lis.Addr().String(),
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+			)
 			assert.NilError(t, err)
 			tt.f(t, ctx, &tt.server, conn)
 		})
