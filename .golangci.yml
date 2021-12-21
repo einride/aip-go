@@ -26,3 +26,6 @@ linters:
     - thelper # false positives
     - tagliatelle # false positives
     - forcetypeassert # not useful for proto.GetExtension
+    - maligned # deprecated upstream, replaced by govet 'fieldalignment'
+    - golint # deprecated upstream, replaced by revive
+    - scopelint # deprecated upstream, replaced by exportloopref
