@@ -2,7 +2,7 @@
 //
 // versions:
 // 	protoc-gen-go-aip development
-// 	protoc v3.17.3
+// 	protoc (unknown)
 // source: einride/example/freight/v1/shipment.proto
 
 package freightv1

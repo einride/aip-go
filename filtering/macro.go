@@ -62,7 +62,7 @@ func (c *Cursor) Expr() *expr.Expr {
 
 // Replace the current expression with a new expression.
 func (c *Cursor) Replace(newExpr *expr.Expr) {
-	Walk(func(childExpr *expr.Expr, parentExpr *expr.Expr) bool {
+	Walk(func(childExpr, parentExpr *expr.Expr) bool {
 		childExpr.Id = c.nextID
 		c.nextID++
 		return true

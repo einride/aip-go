@@ -134,7 +134,7 @@ func rangeFieldsWithBehaviors(
 	})
 }
 
-func hasAnyBehavior(haystack []annotations.FieldBehavior, needles []annotations.FieldBehavior) bool {
+func hasAnyBehavior(haystack, needles []annotations.FieldBehavior) bool {
 	for _, needle := range needles {
 		if hasBehavior(haystack, needle) {
 			return true
