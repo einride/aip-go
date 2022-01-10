@@ -1,7 +1,7 @@
 package resourcename
 
 // Ancestor extracts an ancestor from the provided name, using a pattern for the ancestor.
-func Ancestor(name string, pattern string) (string, bool) {
+func Ancestor(name, pattern string) (string, bool) {
 	if name == "" || pattern == "" {
 		return "", false
 	}

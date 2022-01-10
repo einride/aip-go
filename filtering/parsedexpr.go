@@ -8,7 +8,7 @@ func parsedFloat(id int64, value float64) *expr.Expr {
 	return result
 }
 
-func parsedInt(id int64, value int64) *expr.Expr {
+func parsedInt(id, value int64) *expr.Expr {
 	result := Int(value)
 	result.Id = id
 	return result
