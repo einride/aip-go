@@ -1,6 +1,7 @@
 package resourcename
 
 import (
+	"fmt"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -69,11 +70,29 @@ func TestMatches(t *testing.T) {
 			pattern:  "//freight-example.einride.tech/shippers/{shipper}",
 			expected: false,
 		},
+
+		{
+			test:     "slash prefix in the name",
+			name:     "/shippers/1",
+			pattern:  "shippers/{shipper}",
+			expected: true,
+		},
+
+		{
+			test:     "slash prefix in the pattern",
+			name:     "shippers/1",
+			pattern:  "/shippers/{shipper}",
+			expected: true,
+		},
 	} {
 		tt := tt
 		t.Run(tt.test, func(t *testing.T) {
 			t.Parallel()
-			assert.Assert(t, Match(tt.pattern, tt.name) == tt.expected)
+			assert.Check(
+				t,
+				Match(tt.pattern, tt.name) == tt.expected,
+				fmt.Sprintf("expected Match(%q, %q)=%t", tt.pattern, tt.name, tt.expected),
+			)
 		})
 	}
 }

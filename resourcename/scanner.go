@@ -37,6 +37,8 @@ func (s *Scanner) Scan() bool {
 			}
 			s.serviceStart, s.serviceEnd = s.start, s.start+nextSlash
 			s.start, s.end = s.start+nextSlash+1, s.start+nextSlash+1
+		} else if strings.HasPrefix(s.name, "/") {
+			s.start = s.end + 1 // start past beginning slash
 		}
 	default:
 		s.start = s.end + 1 // start past latest slash
