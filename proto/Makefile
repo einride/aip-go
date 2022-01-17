@@ -2,39 +2,50 @@
 
 .DEFAULT_GOAL := all
 
-include ../.mage/tools.mk
+magefile := ../.mage/tools/bin/magefile
+
+$(magefile): ../.mage/go.mod ../.mage/*.go
+	@cd ../.mage && go run go.einride.tech/mage-tools/cmd/build
+
+.PHONY: clean-mage-tools
+clean-mage-tools:
+	@git clean -fdx ../.mage/tools
 
 .PHONY: all
-all: $(mage)
-	@$(mage) proto:all
+all: $(magefile)
+	@$(magefile) proto:all
 
 .PHONY: api-linter-lint
-api-linter-lint: $(mage)
-	@$(mage) proto:apiLinterLint
+api-linter-lint: $(magefile)
+	@$(magefile) proto:apiLinterLint
 
 .PHONY: buf-generate
-buf-generate: $(mage)
-	@$(mage) proto:bufGenerate
+buf-generate: $(magefile)
+	@$(magefile) proto:bufGenerate
 
 .PHONY: buf-lint
-buf-lint: $(mage)
-	@$(mage) proto:bufLint
+buf-lint: $(magefile)
+	@$(magefile) proto:bufLint
 
 .PHONY: build-descriptor
-build-descriptor: $(mage)
-	@$(mage) proto:buildDescriptor
+build-descriptor: $(magefile)
+	@$(magefile) proto:buildDescriptor
 
 .PHONY: clang-format-proto
-clang-format-proto: $(mage)
+clang-format-proto: $(magefile)
 ifndef path
 	$(error missing argument path="...")
 endif
-	@$(mage) proto:clangFormatProto $(path)
+	@$(magefile) proto:clangFormatProto $(path)
 
 .PHONY: protoc-gen-go
-protoc-gen-go: $(mage)
-	@$(mage) proto:protocGenGo
+protoc-gen-go: $(magefile)
+	@$(magefile) proto:protocGenGo
 
 .PHONY: protoc-gen-go-aip
-protoc-gen-go-aip: $(mage)
-	@$(mage) proto:protocGenGoAip
+protoc-gen-go-aip: $(magefile)
+	@$(magefile) proto:protocGenGoAip
+
+.PHONY: protoc-gen-go-grpc
+protoc-gen-go-grpc: $(magefile)
+	@$(magefile) proto:protocGenGoGrpc

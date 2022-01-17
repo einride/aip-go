@@ -2,54 +2,61 @@
 
 .DEFAULT_GOAL := all
 
-include .mage/tools.mk
+magefile := .mage/tools/bin/magefile
+
+$(magefile): .mage/go.mod .mage/*.go
+	@cd .mage && go run go.einride.tech/mage-tools/cmd/build
+
+.PHONY: clean-mage-tools
+clean-mage-tools:
+	@git clean -fdx .mage/tools
 
 .PHONY: all
-all: $(mage)
-	@$(mage) all
+all: $(magefile)
+	@$(magefile) all
 
 .PHONY: buf-generate-testdata
-buf-generate-testdata: $(mage)
-	@$(mage) bufGenerateTestdata
+buf-generate-testdata: $(magefile)
+	@$(magefile) bufGenerateTestdata
 
 .PHONY: convco-check
-convco-check: $(mage)
+convco-check: $(magefile)
 ifndef rev
 	$(error missing argument rev="...")
 endif
-	@$(mage) convcoCheck $(rev)
+	@$(magefile) convcoCheck $(rev)
 
 .PHONY: format-markdown
-format-markdown: $(mage)
-	@$(mage) formatMarkdown
+format-markdown: $(magefile)
+	@$(magefile) formatMarkdown
 
 .PHONY: git-verify-no-diff
-git-verify-no-diff: $(mage)
-	@$(mage) gitVerifyNoDiff
+git-verify-no-diff: $(magefile)
+	@$(magefile) gitVerifyNoDiff
 
 .PHONY: go-mod-tidy
-go-mod-tidy: $(mage)
-	@$(mage) goModTidy
+go-mod-tidy: $(magefile)
+	@$(magefile) goModTidy
 
 .PHONY: go-stringer
-go-stringer: $(mage)
-	@$(mage) goStringer
+go-stringer: $(magefile)
+	@$(magefile) goStringer
 
 .PHONY: go-test
-go-test: $(mage)
-	@$(mage) goTest
+go-test: $(magefile)
+	@$(magefile) goTest
 
 .PHONY: golangci-lint
-golangci-lint: $(mage)
-	@$(mage) golangciLint
+golangci-lint: $(magefile)
+	@$(magefile) golangciLint
 
 .PHONY: goreview
-goreview: $(mage)
-	@$(mage) goreview
+goreview: $(magefile)
+	@$(magefile) goreview
 
 .PHONY: protoc-gen-go-aip
-protoc-gen-go-aip: $(mage)
-	@$(mage) protocGenGoAip
+protoc-gen-go-aip: $(magefile)
+	@$(magefile) protocGenGoAip
 
 .PHONY: proto
 proto:
