@@ -1,4 +1,3 @@
----
 - included_paths: ["**"]
   disabled_rules:
     - core::0191 # file options managed by buf

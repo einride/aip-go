@@ -18,6 +18,7 @@ import (
 	"go.einride.tech/mage-tools/mgpath"
 	"go.einride.tech/mage-tools/mgtool"
 	"go.einride.tech/mage-tools/targets/mgbuf"
+	"go.einride.tech/mage-tools/targets/mgyamlfmt"
 
 	// mage:import
 	"go.einride.tech/mage-tools/targets/mggo"
@@ -56,6 +57,7 @@ func All() {
 	mg.Deps(
 		mg.F(mgconvco.ConvcoCheck, "origin/master..HEAD"),
 		mgmarkdownfmt.FormatMarkdown,
+		mgyamlfmt.FormatYaml,
 		GoStringer,
 		Proto.All,
 	)

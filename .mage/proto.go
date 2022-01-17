@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -40,40 +39,34 @@ func (Proto) BufLint() {
 	mg.Deps(mgbuf.BufLint)
 }
 
-func (Proto) ProtocGenGo() error {
-	logger := mglog.Logger("protoc-gen-go")
-	newer, err := target.Glob("build/protoc-gen-go", ".../go.mod")
-	if err != nil {
-		return nil
-	}
-	if !newer {
-		return nil
-	}
-	logger.Info("building binary...")
-	return sh.Run("go", "build", "-o", "build/protoc-gen-go", "google.golang.org/protobuf/cmd/protoc-gen-go")
+func (Proto) ProtocGenGo(ctx context.Context) error {
+	_, err := mgtool.GoInstallWithModfile(
+		ctx,
+		"google.golang.org/protobuf/cmd/protoc-gen-go",
+		mgpath.FromGitRoot("go.mod"),
+	)
+	return err
 }
 
 func (Proto) ProtocGenGoAip() error {
 	logger := mglog.Logger("protoc-gen-go-aip")
 	logger.Info("building binary...")
-	return sh.Run("go", "build", "-o", "build/protoc-gen-go-aip", "../cmd/protoc-gen-go-aip")
+	return sh.Run("go", "build", "-o", filepath.Join(mgpath.Bins(), "protoc-gen-go-aip"), "../cmd/protoc-gen-go-aip")
+}
+
+func (Proto) ProtocGenGoGrpc(ctx context.Context) error {
+	_, err := mgtool.GoInstall(ctx, "google.golang.org/grpc/cmd/protoc-gen-go-grpc", "v1.2.0")
+	return err
 }
 
 func (Proto) BufGenerate(ctx context.Context) error {
 	logger := mglog.Logger("buf-generate")
 	ctx = logr.NewContext(ctx, logger)
-	goGrpc, err := mgtool.GoInstall(ctx, "google.golang.org/grpc/cmd/protoc-gen-go-grpc", "v1.2.0")
-	if err != nil {
-		return err
-	}
 	mg.Deps(
 		Proto.ProtocGenGo,
+		Proto.ProtocGenGoGrpc,
 		Proto.ProtocGenGoAip,
 	)
-	path := fmt.Sprintf("%s:%s:%s", os.Getenv("PATH"), filepath.Dir(goGrpc), "../.mage/tools/protoc/3.15.7/bin")
-	if err := os.Setenv("PATH", path); err != nil {
-		return err
-	}
 	logger.Info("generating protobuf stubs...")
 	return mgbuf.Buf(ctx, "generate", "--template", "buf.gen.yaml", "--path", "einride")
 }
