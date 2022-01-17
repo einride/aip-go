@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/go-logr/logr v1.2.2
 	github.com/magefile/mage v1.12.1
-	go.einride.tech/mage-tools v0.17.0
+	go.einride.tech/mage-tools v0.21.1
 )
 
 require (
