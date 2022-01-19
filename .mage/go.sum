@@ -6,8 +6,8 @@ github.com/iancoleman/strcase v0.2.0 h1:05I4QRnGpI0m37iZQRuskXh+w77mr6Z41lwQzuHL
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/magefile/mage v1.12.1 h1:oGdAbhIUd6iKamKlDGVtU6XGdy5SgNuCWn7gCTgHDtU=
 github.com/magefile/mage v1.12.1/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
-go.einride.tech/mage-tools v0.26.0 h1:jfHi++ayiQlrWZjkn2MoUO60qtnxj0+1ZSlVj1rwaEw=
-go.einride.tech/mage-tools v0.26.0/go.mod h1:pFpCBZ0U7a6862mks4y6v5xBkT4IhdrcJdEeTEjweMI=
+go.einride.tech/mage-tools v0.28.0 h1:RSCd3tN6WrtSuudwmqiAzjCKfuTpLtE7bLKqTyuMOMU=
+go.einride.tech/mage-tools v0.28.0/go.mod h1:pFpCBZ0U7a6862mks4y6v5xBkT4IhdrcJdEeTEjweMI=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b h1:h8qDotaEPuJATrMmW04NCwg7v22aHH28wwpauUhK9Oo=
