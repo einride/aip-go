@@ -11,32 +11,19 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/magefile/mage/mg"
-	"github.com/magefile/mage/sh"
 	"github.com/magefile/mage/target"
 	"go.einride.tech/mage-tools/mglog"
 	"go.einride.tech/mage-tools/mgmake"
 	"go.einride.tech/mage-tools/mgpath"
 	"go.einride.tech/mage-tools/mgtool"
-	"go.einride.tech/mage-tools/targets/mgbuf"
-	"go.einride.tech/mage-tools/targets/mgyamlfmt"
-
-	// mage:import
-	"go.einride.tech/mage-tools/targets/mggo"
-
-	// mage:import
-	"go.einride.tech/mage-tools/targets/mggolangcilint"
-
-	// mage:import
-	"go.einride.tech/mage-tools/targets/mggoreview"
-
-	// mage:import
-	"go.einride.tech/mage-tools/targets/mgmarkdownfmt"
-
-	// mage:import
-	"go.einride.tech/mage-tools/targets/mgconvco"
-
-	// mage:import
 	"go.einride.tech/mage-tools/targets/mggitverifynodiff"
+	"go.einride.tech/mage-tools/targets/mgyamlfmt"
+	"go.einride.tech/mage-tools/tools/mgbuf"
+	"go.einride.tech/mage-tools/tools/mgconvco"
+	"go.einride.tech/mage-tools/tools/mggo"
+	"go.einride.tech/mage-tools/tools/mggolangcilint"
+	"go.einride.tech/mage-tools/tools/mggoreview"
+	"go.einride.tech/mage-tools/tools/mgmarkdownfmt"
 )
 
 func init() {
@@ -55,37 +42,64 @@ func init() {
 
 func All() {
 	mg.Deps(
-		mg.F(mgconvco.ConvcoCheck, "origin/master..HEAD"),
-		mgmarkdownfmt.FormatMarkdown,
-		mgyamlfmt.FormatYaml,
+		ConvcoCheck,
+		FormatMarkdown,
+		mgyamlfmt.FormatYAML,
 		GoStringer,
 		Proto.All,
 	)
 	mg.Deps(
-		mggolangcilint.GolangciLint,
-		mggoreview.Goreview,
-		mggo.GoTest,
+		GolangciLint,
+		Goreview,
+		GoTest,
 	)
 	mg.SerialDeps(
-		mggo.GoModTidy,
+		GoModTidy,
 		mggitverifynodiff.GitVerifyNoDiff,
 	)
 }
 
+func ConvcoCheck(ctx context.Context) error {
+	mglog.Logger("convco-check").Info("checking...")
+	return mgconvco.Command(ctx, "check", "origin/master..HEAD").Run()
+}
+
+func FormatMarkdown(ctx context.Context) error {
+	mglog.Logger("format-markdown").Info("formatting..")
+	return mgmarkdownfmt.Command(ctx, "-w", ".").Run()
+}
+
+func GolangciLint(ctx context.Context) error {
+	mglog.Logger("golangci-lint").Info("running...")
+	return mggolangcilint.LintCommand(ctx).Run()
+}
+
+func Goreview(ctx context.Context) error {
+	mglog.Logger("goreview").Info("running...")
+	return mggoreview.Command(ctx, "-c", "1", "./...").Run()
+}
+
+func GoModTidy() error {
+	mglog.Logger("go-mod-tidy").Info("tidying Go module files...")
+	return mggo.GoModTidy().Run()
+}
+
+func GoTest() error {
+	mglog.Logger("go-test").Info("running Go unit tests..")
+	return mggo.GoTest().Run()
+}
+
 func ProtocGenGoAip() error {
-	logger := mglog.Logger("protoc-gen-go-aip")
-	logger.Info("building binary...")
-	return sh.Run("go", "build", "-o", "build/protoc-gen-go-aip", "./cmd/protoc-gen-go-aip")
+	mglog.Logger("protoc-gen-go-aip").Info("building binary...")
+	return mgtool.Command("go", "build", "-o", "build/protoc-gen-go-aip", "./cmd/protoc-gen-go-aip").Run()
 }
 
 func BufGenerateTestdata(ctx context.Context) error {
-	logger := mglog.Logger("buf")
-	ctx = logr.NewContext(ctx, logger)
 	mg.SerialDeps(ProtocGenGoAip)
-	logger.Info("generating testdata stubs...")
-	cleanup := mgpath.ChangeWorkDir("cmd/protoc-gen-go-aip/internal/genaip/testdata")
-	defer cleanup()
-	return mgbuf.Buf(ctx, "generate", "--path", "test")
+	cmd := mgbuf.Command(ctx, "generate", "--path", "test")
+	cmd.Dir = mgpath.FromGitRoot("cmd/protoc-gen-go-aip/internal/genaip/testdata")
+	mglog.Logger("buf").Info("generating testdata stubs...")
+	return cmd.Run()
 }
 
 func GoStringer(ctx context.Context) error {
@@ -105,8 +119,9 @@ func GoStringer(ctx context.Context) error {
 	if generate {
 		logger.Info("generating", "src", methodType, "dst", methodTypeString)
 		path := fmt.Sprintf("%s:%s", os.Getenv("PATH"), filepath.Dir(goStringer))
-		err = sh.RunWith(map[string]string{"PATH": path}, "go", "generate", methodType)
-		if err != nil {
+		cmd := mgtool.Command("go", "generate", methodType)
+		cmd.Env = append(cmd.Env, "PATH="+path)
+		if err := cmd.Run(); err != nil {
 			return err
 		}
 	}
