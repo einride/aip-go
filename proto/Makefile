@@ -34,10 +34,7 @@ build-descriptor: $(magefile)
 
 .PHONY: clang-format-proto
 clang-format-proto: $(magefile)
-ifndef path
-	$(error missing argument path="...")
-endif
-	@$(magefile) proto:clangFormatProto $(path)
+	@$(magefile) proto:clangFormatProto
 
 .PHONY: protoc-gen-go
 protoc-gen-go: $(magefile)

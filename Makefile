@@ -22,18 +22,11 @@ buf-generate-testdata: $(magefile)
 
 .PHONY: convco-check
 convco-check: $(magefile)
-ifndef rev
-	$(error missing argument rev="...")
-endif
-	@$(magefile) convcoCheck $(rev)
+	@$(magefile) convcoCheck
 
 .PHONY: format-markdown
 format-markdown: $(magefile)
 	@$(magefile) formatMarkdown
-
-.PHONY: git-verify-no-diff
-git-verify-no-diff: $(magefile)
-	@$(magefile) gitVerifyNoDiff
 
 .PHONY: go-mod-tidy
 go-mod-tidy: $(magefile)
