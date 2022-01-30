@@ -1,3 +1,9 @@
 - included_paths: ["**"]
   disabled_rules:
     - core::0191 # file options managed by buf
+- included_paths: ["einride/example/syntax/v1/**"]
+  disabled_rules:
+    - core::0191
+    - core::0141::forbidden-types
+    - core::0140::reserved-words
+    - core::0192::has-comments
