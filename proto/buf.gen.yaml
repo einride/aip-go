@@ -11,16 +11,16 @@ plugins:
   - name: go
     out: gen
     opt: module=go.einride.tech/aip/proto/gen
-    path: ../.mage/tools/bin/protoc-gen-go
+    path: ../.sage/bin/protoc-gen-go
 
   - name: go-grpc
     out: gen
     opt:
       - module=go.einride.tech/aip/proto/gen
       - require_unimplemented_servers=false
-    path: ../.mage/tools/bin/protoc-gen-go-grpc
+    path: ../.sage/bin/protoc-gen-go-grpc
 
   - name: go-aip
     out: gen
     opt: module=go.einride.tech/aip/proto/gen
-    path: ../.mage/tools/bin/protoc-gen-go-aip
+    path: ../.sage/bin/protoc-gen-go-aip
