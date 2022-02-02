@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io/fs"
-	"os"
 	"path/filepath"
 
 	"go.einride.tech/sage/sg"
@@ -68,43 +67,9 @@ func (Proto) BufGenerate(ctx context.Context) error {
 	return cmd.Run()
 }
 
-func (Proto) Descriptor(ctx context.Context) error {
-	sg.Logger(ctx).Println("generating proto descriptor...")
-	if err := os.MkdirAll(sg.FromBuildDir("proto"), 0o755); err != nil {
-		return err
-	}
-	cmd := sgbuf.Command(ctx, "build", "-o", sg.FromBuildDir("proto", "descriptor.pb"))
-	cmd.Dir = sg.FromGitRoot("proto")
-	return cmd.Run()
-}
-
 func (Proto) APILinterLint(ctx context.Context) error {
-	sg.Deps(ctx, Proto.Descriptor)
 	sg.Logger(ctx).Println("linting gRPC APIs...")
-	var protoFiles []string
-	if err := filepath.WalkDir(sg.FromGitRoot("proto"), func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() && filepath.Ext(path) == ".proto" {
-			protoFiles = append(protoFiles, path)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-	cmd := sgapilinter.Command(
-		ctx,
-		append(
-			[]string{
-				"--set-exit-status",
-				"--config",
-				"api-linter.yaml",
-				"--descriptor-set-in",
-				sg.FromBuildDir("proto", "descriptor.pb"),
-			},
-			protoFiles...,
-		)...,
-	)
-	cmd.Dir = sg.FromGitRoot("proto")
-	return cmd.Run()
+	return sgapilinter.Run(ctx)
 }
 
 func (Proto) BufGenerateTestdata(ctx context.Context) error {

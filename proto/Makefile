@@ -5,8 +5,12 @@
 
 sagefile := ../.sage/bin/sagefile
 
-$(sagefile): ../.sage/go.mod ../.sage/*.go
+.PHONY: $(sagefile)
+$(sagefile):
 	@cd ../.sage && go mod tidy && go run .
+
+.PHONY: sage
+sage: $(sagefile)
 
 .PHONY: clean-sage
 clean-sage:
@@ -35,10 +39,6 @@ buf-lint: $(sagefile)
 .PHONY: clang-format-proto
 clang-format-proto: $(sagefile)
 	@$(sagefile) Proto:ClangFormatProto
-
-.PHONY: descriptor
-descriptor: $(sagefile)
-	@$(sagefile) Proto:Descriptor
 
 .PHONY: protoc-gen-go
 protoc-gen-go: $(sagefile)
