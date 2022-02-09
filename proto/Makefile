@@ -12,6 +12,10 @@ $(sagefile):
 .PHONY: sage
 sage: $(sagefile)
 
+.PHONY: update-sage
+update-sage:
+	@cd ../.sage && go get -d go.einride.tech/sage@latest && go mod tidy && go run .
+
 .PHONY: clean-sage
 clean-sage:
 	@git clean -fdx ../.sage/tools ../.sage/bin ../.sage/build
