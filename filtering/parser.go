@@ -246,12 +246,12 @@ func (p *Parser) ParseRestriction() (_ *expr.Expr, err error) {
 			err = p.wrapf(err, start, "restriction")
 		}
 	}()
-	comparable, err := p.ParseComparable()
+	comp, err := p.ParseComparable()
 	if err != nil {
 		return nil, err
 	}
 	if !(p.sniff(TokenType.IsComparator) || p.sniff(TokenTypeWhitespace.Test, TokenType.IsComparator)) {
-		return comparable, nil
+		return comp, nil
 	}
 	_ = p.eatTokens(TokenTypeWhitespace)
 	comparatorToken, err := p.parseToken(TokenType.IsComparator)
@@ -268,7 +268,7 @@ func (p *Parser) ParseRestriction() (_ *expr.Expr, err error) {
 		// m:foo - true if m contains the key "foo".
 		arg = parsedString(arg.Id, arg.GetIdentExpr().GetName())
 	}
-	return parsedFunction(p.nextID(start), comparatorToken.Type.Function(), comparable, arg), nil
+	return parsedFunction(p.nextID(start), comparatorToken.Type.Function(), comp, arg), nil
 }
 
 // ParseComparable parses a Comparable.

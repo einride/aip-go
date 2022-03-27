@@ -2,20 +2,17 @@ package main
 
 import (
 	"context"
-	"io/fs"
-	"path/filepath"
 
 	"go.einride.tech/sage/sg"
 	"go.einride.tech/sage/sgtool"
 	"go.einride.tech/sage/tools/sgapilinter"
 	"go.einride.tech/sage/tools/sgbuf"
-	"go.einride.tech/sage/tools/sgclangformat"
 )
 
 type Proto sg.Namespace
 
 func (Proto) All(ctx context.Context) error {
-	sg.Deps(ctx, Proto.ClangFormatProto, Proto.BufLint)
+	sg.Deps(ctx, Proto.BufFormat, Proto.BufLint)
 	sg.Deps(ctx, Proto.APILinterLint, Proto.BufGenerate)
 	sg.Deps(ctx, Proto.BufGenerateTestdata)
 	return nil
@@ -28,18 +25,11 @@ func (Proto) BufLint(ctx context.Context) error {
 	return cmd.Run()
 }
 
-func (Proto) ClangFormatProto(ctx context.Context) error {
+func (Proto) BufFormat(ctx context.Context) error {
 	sg.Logger(ctx).Println("formatting proto files...")
-	var protoFiles []string
-	if err := filepath.WalkDir(sg.FromGitRoot("proto"), func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() && filepath.Ext(path) == ".proto" {
-			protoFiles = append(protoFiles, path)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-	return sgclangformat.FormatProtoCommand(ctx, protoFiles...).Run()
+	cmd := sgbuf.Command(ctx, "format", "--write")
+	cmd.Dir = sg.FromGitRoot("proto")
+	return cmd.Run()
 }
 
 func (Proto) ProtocGenGo(ctx context.Context) error {
