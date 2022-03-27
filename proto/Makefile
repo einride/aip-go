@@ -11,7 +11,7 @@ $(sagefile): ../.sage/go.mod ../.sage/*.go
 .PHONY: sage
 sage:
 	@git clean -fxq $(sagefile)
-	@make $(sagefile)
+	@$(MAKE) $(sagefile)
 
 .PHONY: update-sage
 update-sage:
@@ -29,6 +29,10 @@ api-linter-lint: $(sagefile)
 all: $(sagefile)
 	@$(sagefile) Proto:All
 
+.PHONY: buf-format
+buf-format: $(sagefile)
+	@$(sagefile) Proto:BufFormat
+
 .PHONY: buf-generate
 buf-generate: $(sagefile)
 	@$(sagefile) Proto:BufGenerate
@@ -40,10 +44,6 @@ buf-generate-testdata: $(sagefile)
 .PHONY: buf-lint
 buf-lint: $(sagefile)
 	@$(sagefile) Proto:BufLint
-
-.PHONY: clang-format-proto
-clang-format-proto: $(sagefile)
-	@$(sagefile) Proto:ClangFormatProto
 
 .PHONY: protoc-gen-go
 protoc-gen-go: $(sagefile)

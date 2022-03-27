@@ -30,7 +30,7 @@ func main() {
 
 func All(ctx context.Context) error {
 	sg.Deps(ctx, ConvcoCheck, FormatMarkdown, FormatYAML, GoGenerate, Proto.All)
-	sg.Deps(ctx, GolangciLint, GoReview, GoTest)
+	sg.Deps(ctx, GoLint, GoReview, GoTest)
 	sg.SerialDeps(ctx, GoModTidy, GitVerifyNoDiff)
 	return nil
 }
@@ -50,7 +50,7 @@ func FormatMarkdown(ctx context.Context) error {
 	return sgmarkdownfmt.Command(ctx, "-w", ".").Run()
 }
 
-func GolangciLint(ctx context.Context) error {
+func GoLint(ctx context.Context) error {
 	sg.Logger(ctx).Println("linting Go files...")
 	return sggolangcilint.Run(ctx)
 }

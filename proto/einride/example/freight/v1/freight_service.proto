@@ -334,11 +334,9 @@ message BatchGetSitesRequest {
   // If this is set, the parent of all of the sites specified in `names`
   // must match this field.
   // Format: `shippers/{shipper}`
-  string parent = 1 [
-    (google.api.resource_reference) = {
-      type: "freight-example.einride.tech/Shipper"
-    }
-  ];
+  string parent = 1 [(google.api.resource_reference) = {
+    type: "freight-example.einride.tech/Shipper"
+  }];
 
   // The names of the sites to retrieve.
   // A maximum of 1000 sites can be retrieved in a batch.

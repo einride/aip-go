@@ -11,7 +11,7 @@ $(sagefile): .sage/go.mod .sage/*.go
 .PHONY: sage
 sage:
 	@git clean -fxq $(sagefile)
-	@make $(sagefile)
+	@$(MAKE) $(sagefile)
 
 .PHONY: update-sage
 update-sage:
@@ -45,6 +45,10 @@ git-verify-no-diff: $(sagefile)
 go-generate: $(sagefile)
 	@$(sagefile) GoGenerate
 
+.PHONY: go-lint
+go-lint: $(sagefile)
+	@$(sagefile) GoLint
+
 .PHONY: go-mod-tidy
 go-mod-tidy: $(sagefile)
 	@$(sagefile) GoModTidy
@@ -56,10 +60,6 @@ go-review: $(sagefile)
 .PHONY: go-test
 go-test: $(sagefile)
 	@$(sagefile) GoTest
-
-.PHONY: golangci-lint
-golangci-lint: $(sagefile)
-	@$(sagefile) GolangciLint
 
 .PHONY: stringer
 stringer: $(sagefile)
