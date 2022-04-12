@@ -1,9 +1,12 @@
 package fieldmask
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
+	"go.einride.tech/aip/fieldbehavior"
+	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -74,8 +77,44 @@ func updateNamedField(dst, src protoreflect.Message, segments []string) {
 		// no known field by that name
 		return
 	}
+	if fieldbehavior.Has(field, annotations.FieldBehavior_OUTPUT_ONLY) {
+		return
+	}
 	// a named field in this message
 	if len(segments) == 1 {
+		if fieldbehavior.Has(field, annotations.FieldBehavior_IMMUTABLE) {
+			srcFld := src.Get(field)
+			dstFld := dst.Get(field)
+			cmp := true
+			switch field.Kind() {
+			case protoreflect.EnumKind:
+				cmp = srcFld.Enum() != dstFld.Enum()
+			case protoreflect.BoolKind:
+				cmp = srcFld.Bool() != dstFld.Bool()
+			case protoreflect.Int32Kind,
+				protoreflect.Sint32Kind,
+				protoreflect.Int64Kind,
+				protoreflect.Sint64Kind,
+				protoreflect.Sfixed32Kind,
+				protoreflect.Sfixed64Kind:
+				cmp = srcFld.Int() == dstFld.Int()
+			case protoreflect.Uint32Kind,
+				protoreflect.Uint64Kind,
+				protoreflect.Fixed32Kind,
+				protoreflect.Fixed64Kind:
+				cmp = srcFld.Uint() == dstFld.Uint()
+			case protoreflect.FloatKind,
+				protoreflect.DoubleKind:
+				cmp = srcFld.Float() == dstFld.Float()
+			case protoreflect.StringKind:
+				cmp = srcFld.String() == dstFld.String()
+			case protoreflect.BytesKind:
+				cmp = bytes.Equal(srcFld.Bytes(), dstFld.Bytes())
+			}
+			if !cmp {
+				return
+			}
+		}
 		if !src.Has(field) {
 			dst.Clear(field)
 		} else {
