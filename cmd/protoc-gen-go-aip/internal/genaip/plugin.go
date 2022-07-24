@@ -3,9 +3,10 @@ package genaip
 import (
 	"fmt"
 
-	"go.einride.tech/aip/reflect/aipreflect"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
@@ -14,8 +15,12 @@ const PluginName = "protoc-gen-go-aip"
 
 const generatedFilenameSuffix = "_aip.go"
 
+type Config struct {
+	IncludeResourceDefinitions bool
+}
+
 // Run the AIP Go protobuf compiler plugin.
-func Run(gen *protogen.Plugin) error {
+func Run(gen *protogen.Plugin, config Config) error {
 	var files protoregistry.Files
 	for _, file := range gen.Files {
 		if err := files.RegisterFile(file.Desc); err != nil {
@@ -30,18 +35,24 @@ func Run(gen *protogen.Plugin) error {
 		g := newGeneratedFile(gen, file)
 		g.Skip()
 		var rangeErr error
-		aipreflect.RangeResourceDescriptorsInFile(file.Desc, func(resource *annotations.ResourceDescriptor) bool {
-			g.Unskip()
-			if err := (resourceNameCodeGenerator{
-				resource: resource,
-				files:    &files,
-				file:     file,
-			}).GenerateCode(g); err != nil {
-				rangeErr = err
-				return false
-			}
-			return true
-		})
+		rangeResourcesInFile(
+			file.Desc,
+			func(resource *annotations.ResourceDescriptor, extension protoreflect.ExtensionType) bool {
+				if !config.IncludeResourceDefinitions && extension == annotations.E_ResourceDefinition {
+					return true
+				}
+				g.Unskip()
+				if err := (resourceNameCodeGenerator{
+					resource: resource,
+					files:    &files,
+					file:     file,
+				}).GenerateCode(g); err != nil {
+					rangeErr = err
+					return false
+				}
+				return true
+			},
+		)
 		if rangeErr != nil {
 			return rangeErr
 		}
@@ -67,4 +78,28 @@ func getProtocVersion(gen *protogen.Plugin) string {
 		return fmt.Sprintf("v%v.%v.%v", v.GetMajor(), v.GetMinor(), v.GetPatch())
 	}
 	return "(unknown)"
+}
+
+func rangeResourcesInFile(
+	file protoreflect.FileDescriptor,
+	fn func(resource *annotations.ResourceDescriptor, extension protoreflect.ExtensionType) bool,
+) {
+	for _, resource := range proto.GetExtension(
+		file.Options(), annotations.E_ResourceDefinition,
+	).([]*annotations.ResourceDescriptor) {
+		if !fn(resource, annotations.E_ResourceDefinition) {
+			return
+		}
+	}
+	for i := 0; i < file.Messages().Len(); i++ {
+		resource := proto.GetExtension(
+			file.Messages().Get(i).Options(), annotations.E_Resource,
+		).(*annotations.ResourceDescriptor)
+		if resource == nil {
+			continue
+		}
+		if !fn(resource, annotations.E_Resource) {
+			return
+		}
+	}
 }
