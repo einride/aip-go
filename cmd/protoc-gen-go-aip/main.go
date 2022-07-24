@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,5 +16,19 @@ func main() {
 		log.Printf("%v %v\n", filepath.Base(os.Args[0]), genaip.PluginVersion)
 		os.Exit(0)
 	}
-	protogen.Options{}.Run(genaip.Run)
+	var (
+		flags                      flag.FlagSet
+		includeResourceDefinitions = flags.Bool(
+			"include_resource_definitions",
+			true,
+			"set to false to exclude resource definitions from code generation",
+		)
+	)
+	protogen.Options{
+		ParamFunc: flags.Set,
+	}.Run(func(plugin *protogen.Plugin) error {
+		return genaip.Run(plugin, genaip.Config{
+			IncludeResourceDefinitions: *includeResourceDefinitions,
+		})
+	})
 }
