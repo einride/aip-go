@@ -300,7 +300,7 @@ message CreateSiteRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "freight-example.einride.tech/Shipper"
+      child_type: "freight-example.einride.tech/Site"
     }
   ];
   // The site to create.
@@ -407,7 +407,7 @@ message CreateShipmentRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "freight-example.einride.tech/Shipper"
+      child_type: "freight-example.einride.tech/Shipment"
     }
   ];
   // The shipment to create.
