@@ -5,17 +5,37 @@
 
 sagefile := .sage/bin/sagefile
 
-$(sagefile): .sage/go.mod .sage/*.go
-	@cd .sage && go mod tidy && go run .
+# Setup Go.
+go := $(shell command -v go 2>/dev/null)
+ifndef go
+SAGE_GO_VERSION ?= 1.18.4
+export GOROOT := .sage/tools/go/$(SAGE_GO_VERSION)/go
+export PATH := $(PATH):$(GOROOT)/bin
+go := $(GOROOT)/bin/go
+os := $(shell uname | tr '[:upper:]' '[:lower:]')
+arch := $(shell uname -m)
+ifeq ($(arch),x86_64)
+arch := amd64
+endif
+$(go):
+	$(info installing Go $(SAGE_GO_VERSION)...)
+	@mkdir -p $(dir $(GOROOT))
+	@curl -sSL https://go.dev/dl/go$(SAGE_GO_VERSION).$(os)-$(arch).tar.gz | tar xz -C $(dir $(GOROOT))
+	@touch $(GOROOT)/go.mod
+	@chmod +x $(go)
+endif
+
+.PHONY: $(sagefile)
+$(sagefile): $(go)
+	@cd .sage && $(go) mod tidy && $(go) run .
 
 .PHONY: sage
 sage:
-	@git clean -fxq $(sagefile)
 	@$(MAKE) $(sagefile)
 
 .PHONY: update-sage
-update-sage:
-	@cd .sage && go get -d go.einride.tech/sage@latest && go mod tidy && go run .
+update-sage: $(go)
+	@cd .sage && $(go) get -d go.einride.tech/sage@latest && $(go) mod tidy && $(go) run .
 
 .PHONY: clean-sage
 clean-sage:
