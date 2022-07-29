@@ -18,6 +18,15 @@ type ShipmentResourceName struct {
 	Shipment string
 }
 
+func (n ShipperResourceName) ShipmentResourceName(
+	shipment string,
+) ShipmentResourceName {
+	return ShipmentResourceName{
+		Shipper:  n.Shipper,
+		Shipment: shipment,
+	}
+}
+
 func (n ShipmentResourceName) Validate() error {
 	if n.Shipper == "" {
 		return fmt.Errorf("shipper: empty")

@@ -18,6 +18,15 @@ type SiteResourceName struct {
 	Site    string
 }
 
+func (n ShipperResourceName) SiteResourceName(
+	site string,
+) SiteResourceName {
+	return SiteResourceName{
+		Shipper: n.Shipper,
+		Site:    site,
+	}
+}
+
 func (n SiteResourceName) Validate() error {
 	if n.Shipper == "" {
 		return fmt.Errorf("shipper: empty")

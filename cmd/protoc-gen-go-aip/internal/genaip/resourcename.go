@@ -73,6 +73,22 @@ func (r resourceNameCodeGenerator) generatePatternStruct(
 		}
 	}
 	g.P("}")
+	var parentConstructorsErr error
+	aipreflect.RangeParentResourcesInPackage(
+		r.files,
+		r.file.Desc.Package(),
+		pattern,
+		func(parent *annotations.ResourceDescriptor) bool {
+			if err := r.generateParentConstructorMethod(g, pattern, typeName, parent); err != nil {
+				parentConstructorsErr = err
+				return false
+			}
+			return true
+		},
+	)
+	if parentConstructorsErr != nil {
+		return parentConstructorsErr
+	}
 	if err := r.generateValidateMethod(g, pattern, typeName); err != nil {
 		return err
 	}
@@ -102,6 +118,63 @@ func (r resourceNameCodeGenerator) generatePatternStruct(
 		},
 	)
 	return parentErr
+}
+
+func (r *resourceNameCodeGenerator) generateParentConstructorMethod(
+	g *protogen.GeneratedFile,
+	pattern string,
+	typeName string,
+	parent *annotations.ResourceDescriptor,
+) error {
+	var parentPattern string
+	for _, parentCandidate := range parent.Pattern {
+		if resourcename.HasParent(pattern, parentCandidate) {
+			parentPattern = parentCandidate
+			break
+		}
+	}
+	if parentPattern == "" {
+		return nil
+	}
+	pg := resourceNameCodeGenerator{resource: parent, file: r.file, files: r.files}
+	parentStruct := pg.StructName(parentPattern)
+	g.P()
+	g.P("func (n ", parentStruct, ") ", typeName, "(")
+	var sc resourcename.Scanner
+	sc.Init(strings.TrimPrefix(pattern, parentPattern))
+	for sc.Scan() {
+		if sc.Segment().IsVariable() {
+			g.P(strcase.LowerCamelCase(string(sc.Segment().Literal())), " string,")
+		}
+	}
+	g.P(") ", typeName, " {")
+	g.P("return ", typeName, "{")
+	sc.Init(parentPattern)
+	for sc.Scan() {
+		if sc.Segment().IsVariable() {
+			g.P(
+				strcase.UpperCamelCase(string(sc.Segment().Literal())),
+				": ",
+				"n.",
+				strcase.UpperCamelCase(string(sc.Segment().Literal())),
+				",",
+			)
+		}
+	}
+	sc.Init(strings.TrimPrefix(pattern, parentPattern))
+	for sc.Scan() {
+		if sc.Segment().IsVariable() {
+			g.P(
+				strcase.UpperCamelCase(string(sc.Segment().Literal())),
+				": ",
+				strcase.LowerCamelCase(string(sc.Segment().Literal())),
+				",",
+			)
+		}
+	}
+	g.P("}")
+	g.P("}")
+	return nil
 }
 
 func (r *resourceNameCodeGenerator) generateParentMethod(
