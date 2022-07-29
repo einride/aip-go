@@ -23,53 +23,69 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FreightServiceClient interface {
 	// Get a shipper.
+	//
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetShipper(ctx context.Context, in *GetShipperRequest, opts ...grpc.CallOption) (*Shipper, error)
 	// List shippers.
+	//
 	// See: https://google.aip.dev/132 (Standard methods: List).
 	ListShippers(ctx context.Context, in *ListShippersRequest, opts ...grpc.CallOption) (*ListShippersResponse, error)
 	// Create a shipper.
+	//
 	// See: https://google.aip.dev/133 (Standard methods: Create).
 	CreateShipper(ctx context.Context, in *CreateShipperRequest, opts ...grpc.CallOption) (*Shipper, error)
 	// Update a shipper.
+	//
 	// See: https://google.aip.dev/134 (Standard methods: Update).
 	UpdateShipper(ctx context.Context, in *UpdateShipperRequest, opts ...grpc.CallOption) (*Shipper, error)
 	// Delete a shipper.
+	//
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteShipper(ctx context.Context, in *DeleteShipperRequest, opts ...grpc.CallOption) (*Shipper, error)
 	// Get a site.
+	//
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetSite(ctx context.Context, in *GetSiteRequest, opts ...grpc.CallOption) (*Site, error)
 	// List sites for a shipper.
+	//
 	// See: https://google.aip.dev/132 (Standard methods: List).
 	ListSites(ctx context.Context, in *ListSitesRequest, opts ...grpc.CallOption) (*ListSitesResponse, error)
 	// Create a site.
+	//
 	// See: https://google.aip.dev/133 (Standard methods: Create).
 	CreateSite(ctx context.Context, in *CreateSiteRequest, opts ...grpc.CallOption) (*Site, error)
 	// Update a site.
+	//
 	// See: https://google.aip.dev/134 (Standard methods: Update).
 	UpdateSite(ctx context.Context, in *UpdateSiteRequest, opts ...grpc.CallOption) (*Site, error)
 	// Delete a site.
+	//
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteSite(ctx context.Context, in *DeleteSiteRequest, opts ...grpc.CallOption) (*Site, error)
 	// Batch get sites.
+	//
 	// See: https://google.aip.dev/231 (Batch methods: Get).
 	BatchGetSites(ctx context.Context, in *BatchGetSitesRequest, opts ...grpc.CallOption) (*BatchGetSitesResponse, error)
 	// Get a shipment.
+	//
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetShipment(ctx context.Context, in *GetShipmentRequest, opts ...grpc.CallOption) (*Shipment, error)
 	// List shipments for a shipper.
+	//
 	// See: https://google.aip.dev/132 (Standard methods: List).
 	ListShipments(ctx context.Context, in *ListShipmentsRequest, opts ...grpc.CallOption) (*ListShipmentsResponse, error)
 	// Create a shipment.
+	//
 	// See: https://google.aip.dev/133 (Standard methods: Create).
 	CreateShipment(ctx context.Context, in *CreateShipmentRequest, opts ...grpc.CallOption) (*Shipment, error)
 	// Update a shipment.
+	//
 	// See: https://google.aip.dev/134 (Standard methods: Update).
 	UpdateShipment(ctx context.Context, in *UpdateShipmentRequest, opts ...grpc.CallOption) (*Shipment, error)
 	// Delete a shipment.
+	//
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteShipment(ctx context.Context, in *DeleteShipmentRequest, opts ...grpc.CallOption) (*Shipment, error)
@@ -232,53 +248,69 @@ func (c *freightServiceClient) DeleteShipment(ctx context.Context, in *DeleteShi
 // for forward compatibility
 type FreightServiceServer interface {
 	// Get a shipper.
+	//
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetShipper(context.Context, *GetShipperRequest) (*Shipper, error)
 	// List shippers.
+	//
 	// See: https://google.aip.dev/132 (Standard methods: List).
 	ListShippers(context.Context, *ListShippersRequest) (*ListShippersResponse, error)
 	// Create a shipper.
+	//
 	// See: https://google.aip.dev/133 (Standard methods: Create).
 	CreateShipper(context.Context, *CreateShipperRequest) (*Shipper, error)
 	// Update a shipper.
+	//
 	// See: https://google.aip.dev/134 (Standard methods: Update).
 	UpdateShipper(context.Context, *UpdateShipperRequest) (*Shipper, error)
 	// Delete a shipper.
+	//
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteShipper(context.Context, *DeleteShipperRequest) (*Shipper, error)
 	// Get a site.
+	//
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetSite(context.Context, *GetSiteRequest) (*Site, error)
 	// List sites for a shipper.
+	//
 	// See: https://google.aip.dev/132 (Standard methods: List).
 	ListSites(context.Context, *ListSitesRequest) (*ListSitesResponse, error)
 	// Create a site.
+	//
 	// See: https://google.aip.dev/133 (Standard methods: Create).
 	CreateSite(context.Context, *CreateSiteRequest) (*Site, error)
 	// Update a site.
+	//
 	// See: https://google.aip.dev/134 (Standard methods: Update).
 	UpdateSite(context.Context, *UpdateSiteRequest) (*Site, error)
 	// Delete a site.
+	//
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteSite(context.Context, *DeleteSiteRequest) (*Site, error)
 	// Batch get sites.
+	//
 	// See: https://google.aip.dev/231 (Batch methods: Get).
 	BatchGetSites(context.Context, *BatchGetSitesRequest) (*BatchGetSitesResponse, error)
 	// Get a shipment.
+	//
 	// See: https://google.aip.dev/131 (Standard methods: Get).
 	GetShipment(context.Context, *GetShipmentRequest) (*Shipment, error)
 	// List shipments for a shipper.
+	//
 	// See: https://google.aip.dev/132 (Standard methods: List).
 	ListShipments(context.Context, *ListShipmentsRequest) (*ListShipmentsResponse, error)
 	// Create a shipment.
+	//
 	// See: https://google.aip.dev/133 (Standard methods: Create).
 	CreateShipment(context.Context, *CreateShipmentRequest) (*Shipment, error)
 	// Update a shipment.
+	//
 	// See: https://google.aip.dev/134 (Standard methods: Update).
 	UpdateShipment(context.Context, *UpdateShipmentRequest) (*Shipment, error)
 	// Delete a shipment.
+	//
 	// See: https://google.aip.dev/135 (Standard methods: Delete).
 	// See: https://google.aip.dev/164 (Soft delete).
 	DeleteShipment(context.Context, *DeleteShipmentRequest) (*Shipment, error)

@@ -15,18 +15,16 @@ import "google/protobuf/field_mask.proto";
 //
 // It defines the following resource model:
 //
-// - The API has a collection of [Shipper][einride.example.freight.v1.Shipper]
-//   resources, named `shippers/*`
+// - The API has a collection of Shipper resources.
 //
-// - Each Shipper has a collection of [Site][einride.example.freight.v1.Site]
-//   resources, named `shippers/*/sites/*`
+// - Each Shipper has a collection of Site resources.
 //
-// - Each Shipper has a collection of [Shipment][einride.example.freight.v1.Shipment]
-//   resources, named `shippers/*/shipments/*`
+// - Each Shipper has a collection of Shipment resources.
 service FreightService {
   option (google.api.default_host) = "freight-example.einride.tech";
 
   // Get a shipper.
+  //
   // See: https://google.aip.dev/131 (Standard methods: Get).
   rpc GetShipper(GetShipperRequest) returns (Shipper) {
     option (google.api.http) = {
@@ -36,6 +34,7 @@ service FreightService {
   }
 
   // List shippers.
+  //
   // See: https://google.aip.dev/132 (Standard methods: List).
   rpc ListShippers(ListShippersRequest) returns (ListShippersResponse) {
     option (google.api.http) = {
@@ -44,6 +43,7 @@ service FreightService {
   }
 
   // Create a shipper.
+  //
   // See: https://google.aip.dev/133 (Standard methods: Create).
   rpc CreateShipper(CreateShipperRequest) returns (Shipper) {
     option (google.api.http) = {
@@ -54,6 +54,7 @@ service FreightService {
   }
 
   // Update a shipper.
+  //
   // See: https://google.aip.dev/134 (Standard methods: Update).
   rpc UpdateShipper(UpdateShipperRequest) returns (Shipper) {
     option (google.api.http) = {
@@ -64,6 +65,7 @@ service FreightService {
   }
 
   // Delete a shipper.
+  //
   // See: https://google.aip.dev/135 (Standard methods: Delete).
   // See: https://google.aip.dev/164 (Soft delete).
   rpc DeleteShipper(DeleteShipperRequest) returns (Shipper) {
@@ -74,6 +76,7 @@ service FreightService {
   }
 
   // Get a site.
+  //
   // See: https://google.aip.dev/131 (Standard methods: Get).
   rpc GetSite(GetSiteRequest) returns (Site) {
     option (google.api.http) = {
@@ -83,6 +86,7 @@ service FreightService {
   }
 
   // List sites for a shipper.
+  //
   // See: https://google.aip.dev/132 (Standard methods: List).
   rpc ListSites(ListSitesRequest) returns (ListSitesResponse) {
     option (google.api.http) = {
@@ -92,6 +96,7 @@ service FreightService {
   }
 
   // Create a site.
+  //
   // See: https://google.aip.dev/133 (Standard methods: Create).
   rpc CreateSite(CreateSiteRequest) returns (Site) {
     option (google.api.http) = {
@@ -102,6 +107,7 @@ service FreightService {
   }
 
   // Update a site.
+  //
   // See: https://google.aip.dev/134 (Standard methods: Update).
   rpc UpdateSite(UpdateSiteRequest) returns (Site) {
     option (google.api.http) = {
@@ -112,6 +118,7 @@ service FreightService {
   }
 
   // Delete a site.
+  //
   // See: https://google.aip.dev/135 (Standard methods: Delete).
   // See: https://google.aip.dev/164 (Soft delete).
   rpc DeleteSite(DeleteSiteRequest) returns (Site) {
@@ -122,6 +129,7 @@ service FreightService {
   }
 
   // Batch get sites.
+  //
   // See: https://google.aip.dev/231 (Batch methods: Get).
   rpc BatchGetSites(BatchGetSitesRequest) returns (BatchGetSitesResponse) {
     option (google.api.http) = {
@@ -130,6 +138,7 @@ service FreightService {
   }
 
   // Get a shipment.
+  //
   // See: https://google.aip.dev/131 (Standard methods: Get).
   rpc GetShipment(GetShipmentRequest) returns (Shipment) {
     option (google.api.http) = {
@@ -139,6 +148,7 @@ service FreightService {
   }
 
   // List shipments for a shipper.
+  //
   // See: https://google.aip.dev/132 (Standard methods: List).
   rpc ListShipments(ListShipmentsRequest) returns (ListShipmentsResponse) {
     option (google.api.http) = {
@@ -148,6 +158,7 @@ service FreightService {
   }
 
   // Create a shipment.
+  //
   // See: https://google.aip.dev/133 (Standard methods: Create).
   rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {
     option (google.api.http) = {
@@ -158,6 +169,7 @@ service FreightService {
   }
 
   // Update a shipment.
+  //
   // See: https://google.aip.dev/134 (Standard methods: Update).
   rpc UpdateShipment(UpdateShipmentRequest) returns (Shipment) {
     option (google.api.http) = {
@@ -168,6 +180,7 @@ service FreightService {
   }
 
   // Delete a shipment.
+  //
   // See: https://google.aip.dev/135 (Standard methods: Delete).
   // See: https://google.aip.dev/164 (Soft delete).
   rpc DeleteShipment(DeleteShipmentRequest) returns (Shipment) {
@@ -258,7 +271,6 @@ message ListSitesRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
       type: "freight-example.einride.tech/Shipper"
-      child_type: "freight-example.einride.tech/Site"
     }
   ];
 
@@ -300,7 +312,7 @@ message CreateSiteRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "freight-example.einride.tech/Site"
+      type: "freight-example.einride.tech/Shipper"
     }
   ];
   // The site to create.
@@ -373,7 +385,6 @@ message ListShipmentsRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
       type: "freight-example.einride.tech/Shipper"
-      child_type: "freight-example.einride.tech/Shipment"
     }
   ];
 
@@ -407,7 +418,7 @@ message CreateShipmentRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "freight-example.einride.tech/Shipment"
+      type: "freight-example.einride.tech/Shipper"
     }
   ];
   // The shipment to create.
