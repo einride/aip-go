@@ -4,6 +4,18 @@ package test.single;
 
 import "google/api/resource.proto";
 
+message Shelf {
+  option (google.api.resource) = {
+    type: "test1.testdata/Shelf"
+    singular: "shelf"
+    plural: "shelves"
+    pattern: "shelves/{shelf}"
+  };
+
+  // The resource name of the shelf.
+  string name = 1;
+}
+
 message Book {
   option (google.api.resource) = {
     type: "test1.testdata/Book"
