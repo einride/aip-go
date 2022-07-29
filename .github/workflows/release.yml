@@ -16,9 +16,6 @@ jobs:
       - name: Make
         run: make
 
-      - name: Make
-        run: make
-
       - name: Release
         uses: go-semantic-release/action@v1.18
         with:
