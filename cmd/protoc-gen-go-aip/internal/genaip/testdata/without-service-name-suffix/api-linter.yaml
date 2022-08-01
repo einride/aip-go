@@ -1,0 +1,2 @@
+- included_paths: ["**"]
+  disabled_rules: ["core"]

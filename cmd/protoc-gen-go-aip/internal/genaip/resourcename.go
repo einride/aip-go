@@ -7,15 +7,19 @@ import (
 	"github.com/stoewer/go-strcase"
 	"go.einride.tech/aip/reflect/aipreflect"
 	"go.einride.tech/aip/resourcename"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 type resourceNameCodeGenerator struct {
-	resource *annotations.ResourceDescriptor
-	file     *protogen.File
-	files    *protoregistry.Files
+	resource                *annotations.ResourceDescriptor
+	file                    *protogen.File
+	files                   *protoregistry.Files
+	includeServiceName      bool
+	removeServiceNameSuffix []string
 }
 
 func (r resourceNameCodeGenerator) GenerateCode(g *protogen.GeneratedFile) error {
@@ -120,7 +124,13 @@ func (r *resourceNameCodeGenerator) generateParentMethod(
 	if parentPattern == "" {
 		return nil
 	}
-	pg := resourceNameCodeGenerator{resource: parent, file: r.file, files: r.files}
+	pg := resourceNameCodeGenerator{
+		resource:                parent,
+		file:                    r.file,
+		files:                   r.files,
+		includeServiceName:      r.includeServiceName,
+		removeServiceNameSuffix: r.removeServiceNameSuffix,
+	}
 	parentStruct := pg.StructName(parentPattern)
 	g.P()
 	g.P("func (n ", typeName, ") ", parentStruct, "() ", parentStruct, " {")
@@ -300,7 +310,20 @@ func (r *resourceNameCodeGenerator) generateMultiPatternParseMethod(g *protogen.
 }
 
 func (r *resourceNameCodeGenerator) SinglePatternStructName() string {
-	return aipreflect.ResourceType(r.resource.Type).Type() + "ResourceName"
+	var builder strings.Builder
+	rt := aipreflect.ResourceType(r.resource.Type)
+	if r.includeServiceName {
+		prefix := rt.ServiceName()
+		for _, s := range r.removeServiceNameSuffix {
+			prefix = strings.TrimSuffix(prefix, s)
+		}
+		split := strings.ReplaceAll(prefix, ".", " ")
+		title := cases.Title(language.AmericanEnglish).String(split)
+		builder.WriteString(strings.ReplaceAll(title, " ", ""))
+	}
+	builder.WriteString(rt.Type())
+	builder.WriteString("ResourceName")
+	return builder.String()
 }
 
 func (r *resourceNameCodeGenerator) StructName(pattern string) string {
@@ -313,6 +336,7 @@ func (r *resourceNameCodeGenerator) StructName(pattern string) string {
 	return r.MultiPatternStructName(pattern)
 }
 
+// TODO: Add support for including service name.
 func (r *resourceNameCodeGenerator) MultiPatternStructName(pattern string) string {
 	var result strings.Builder
 	var sc resourcename.Scanner

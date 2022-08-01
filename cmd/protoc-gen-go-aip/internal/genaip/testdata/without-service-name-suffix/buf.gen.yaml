@@ -1,0 +1,17 @@
+version: v1
+
+managed:
+  enabled: true
+  go_package_prefix:
+    default: go.einride.tech/aip/cmd/protoc-gen-go-aip/internal/genaip/without-service-name-suffix
+    except:
+      - buf.build/googleapis/googleapis
+
+plugins:
+  - name: go-aip
+    out: .
+    opt:
+      - module=go.einride.tech/aip/cmd/protoc-gen-go-aip/internal/genaip/without-service-name-suffix
+      - include_service_name=true
+      - remove_service_name_suffix=.testdata+.otherdata
+    path: ../../../../../../.sage/bin/protoc-gen-go-aip

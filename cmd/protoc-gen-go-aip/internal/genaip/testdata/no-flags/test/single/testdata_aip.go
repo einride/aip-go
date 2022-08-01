@@ -13,12 +13,12 @@ import (
 	strings "strings"
 )
 
-type BookResourceName struct {
+type Test1TestdataBookResourceName struct {
 	Shelf string
 	Book  string
 }
 
-func (n BookResourceName) Validate() error {
+func (n Test1TestdataBookResourceName) Validate() error {
 	if n.Shelf == "" {
 		return fmt.Errorf("shelf: empty")
 	}
@@ -34,11 +34,11 @@ func (n BookResourceName) Validate() error {
 	return nil
 }
 
-func (n BookResourceName) ContainsWildcard() bool {
+func (n Test1TestdataBookResourceName) ContainsWildcard() bool {
 	return false || n.Shelf == "-" || n.Book == "-"
 }
 
-func (n BookResourceName) String() string {
+func (n Test1TestdataBookResourceName) String() string {
 	return resourcename.Sprint(
 		"shelves/{shelf}/books/{book}",
 		n.Shelf,
@@ -46,14 +46,14 @@ func (n BookResourceName) String() string {
 	)
 }
 
-func (n BookResourceName) MarshalString() (string, error) {
+func (n Test1TestdataBookResourceName) MarshalString() (string, error) {
 	if err := n.Validate(); err != nil {
 		return "", err
 	}
 	return n.String(), nil
 }
 
-func (n *BookResourceName) UnmarshalString(name string) error {
+func (n *Test1TestdataBookResourceName) UnmarshalString(name string) error {
 	return resourcename.Sscan(
 		name,
 		"shelves/{shelf}/books/{book}",

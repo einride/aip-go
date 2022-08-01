@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"go.einride.tech/sage/sg"
 	"go.einride.tech/sage/sgtool"
@@ -65,7 +69,27 @@ func (Proto) APILinterLint(ctx context.Context) error {
 func (Proto) BufGenerateTestdata(ctx context.Context) error {
 	sg.Deps(ctx, Proto.ProtocGenGoAIP)
 	sg.Logger(ctx).Println("generating testdata stubs...")
-	cmd := sgbuf.Command(ctx, "generate", "--path", "test")
-	cmd.Dir = sg.FromGitRoot("cmd/protoc-gen-go-aip/internal/genaip/testdata")
-	return cmd.Run()
+	base := sg.FromGitRoot("cmd/protoc-gen-go-aip/internal/genaip/testdata")
+	return filepath.WalkDir(
+		base,
+		func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			relPath, err := filepath.Rel(base, path)
+			if err != nil {
+				return err
+			}
+
+			if path == base {
+				return nil
+			} else if !d.IsDir() || strings.Count(relPath, string(os.PathSeparator)) != 0 { // // Only walk 1 level deep
+				return nil
+			}
+
+			cmd := sgbuf.Command(ctx, "generate", "--path", "test")
+			cmd.Dir = path
+			return cmd.Run()
+		},
+	)
 }

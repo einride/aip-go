@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package test.single;
+
+import "google/api/resource.proto";
+
+option (google.api.resource_definition) = {
+  type: "test1.testdata/Book"
+  pattern: "shelves/{shelf}/books/{book}"
+};
+
+option (google.api.resource_definition) = {
+  type: "test2.testdata/Book"
+  pattern: "shelves/{shelf}/books/{book}"
+};

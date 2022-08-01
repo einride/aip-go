@@ -21,22 +21,22 @@ type BookMultiPatternResourceName interface {
 func ParseBookMultiPatternResourceName(name string) (BookMultiPatternResourceName, error) {
 	switch {
 	case resourcename.Match("shelves/{shelf}/books/{book}", name):
-		var result ShelvesBookResourceName
+		var result ShelvesTest1TestdataBookResourceName
 		return &result, result.UnmarshalString(name)
 	case resourcename.Match("publishers/{publisher}/books/{book}", name):
-		var result PublishersBookResourceName
+		var result PublishersTest1TestdataBookResourceName
 		return &result, result.UnmarshalString(name)
 	default:
 		return nil, fmt.Errorf("no matching pattern")
 	}
 }
 
-type ShelvesBookResourceName struct {
+type ShelvesTest1TestdataBookResourceName struct {
 	Shelf string
 	Book  string
 }
 
-func (n ShelvesBookResourceName) Validate() error {
+func (n ShelvesTest1TestdataBookResourceName) Validate() error {
 	if n.Shelf == "" {
 		return fmt.Errorf("shelf: empty")
 	}
@@ -52,11 +52,11 @@ func (n ShelvesBookResourceName) Validate() error {
 	return nil
 }
 
-func (n ShelvesBookResourceName) ContainsWildcard() bool {
+func (n ShelvesTest1TestdataBookResourceName) ContainsWildcard() bool {
 	return false || n.Shelf == "-" || n.Book == "-"
 }
 
-func (n ShelvesBookResourceName) String() string {
+func (n ShelvesTest1TestdataBookResourceName) String() string {
 	return resourcename.Sprint(
 		"shelves/{shelf}/books/{book}",
 		n.Shelf,
@@ -64,14 +64,14 @@ func (n ShelvesBookResourceName) String() string {
 	)
 }
 
-func (n ShelvesBookResourceName) MarshalString() (string, error) {
+func (n ShelvesTest1TestdataBookResourceName) MarshalString() (string, error) {
 	if err := n.Validate(); err != nil {
 		return "", err
 	}
 	return n.String(), nil
 }
 
-func (n *ShelvesBookResourceName) UnmarshalString(name string) error {
+func (n *ShelvesTest1TestdataBookResourceName) UnmarshalString(name string) error {
 	return resourcename.Sscan(
 		name,
 		"shelves/{shelf}/books/{book}",
@@ -80,12 +80,12 @@ func (n *ShelvesBookResourceName) UnmarshalString(name string) error {
 	)
 }
 
-type PublishersBookResourceName struct {
+type PublishersTest1TestdataBookResourceName struct {
 	Publisher string
 	Book      string
 }
 
-func (n PublishersBookResourceName) Validate() error {
+func (n PublishersTest1TestdataBookResourceName) Validate() error {
 	if n.Publisher == "" {
 		return fmt.Errorf("publisher: empty")
 	}
@@ -101,11 +101,11 @@ func (n PublishersBookResourceName) Validate() error {
 	return nil
 }
 
-func (n PublishersBookResourceName) ContainsWildcard() bool {
+func (n PublishersTest1TestdataBookResourceName) ContainsWildcard() bool {
 	return false || n.Publisher == "-" || n.Book == "-"
 }
 
-func (n PublishersBookResourceName) String() string {
+func (n PublishersTest1TestdataBookResourceName) String() string {
 	return resourcename.Sprint(
 		"publishers/{publisher}/books/{book}",
 		n.Publisher,
@@ -113,14 +113,14 @@ func (n PublishersBookResourceName) String() string {
 	)
 }
 
-func (n PublishersBookResourceName) MarshalString() (string, error) {
+func (n PublishersTest1TestdataBookResourceName) MarshalString() (string, error) {
 	if err := n.Validate(); err != nil {
 		return "", err
 	}
 	return n.String(), nil
 }
 
-func (n *PublishersBookResourceName) UnmarshalString(name string) error {
+func (n *PublishersTest1TestdataBookResourceName) UnmarshalString(name string) error {
 	return resourcename.Sscan(
 		name,
 		"publishers/{publisher}/books/{book}",

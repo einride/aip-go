@@ -17,6 +17,14 @@ const generatedFilenameSuffix = "_aip.go"
 
 type Config struct {
 	IncludeResourceDefinitions bool
+	// This include the service name as part of the generated resource name.
+	// For example `mydomain.test.com/Book` becomes `MydomainTestComBookResourceName`
+	IncludeServiceName bool
+	// Only relevant is IncludeServiceName is true.
+	// A list of suffixes to be removed before generating the resource name struct.
+	// For example if the service name is `mydomain.test.com/Book` and this is set to `[]string{".test.com"}`
+	// then the generated struct becomes `MydomainBookResourceName`.
+	RemoveServiceNameSuffix []string
 }
 
 // Run the AIP Go protobuf compiler plugin.
@@ -43,9 +51,11 @@ func Run(gen *protogen.Plugin, config Config) error {
 				}
 				g.Unskip()
 				if err := (resourceNameCodeGenerator{
-					resource: resource,
-					files:    &files,
-					file:     file,
+					resource:                resource,
+					files:                   &files,
+					file:                    file,
+					includeServiceName:      config.IncludeServiceName,
+					removeServiceNameSuffix: config.RemoveServiceNameSuffix,
 				}).GenerateCode(g); err != nil {
 					rangeErr = err
 					return false
