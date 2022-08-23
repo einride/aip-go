@@ -127,7 +127,7 @@ func TestScan(t *testing.T) {
 	})
 }
 
-// nolint: gochecknoglobals
+//nolint: gochecknoglobals
 var benchmarkScanSink string
 
 func BenchmarkScan(b *testing.B) {
