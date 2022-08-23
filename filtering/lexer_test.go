@@ -350,7 +350,7 @@ func TestLexer(t *testing.T) {
 	}
 }
 
-// nolint: gochecknoglobals
+//nolint: gochecknoglobals
 var tokenSink Token
 
 func BenchmarkLexer_Lex(b *testing.B) {

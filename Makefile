@@ -3,13 +3,14 @@
 
 .DEFAULT_GOAL := all
 
-sagefile := .sage/bin/sagefile
+cwd := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+sagefile := $(abspath $(cwd)/.sage/bin/sagefile)
 
 # Setup Go.
 go := $(shell command -v go 2>/dev/null)
 ifndef go
 SAGE_GO_VERSION ?= 1.18.4
-export GOROOT := .sage/tools/go/$(SAGE_GO_VERSION)/go
+export GOROOT := $(abspath $(cwd)/.sage/tools/go/$(SAGE_GO_VERSION)/go)
 export PATH := $(PATH):$(GOROOT)/bin
 go := $(GOROOT)/bin/go
 os := $(shell uname | tr '[:upper:]' '[:lower:]')
