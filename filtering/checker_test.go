@@ -356,6 +356,63 @@ func TestChecker(t *testing.T) {
 		},
 
 		{
+			filter: `create_time = "2022-08-12 22:22:22"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+			errorContains: "invalid timestamp. Should be in RFC3339 format",
+		},
+
+		{
+			filter: `create_time = "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
+			filter: `create_time != "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
+			filter: `create_time < "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
+			filter: `create_time > "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
+			filter: `create_time <= "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
+			filter: `create_time >= "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
 			filter:        "<",
 			errorContains: "unexpected token <",
 		},
