@@ -187,13 +187,24 @@ func (c *Checker) checkCallExprBuiltinFunctionOverloads(
 	case FunctionOverloadTimestampString:
 		if constExpr := callExpr.Args[0].GetConstExpr(); constExpr != nil {
 			if _, err := time.Parse(time.RFC3339, constExpr.GetStringValue()); err != nil {
-				return c.errorf(callExpr.Args[0], "invalid timestamp")
+				return c.errorf(callExpr.Args[0], "invalid timestamp. Should be in RFC3339 format")
 			}
 		}
 	case FunctionOverloadDurationString:
 		if constExpr := callExpr.Args[0].GetConstExpr(); constExpr != nil {
 			if _, err := time.ParseDuration(constExpr.GetStringValue()); err != nil {
 				return c.errorf(callExpr.Args[0], "invalid duration")
+			}
+		}
+	case FunctionOverloadLessThanTimestampString,
+		FunctionOverloadGreaterThanTimestampString,
+		FunctionOverloadLessEqualsTimestampString,
+		FunctionOverloadGreaterEqualsTimestampString,
+		FunctionOverloadEqualsTimestampString,
+		FunctionOverloadNotEqualsTimestampString:
+		if constExpr := callExpr.Args[1].GetConstExpr(); constExpr != nil {
+			if _, err := time.Parse(time.RFC3339, constExpr.GetStringValue()); err != nil {
+				return c.errorf(callExpr.Args[0], "invalid timestamp. Should be in RFC3339 format")
 			}
 		}
 	}
