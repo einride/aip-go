@@ -3,7 +3,7 @@ version: v1
 name: buf.build/einride/aip
 
 deps:
-  - buf.build/googleapis/googleapis
+  - buf.build/einride/googleapis
 
 lint:
   use:

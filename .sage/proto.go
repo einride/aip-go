@@ -13,7 +13,7 @@ type Proto sg.Namespace
 
 func (Proto) All(ctx context.Context) error {
 	sg.Deps(ctx, Proto.BufFormat, Proto.BufLint)
-	sg.Deps(ctx, Proto.APILinterLint, Proto.BufGenerate)
+	sg.Deps(ctx, Proto.BufGenerate)
 	sg.Deps(ctx, Proto.BufGenerateTestdata)
 	return nil
 }
