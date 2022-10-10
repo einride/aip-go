@@ -8,6 +8,7 @@ sagefile := $(abspath $(cwd)/.sage/bin/sagefile)
 
 # Setup Go.
 go := $(shell command -v go 2>/dev/null)
+export GOWORK ?= off
 ifndef go
 SAGE_GO_VERSION ?= 1.18.4
 export GOROOT := $(abspath $(cwd)/.sage/tools/go/$(SAGE_GO_VERSION)/go)
