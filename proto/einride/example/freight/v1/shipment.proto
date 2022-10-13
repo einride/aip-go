@@ -62,6 +62,9 @@ message Shipment {
 
   // Annotations of the shipment.
   map<string, string> annotations = 12;
+
+  // Reference ID provided by external system.
+  string external_reference_id = 13 [(google.api.field_behavior) = IMMUTABLE];
 }
 
 // A shipment line item.
@@ -74,4 +77,6 @@ message LineItem {
   float weight_kg = 3;
   // The volume of the line item in cubic meters.
   float volume_m3 = 4;
+  // Reference ID provided by external system.
+  string external_reference_id = 5 [(google.api.field_behavior) = IMMUTABLE];
 }
