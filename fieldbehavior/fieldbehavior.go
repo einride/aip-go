@@ -29,6 +29,10 @@ func Has(field protoreflect.FieldDescriptor, want annotations.FieldBehavior) boo
 }
 
 // ClearFields clears all fields annotated with any of the provided behaviors.
+// This can be used to ignore fields provided as input that have field_behavior's
+// such as OUTPUT_ONLY and IMMUTABLE.
+//
+// See: https://google.aip.dev/161#output-only-fields
 func ClearFields(message proto.Message, behaviorsToClear ...annotations.FieldBehavior) {
 	clearFieldsWithBehaviors(message, behaviorsToClear...)
 }
