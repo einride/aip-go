@@ -7,14 +7,28 @@ import (
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/genproto/googleapis/example/library/v1"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/assert/cmp"
 )
 
-func TestValidateRequiredFields(t *testing.T) {
+func TestClearFields(t *testing.T) {
 	t.Parallel()
-	assert.NilError(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{Name: "testbook"}))
-	assert.Error(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{}), "missing required field: name")
+	t.Run("clear fields with set field_behavior", func(t *testing.T) {
+		t.Parallel()
+
+		site := &examplefreightv1.Site{
+			Name:        "site1",           // has no field_behaviors; should not be cleared.
+			CreateTime:  timestamppb.Now(), // has OUTPUT_ONLY field_behavior; should be cleared.
+			DisplayName: "site one",        // has REQUIRED field_behavior; should not be cleared.
+		}
+
+		ClearFields(site, annotations.FieldBehavior_OUTPUT_ONLY)
+
+		assert.Equal(t, site.CreateTime, (*timestamppb.Timestamp)(nil))
+		assert.Equal(t, site.DisplayName, "site one")
+		assert.Equal(t, site.Name, "site1")
+	})
 }
 
 func TestCopyFields(t *testing.T) {
@@ -25,6 +39,12 @@ func TestCopyFields(t *testing.T) {
 			CopyFields(&library.Book{}, &library.Shelf{}, annotations.FieldBehavior_REQUIRED)
 		}))
 	})
+}
+
+func TestValidateRequiredFields(t *testing.T) {
+	t.Parallel()
+	assert.NilError(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{Name: "testbook"}))
+	assert.Error(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{}), "missing required field: name")
 }
 
 func TestValidateRequiredFieldsWithMask(t *testing.T) {
@@ -95,7 +115,6 @@ func TestValidateRequiredFieldsWithMask(t *testing.T) {
 			),
 		)
 	})
-
 	t.Run("support maps", func(t *testing.T) {
 		t.Parallel()
 		assert.NilError(
