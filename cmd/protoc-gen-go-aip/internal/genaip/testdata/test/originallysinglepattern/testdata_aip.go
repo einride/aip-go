@@ -36,6 +36,15 @@ type BookResourceName struct {
 	Book  string
 }
 
+func (n ShelfResourceName) BookResourceName(
+	book string,
+) BookResourceName {
+	return BookResourceName{
+		Shelf: n.Shelf,
+		Book:  book,
+	}
+}
+
 func (n BookResourceName) Validate() error {
 	if n.Shelf == "" {
 		return fmt.Errorf("shelf: empty")
@@ -80,9 +89,24 @@ func (n *BookResourceName) UnmarshalString(name string) error {
 	)
 }
 
+func (n BookResourceName) ShelfResourceName() ShelfResourceName {
+	return ShelfResourceName{
+		Shelf: n.Shelf,
+	}
+}
+
 type ShelvesBookResourceName struct {
 	Shelf string
 	Book  string
+}
+
+func (n ShelfResourceName) ShelvesBookResourceName(
+	book string,
+) ShelvesBookResourceName {
+	return ShelvesBookResourceName{
+		Shelf: n.Shelf,
+		Book:  book,
+	}
 }
 
 func (n ShelvesBookResourceName) Validate() error {
@@ -127,6 +151,12 @@ func (n *ShelvesBookResourceName) UnmarshalString(name string) error {
 		&n.Shelf,
 		&n.Book,
 	)
+}
+
+func (n ShelvesBookResourceName) ShelfResourceName() ShelfResourceName {
+	return ShelfResourceName{
+		Shelf: n.Shelf,
+	}
 }
 
 type PublishersBookResourceName struct {
@@ -175,5 +205,164 @@ func (n *PublishersBookResourceName) UnmarshalString(name string) error {
 		"publishers/{publisher}/books/{book}",
 		&n.Publisher,
 		&n.Book,
+	)
+}
+
+type ShelfMultiPatternResourceName interface {
+	fmt.Stringer
+	MarshalString() (string, error)
+}
+
+func ParseShelfMultiPatternResourceName(name string) (ShelfMultiPatternResourceName, error) {
+	switch {
+	case resourcename.Match("shelves/{shelf}", name):
+		var result ShelfResourceName
+		return &result, result.UnmarshalString(name)
+	case resourcename.Match("libraries/{library}/shelves/{shelf}", name):
+		var result LibrariesShelfResourceName
+		return &result, result.UnmarshalString(name)
+	case resourcename.Match("rooms/{room}/shelves/{shelf}", name):
+		var result RoomsShelfResourceName
+		return &result, result.UnmarshalString(name)
+	default:
+		return nil, fmt.Errorf("no matching pattern")
+	}
+}
+
+type ShelfResourceName struct {
+	Shelf string
+}
+
+func (n ShelfResourceName) Validate() error {
+	if n.Shelf == "" {
+		return fmt.Errorf("shelf: empty")
+	}
+	if strings.IndexByte(n.Shelf, '/') != -1 {
+		return fmt.Errorf("shelf: contains illegal character '/'")
+	}
+	return nil
+}
+
+func (n ShelfResourceName) ContainsWildcard() bool {
+	return false || n.Shelf == "-"
+}
+
+func (n ShelfResourceName) String() string {
+	return resourcename.Sprint(
+		"shelves/{shelf}",
+		n.Shelf,
+	)
+}
+
+func (n ShelfResourceName) MarshalString() (string, error) {
+	if err := n.Validate(); err != nil {
+		return "", err
+	}
+	return n.String(), nil
+}
+
+func (n *ShelfResourceName) UnmarshalString(name string) error {
+	return resourcename.Sscan(
+		name,
+		"shelves/{shelf}",
+		&n.Shelf,
+	)
+}
+
+type LibrariesShelfResourceName struct {
+	Library string
+	Shelf   string
+}
+
+func (n LibrariesShelfResourceName) Validate() error {
+	if n.Library == "" {
+		return fmt.Errorf("library: empty")
+	}
+	if strings.IndexByte(n.Library, '/') != -1 {
+		return fmt.Errorf("library: contains illegal character '/'")
+	}
+	if n.Shelf == "" {
+		return fmt.Errorf("shelf: empty")
+	}
+	if strings.IndexByte(n.Shelf, '/') != -1 {
+		return fmt.Errorf("shelf: contains illegal character '/'")
+	}
+	return nil
+}
+
+func (n LibrariesShelfResourceName) ContainsWildcard() bool {
+	return false || n.Library == "-" || n.Shelf == "-"
+}
+
+func (n LibrariesShelfResourceName) String() string {
+	return resourcename.Sprint(
+		"libraries/{library}/shelves/{shelf}",
+		n.Library,
+		n.Shelf,
+	)
+}
+
+func (n LibrariesShelfResourceName) MarshalString() (string, error) {
+	if err := n.Validate(); err != nil {
+		return "", err
+	}
+	return n.String(), nil
+}
+
+func (n *LibrariesShelfResourceName) UnmarshalString(name string) error {
+	return resourcename.Sscan(
+		name,
+		"libraries/{library}/shelves/{shelf}",
+		&n.Library,
+		&n.Shelf,
+	)
+}
+
+type RoomsShelfResourceName struct {
+	Room  string
+	Shelf string
+}
+
+func (n RoomsShelfResourceName) Validate() error {
+	if n.Room == "" {
+		return fmt.Errorf("room: empty")
+	}
+	if strings.IndexByte(n.Room, '/') != -1 {
+		return fmt.Errorf("room: contains illegal character '/'")
+	}
+	if n.Shelf == "" {
+		return fmt.Errorf("shelf: empty")
+	}
+	if strings.IndexByte(n.Shelf, '/') != -1 {
+		return fmt.Errorf("shelf: contains illegal character '/'")
+	}
+	return nil
+}
+
+func (n RoomsShelfResourceName) ContainsWildcard() bool {
+	return false || n.Room == "-" || n.Shelf == "-"
+}
+
+func (n RoomsShelfResourceName) String() string {
+	return resourcename.Sprint(
+		"rooms/{room}/shelves/{shelf}",
+		n.Room,
+		n.Shelf,
+	)
+}
+
+func (n RoomsShelfResourceName) MarshalString() (string, error) {
+	if err := n.Validate(); err != nil {
+		return "", err
+	}
+	return n.String(), nil
+}
+
+func (n *RoomsShelfResourceName) UnmarshalString(name string) error {
+	return resourcename.Sscan(
+		name,
+		"rooms/{room}/shelves/{shelf}",
+		&n.Room,
+		&n.Shelf,
 	)
 }

@@ -42,7 +42,7 @@ func TestShelfResourceName(t *testing.T) {
 	t.Run("good", func(t *testing.T) {
 		const shelf = "shelf"
 		pattern := fmt.Sprintf("shelves/%s", shelf)
-		name := ShelfResourceName{}
+		var name ShelfResourceName
 		err := name.UnmarshalString(pattern)
 		assert.NilError(t, err)
 		assert.Equal(t, name.Shelf, shelf)
@@ -53,14 +53,14 @@ func TestShelfResourceName(t *testing.T) {
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		name := ShelfResourceName{}
-		err := name.UnmarshalString(fmt.Sprintf("others/other"))
+		var name ShelfResourceName
+		err := name.UnmarshalString("others/other")
 		assert.Error(t, err, "parse resource name 'others/other' with pattern 'shelves/{shelf}': segment shelves: got others")
 	})
 
 	t.Run("bad wrong parent", func(t *testing.T) {
-		name := ShelfResourceName{}
-		err := name.UnmarshalString(fmt.Sprintf("others/other/shelves/shelf"))
+		var name ShelfResourceName
+		err := name.UnmarshalString("others/other/shelves/shelf")
 		assert.Error(t, err, "parse resource name 'others/other/shelves/shelf' with pattern 'shelves/{shelf}': segment shelves: got others")
 	})
 }
