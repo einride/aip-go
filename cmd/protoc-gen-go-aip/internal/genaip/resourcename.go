@@ -33,18 +33,27 @@ func (r resourceNameCodeGenerator) GenerateCode(g *protogen.GeneratedFile) error
 			return err
 		}
 	}
+
 	// Generate the single-pattern struct unless we explicitly only want multi-patterns from the start.
-	if !hasFutureMultiPattern {
+	firstPattern := r.resource.Pattern[0]
+	shouldGenerateSinglePatternStruct := !hasFutureMultiPattern
+	firstSinglePatternStructName := r.SinglePatternStructName()
+	if shouldGenerateSinglePatternStruct {
 		if err := r.generatePatternStruct(
-			g, r.resource.Pattern[0], r.SinglePatternStructName(),
+			g, firstPattern, firstSinglePatternStructName,
 		); err != nil {
 			return err
 		}
 	}
 	// Generate the multi-pattern variant of the single-pattern struct if we need multi-pattern support.
-	if hasMultiPattern || hasFutureMultiPattern {
+	// If we've already generated single-pattern structs above, ignore top-level resources here as the
+	// multi-pattern variant of the single-pattern struct will be identical to the single-pattern struct.
+	firstMultiPatternStructName := r.MultiPatternStructName(firstPattern)
+	equalMultiSinglePatternStructName := firstMultiPatternStructName == firstSinglePatternStructName
+	avoidGeneratingSameSingleStruct := shouldGenerateSinglePatternStruct && equalMultiSinglePatternStructName
+	if (hasMultiPattern || hasFutureMultiPattern) && !avoidGeneratingSameSingleStruct {
 		if err := r.generatePatternStruct(
-			g, r.resource.Pattern[0], r.MultiPatternStructName(r.resource.Pattern[0]),
+			g, firstPattern, firstMultiPatternStructName,
 		); err != nil {
 			return err
 		}

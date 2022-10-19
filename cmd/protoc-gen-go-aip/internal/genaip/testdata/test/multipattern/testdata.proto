@@ -17,3 +17,19 @@ message Book {
   // The resource name of the book.
   string name = 1;
 }
+
+// Shelf can be either top-level, within a library or within a room.
+message Shelf {
+  option (google.api.resource) = {
+    type: "test1.testdata/Shelf"
+    singular: "shelf"
+    plural: "shelves"
+    pattern: "shelves/{shelf}"
+    pattern: "libraries/{library}/shelves/{shelf}"
+    pattern: "rooms/{room}/shelves/{shelf}"
+    history: FUTURE_MULTI_PATTERN
+  };
+
+  // The resource name.
+  string name = 1;
+}
