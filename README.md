@@ -1,3 +1,5 @@
+[![Go Reference](https://pkg.go.dev/badge/go.einride.tech/aip.svg)](https://pkg.go.dev/go.einride.tech/aip)
+
 AIP Go
 ======
 
