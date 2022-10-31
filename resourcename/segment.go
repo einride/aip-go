@@ -9,8 +9,8 @@ const RevisionSeparator = '@'
 //
 // EBNF
 //
-//  Segment  = Literal | Variable ;
-//  Variable = "{" Literal "}" ;
+//	Segment  = Literal | Variable ;
+//	Variable = "{" Literal "}" ;
 type Segment string
 
 // IsVariable reports whether the segment is a variable segment.
@@ -38,8 +38,8 @@ func (s Segment) IsWildcard() bool {
 //
 // EBNF
 //
-//  Literal  = RESOURCE_ID | RevisionLiteral ;
-//  RevisionLiteral = RESOURCE_ID "@" REVISION_ID ;
+//	Literal  = RESOURCE_ID | RevisionLiteral ;
+//	RevisionLiteral = RESOURCE_ID "@" REVISION_ID ;
 type Literal string
 
 // ResourceID returns the literal's resource ID.
