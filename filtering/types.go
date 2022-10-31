@@ -6,7 +6,8 @@ import (
 )
 
 // Primitive types.
-//nolint: gochecknoglobals
+//
+//nolint:gochecknoglobals
 var (
 	TypeInt    = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_INT64}}
 	TypeFloat  = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_DOUBLE}}
@@ -47,7 +48,8 @@ func TypeEnum(enumType protoreflect.EnumType) *expr.Type {
 }
 
 // Well-known types.
-//nolint: gochecknoglobals
+//
+//nolint:gochecknoglobals
 var (
 	TypeDuration  = &expr.Type{TypeKind: &expr.Type_WellKnown{WellKnown: expr.Type_DURATION}}
 	TypeTimestamp = &expr.Type{TypeKind: &expr.Type_WellKnown{WellKnown: expr.Type_TIMESTAMP}}

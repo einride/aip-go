@@ -97,7 +97,7 @@ func TestSegmentScanner(t *testing.T) {
 	}
 }
 
-//nolint: gochecknoglobals
+//nolint:gochecknoglobals
 var stringSink string
 
 func BenchmarkScanner(b *testing.B) {

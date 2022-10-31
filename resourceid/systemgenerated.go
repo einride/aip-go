@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-//nolint: gochecknoglobals
+//nolint:gochecknoglobals
 var base32Encoding = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").WithPadding(base32.NoPadding)
 
 // NewSystemGenerated returns a new system-generated resource ID.

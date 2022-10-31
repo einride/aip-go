@@ -1,5 +1,6 @@
 package genaip
 
 // PluginVersion is the version of the protoc-gen-go-aip plugin.
-//nolint: gochecknoglobals
+//
+//nolint:gochecknoglobals
 var PluginVersion = "development"

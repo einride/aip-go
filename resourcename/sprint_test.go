@@ -70,7 +70,7 @@ func TestSprint(t *testing.T) {
 	}
 }
 
-//nolint: gochecknoglobals
+//nolint:gochecknoglobals
 var benchmarkSprintSink string
 
 func BenchmarkSprint(b *testing.B) {

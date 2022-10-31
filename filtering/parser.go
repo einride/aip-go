@@ -64,9 +64,9 @@ func (p *Parser) SourceInfo() *expr.SourceInfo {
 //
 // EBNF
 //
-//  expression
-//    : sequence {WS AND WS sequence}
-//    ;
+//	expression
+//	  : sequence {WS AND WS sequence}
+//	  ;
 func (p *Parser) ParseExpression() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -97,9 +97,9 @@ func (p *Parser) ParseExpression() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  sequence
-//    : factor {WS factor}
-//    ;
+//	sequence
+//	  : factor {WS factor}
+//	  ;
 func (p *Parser) ParseSequence() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -135,9 +135,9 @@ func (p *Parser) ParseSequence() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  factor
-//    : term {WS OR WS term}
-//    ;
+//	factor
+//	  : term {WS OR WS term}
+//	  ;
 func (p *Parser) ParseFactor() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -170,9 +170,9 @@ func (p *Parser) ParseFactor() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  term
-//    : [(NOT WS | MINUS)] simple
-//    ;
+//	term
+//	  : [(NOT WS | MINUS)] simple
+//	  ;
 func (p *Parser) ParseTerm() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -215,10 +215,10 @@ func (p *Parser) ParseTerm() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  simple
-//    : restriction
-//    | composite
-//    ;
+//	simple
+//	  : restriction
+//	  | composite
+//	  ;
 func (p *Parser) ParseSimple() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -236,9 +236,9 @@ func (p *Parser) ParseSimple() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  restriction
-//    : comparable [comparator arg]
-//    ;
+//	restriction
+//	  : comparable [comparator arg]
+//	  ;
 func (p *Parser) ParseRestriction() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -275,11 +275,11 @@ func (p *Parser) ParseRestriction() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  comparable
-//    : member
-//    | function
-//    | number (custom)
-//    ;
+//	comparable
+//	  : member
+//	  | function
+//	  | number (custom)
+//	  ;
 func (p *Parser) ParseComparable() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -300,20 +300,20 @@ func (p *Parser) ParseComparable() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  member
-//    : value {DOT field}
-//    ;
+//	member
+//	  : value {DOT field}
+//	  ;
 //
-//  value
-//    : TEXT
-//    | STRING
-//    ;
+//	value
+//	  : TEXT
+//	  | STRING
+//	  ;
 //
-//  field
-//    : value
-//    | keyword
-//    | number
-//    ;
+//	field
+//	  : value
+//	  | keyword
+//	  | number
+//	  ;
 func (p *Parser) ParseMember() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -355,14 +355,14 @@ func (p *Parser) ParseMember() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  function
-//    : name {DOT name} LPAREN [argList] RPAREN
-//    ;
+//	function
+//	  : name {DOT name} LPAREN [argList] RPAREN
+//	  ;
 //
-//  name
-//    : TEXT
-//    | keyword
-//    ;
+//	name
+//	  : TEXT
+//	  | keyword
+//	  ;
 func (p *Parser) ParseFunction() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -420,9 +420,9 @@ func (p *Parser) TryParseFunction() (*expr.Expr, bool) {
 //
 // EBNF
 //
-//  composite
-//    : LPAREN expression RPAREN
-//    ;
+//	composite
+//	  : LPAREN expression RPAREN
+//	  ;
 func (p *Parser) ParseComposite() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -449,19 +449,19 @@ func (p *Parser) ParseComposite() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  number
-//    : float
-//    | int
-//    ;
+//	number
+//	  : float
+//	  | int
+//	  ;
 //
-//  float
-//    : MINUS? (NUMBER DOT NUMBER* | DOT NUMBER) EXP?
-//    ;
+//	float
+//	  : MINUS? (NUMBER DOT NUMBER* | DOT NUMBER) EXP?
+//	  ;
 //
-//  int
-//    : MINUS? NUMBER
-//    | MINUS? HEX
-//    ;
+//	int
+//	  : MINUS? NUMBER
+//	  | MINUS? HEX
+//	  ;
 func (p *Parser) ParseNumber() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -489,9 +489,9 @@ func (p *Parser) TryParseNumber() (*expr.Expr, bool) {
 //
 // EBNF
 //
-//  float
-//    : MINUS? (NUMBER DOT NUMBER* | DOT NUMBER) EXP?
-//    ;
+//	float
+//	  : MINUS? (NUMBER DOT NUMBER* | DOT NUMBER) EXP?
+//	  ;
 func (p *Parser) ParseFloat() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -558,10 +558,10 @@ func (p *Parser) TryParseFloat() (*expr.Expr, bool) {
 //
 // EBNF
 //
-//  int
-//    : MINUS? NUMBER
-//    | MINUS? HEX
-//    ;
+//	int
+//	  : MINUS? NUMBER
+//	  | MINUS? HEX
+//	  ;
 func (p *Parser) ParseInt() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
@@ -588,10 +588,10 @@ func (p *Parser) ParseInt() (_ *expr.Expr, err error) {
 //
 // EBNF
 //
-//  arg
-//    : comparable
-//    | composite
-//    ;
+//	arg
+//	  : comparable
+//	  | composite
+//	  ;
 func (p *Parser) ParseArg() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
 	defer func() {
