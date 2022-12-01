@@ -32,8 +32,12 @@ func ParsePageToken(request Request) (_ PageToken, err error) {
 	}
 	requestChecksum ^= pageTokenChecksumMask // apply checksum mask for PageToken
 	if request.GetPageToken() == "" {
+		offset := int64(0)
+		if s, ok := request.(skipRequest); ok {
+			offset += int64(s.GetSkip())
+		}
 		return PageToken{
-			Offset:          0,
+			Offset:          offset,
 			RequestChecksum: requestChecksum,
 		}, nil
 	}
@@ -45,6 +49,9 @@ func ParsePageToken(request Request) (_ PageToken, err error) {
 		return PageToken{}, fmt.Errorf(
 			"checksum mismatch (got 0x%x but expected 0x%x)", pageToken.RequestChecksum, requestChecksum,
 		)
+	}
+	if s, ok := request.(skipRequest); ok {
+		pageToken.Offset += int64(s.GetSkip())
 	}
 	return pageToken, nil
 }
