@@ -36,6 +36,40 @@ func TestParseOffsetPageToken(t *testing.T) {
 		assert.Equal(t, int64(30), pageToken3.Offset)
 	})
 	t.Run("skip", func(t *testing.T) {
+		t.Run("docs example 1", func(t *testing.T) {
+			// From https://google.aip.dev/158:
+			// A request with no page token and a skip value of 30 returns a single
+			// page of results starting with the 31st result.
+			pageToken, err := ParsePageToken(&freightv1.ListSitesRequest{
+				Parent: "shippers/1",
+				Skip:   30,
+			})
+			assert.NilError(t, err)
+			assert.Equal(t, int64(30), pageToken.Offset) // 31st result
+		})
+
+		t.Run("docs example 2", func(t *testing.T) {
+			// From https://google.aip.dev/158:
+			// A request with a page token corresponding to the 51st result (because the first
+			// 50 results were returned on the first page) and a skip value of 30 returns a
+			// single page of results starting with the 81st result.
+			request1 := &freightv1.ListSitesRequest{
+				Parent:   "shippers/1",
+				PageSize: 50,
+			}
+			pageToken1, err := ParsePageToken(request1)
+			assert.NilError(t, err)
+			request2 := &freightv1.ListSitesRequest{
+				Parent:    "shippers/1",
+				Skip:      30,
+				PageSize:  50,
+				PageToken: pageToken1.Next(request1).String(),
+			}
+			pageToken2, err := ParsePageToken(request2)
+			assert.NilError(t, err)
+			assert.Equal(t, int64(80), pageToken2.Offset)
+		})
+
 		t.Run("handle empty token with skip", func(t *testing.T) {
 			request1 := &freightv1.ListSitesRequest{
 				Parent:   "shippers/1",
