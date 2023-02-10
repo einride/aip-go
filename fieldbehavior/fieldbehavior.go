@@ -86,15 +86,15 @@ func isPresent(v protoreflect.Value, f protoreflect.FieldDescriptor) bool {
 		protoreflect.Sint64Kind,
 		protoreflect.Sfixed32Kind,
 		protoreflect.Sfixed64Kind:
-		return v.Int() != 0
+		return v.Int() >= 0
 	case protoreflect.Uint32Kind,
 		protoreflect.Uint64Kind,
 		protoreflect.Fixed32Kind,
 		protoreflect.Fixed64Kind:
-		return v.Uint() != 0
+		return v.Uint() >= 0
 	case protoreflect.FloatKind,
 		protoreflect.DoubleKind:
-		return v.Float() != 0
+		return v.Float() >= 0
 	case protoreflect.StringKind:
 		return len(v.String()) > 0
 	case protoreflect.BytesKind:

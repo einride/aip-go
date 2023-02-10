@@ -40,8 +40,21 @@ func TestCopyFields(t *testing.T) {
 
 func TestValidateRequiredFields(t *testing.T) {
 	t.Parallel()
-	assert.NilError(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{Name: "testbook"}))
 	assert.Error(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{}), "missing required field: name")
+	assert.NilError(t, ValidateRequiredFields(&examplefreightv1.GetShipmentRequest{Name: "testbook"}))
+	assert.NilError(t, ValidateRequiredFields(&examplefreightv1.Shipment{
+		OriginSite:           "origin_site",
+		DestinationSite:      "destination_site",
+		PickupEarliestTime:   timestamppb.Now(),
+		PickupLatestTime:     timestamppb.Now(),
+		DeliveryEarliestTime: timestamppb.Now(),
+		DeliveryLatestTime:   timestamppb.Now(),
+		LineItems: []*examplefreightv1.LineItem{
+			{
+				WeightKg: 0,
+			},
+		},
+	}))
 }
 
 func TestValidateRequiredFieldsWithMask(t *testing.T) {

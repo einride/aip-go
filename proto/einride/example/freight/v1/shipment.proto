@@ -74,7 +74,7 @@ message LineItem {
   // The quantity of the line item.
   float quantity = 2;
   // The weight of the line item in kilograms.
-  float weight_kg = 3;
+  float weight_kg = 3 [(google.api.field_behavior) = REQUIRED];
   // The volume of the line item in cubic meters.
   float volume_m3 = 4;
   // Reference ID provided by external system.
