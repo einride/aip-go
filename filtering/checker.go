@@ -57,6 +57,12 @@ func (c *Checker) checkExpr(e *expr.Expr) error {
 			return c.checkInt64Literal(e)
 		case *expr.Constant_StringValue:
 			return c.checkStringLiteral(e)
+		case *expr.Constant_DurationValue:
+			return c.checkDurationLiteral(e)
+		case *expr.Constant_TimestampValue:
+			return c.checkTimestampLiteral(e)
+		case *expr.Constant_NullValue:
+			return c.checkNullLiteral(e)
 		default:
 			return c.errorf(e, "unsupported constant kind")
 		}
@@ -225,6 +231,18 @@ func (c *Checker) checkDoubleLiteral(e *expr.Expr) error {
 
 func (c *Checker) checkBoolLiteral(e *expr.Expr) error {
 	return c.setType(e, TypeBool)
+}
+
+func (c *Checker) checkDurationLiteral(e *expr.Expr) error {
+	return c.setType(e, TypeDuration)
+}
+
+func (c *Checker) checkTimestampLiteral(e *expr.Expr) error {
+	return c.setType(e, TypeTimestamp)
+}
+
+func (c *Checker) checkNullLiteral(e *expr.Expr) error {
+	return c.setType(e, TypeNull)
 }
 
 func (c *Checker) errorf(_ *expr.Expr, format string, args ...interface{}) error {

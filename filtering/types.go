@@ -13,6 +13,7 @@ var (
 	TypeFloat  = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_DOUBLE}}
 	TypeString = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_STRING}}
 	TypeBool   = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_BOOL}}
+	TypeNull   = &expr.Type{TypeKind: &expr.Type_Null{}}
 )
 
 // TypeMap returns the type for a map with the provided key and value types.
