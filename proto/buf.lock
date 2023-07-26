@@ -2,10 +2,7 @@
 version: v1
 deps:
   - remote: buf.build
-    owner: einride
-    repository: googleapis
-    commit: 625fcaf6adb343be8ae8ef0ee7be7b77
-  - remote: buf.build
     owner: googleapis
     repository: googleapis
-    commit: 62f35d8aed1149c291d606d958a7ce32
+    commit: cc916c31859748a68fd229a3c8d7a2e8
+    digest: shake256:469b049d0eb04203d5272062636c078decefc96fec69739159c25d85349c50c34c7706918a8b216c5c27f76939df48452148cff8c5c3ae77fa6ba5c25c1b8bf8
