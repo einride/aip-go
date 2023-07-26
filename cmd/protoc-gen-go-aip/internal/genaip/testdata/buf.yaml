@@ -1,4 +1,4 @@
 version: v1
 
 deps:
-  - buf.build/einride/googleapis
+  - buf.build/googleapis/googleapis
