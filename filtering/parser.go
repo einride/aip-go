@@ -469,10 +469,16 @@ func (p *Parser) ParseNumber() (_ *expr.Expr, err error) {
 			err = p.wrapf(err, start, "number")
 		}
 	}()
+
 	if float, ok := p.TryParseFloat(); ok {
 		return float, nil
 	}
-	return p.ParseInt()
+
+	if int, ok := p.TryParseInt(); ok {
+		return int, nil
+	}
+
+	return p.ParseUint()
 }
 
 func (p *Parser) TryParseNumber() (*expr.Expr, bool) {
@@ -554,6 +560,16 @@ func (p *Parser) TryParseFloat() (*expr.Expr, bool) {
 	return result, true
 }
 
+func (p *Parser) TryParseInt() (*expr.Expr, bool) {
+	start := *p
+	result, err := p.ParseInt()
+	if err != nil {
+		*p = start
+		return nil, false
+	}
+	return result, true
+}
+
 // ParseInt parses an int.
 //
 // EBNF
@@ -582,6 +598,32 @@ func (p *Parser) ParseInt() (_ *expr.Expr, err error) {
 		intValue *= -1
 	}
 	return parsedInt(p.nextID(start), intValue), nil
+}
+
+// ParseInt parses an uint.
+//
+// EBNF
+//
+//	uint
+//	  : MINUS? NUMBER
+//	  | MINUS? HEX
+//	  ;
+func (p *Parser) ParseUint() (_ *expr.Expr, err error) {
+	start := p.lexer.Position()
+	defer func() {
+		if err != nil {
+			err = p.wrapf(err, start, "uint")
+		}
+	}()
+	token, err := p.parseToken(TokenTypeNumber.Test, TokenTypeHexNumber.Test)
+	if err != nil {
+		return nil, err
+	}
+	uintValue, err := strconv.ParseUint(token.Value, 0, 64)
+	if err != nil {
+		return nil, err
+	}
+	return parsedUint(p.nextID(start), uintValue), nil
 }
 
 // ParseArg parses an Arg.

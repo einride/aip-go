@@ -14,6 +14,12 @@ func parsedInt(id, value int64) *expr.Expr {
 	return result
 }
 
+func parsedUint(id int64, value uint64) *expr.Expr {
+	result := Uint(value)
+	result.Id = id
+	return result
+}
+
 func parsedText(id int64, s string) *expr.Expr {
 	result := Text(s)
 	result.Id = id

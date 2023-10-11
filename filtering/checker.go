@@ -55,6 +55,8 @@ func (c *Checker) checkExpr(e *expr.Expr) error {
 			return c.checkDoubleLiteral(e)
 		case *expr.Constant_Int64Value:
 			return c.checkInt64Literal(e)
+		case *expr.Constant_Uint64Value:
+			return c.checkUint64Literal(e)
 		case *expr.Constant_StringValue:
 			return c.checkStringLiteral(e)
 		default:
@@ -155,6 +157,11 @@ func (c *Checker) resolveCallExprFunctionOverload(
 				if !ok {
 					return nil, c.errorf(callExpr.Args[i], "unknown type")
 				}
+
+				if argType.GetPrimitive() == expr.Type_UINT64 && param.GetPrimitive() == expr.Type_INT64 {
+					param = TypeUint
+				}
+
 				if !proto.Equal(argType, param) {
 					allTypesMatch = false
 					break
@@ -213,6 +220,10 @@ func (c *Checker) checkCallExprBuiltinFunctionOverloads(
 
 func (c *Checker) checkInt64Literal(e *expr.Expr) error {
 	return c.setType(e, TypeInt)
+}
+
+func (c *Checker) checkUint64Literal(e *expr.Expr) error {
+	return c.setType(e, TypeUint)
 }
 
 func (c *Checker) checkStringLiteral(e *expr.Expr) error {
