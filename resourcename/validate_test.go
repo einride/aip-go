@@ -38,6 +38,12 @@ func TestValidate(t *testing.T) {
 		},
 
 		{
+			name:          "invalid slash prefix",
+			input:         "/foo/bar",
+			errorContains: "segment 1 is empty",
+		},
+
+		{
 			name:          "variable",
 			input:         "foo/bar/{baz}",
 			errorContains: "must not contain variables",
@@ -86,6 +92,11 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "full",
 			input: "//example.com/foo/bar",
+		},
+
+		{
+			name:  "root",
+			input: "/",
 		},
 	} {
 		tt := tt

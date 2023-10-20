@@ -21,6 +21,9 @@ func (s *Scanner) Init(name string) {
 
 // Scan to the next segment.
 func (s *Scanner) Scan() bool {
+	if s.name == "/" {
+		return false
+	}
 	switch s.end {
 	case len(s.name):
 		return false
@@ -37,8 +40,6 @@ func (s *Scanner) Scan() bool {
 			}
 			s.serviceStart, s.serviceEnd = s.start, s.start+nextSlash
 			s.start, s.end = s.start+nextSlash+1, s.start+nextSlash+1
-		} else if strings.HasPrefix(s.name, "/") {
-			s.start = s.end + 1 // start past beginning slash
 		}
 	default:
 		s.start = s.end + 1 // start past latest slash

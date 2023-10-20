@@ -58,6 +58,12 @@ func TestSegmentScanner(t *testing.T) {
 		},
 
 		{
+			name:     "root",
+			input:    "/",
+			segments: []Segment{},
+		},
+
+		{
 			name:        "full",
 			input:       "//library.googleapis.com/publishers/123/books/les-miserables",
 			full:        true,

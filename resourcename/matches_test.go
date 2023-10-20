@@ -75,14 +75,21 @@ func TestMatches(t *testing.T) {
 			test:     "slash prefix in the name",
 			name:     "/shippers/1",
 			pattern:  "shippers/{shipper}",
-			expected: true,
+			expected: false,
 		},
 
 		{
 			test:     "slash prefix in the pattern",
 			name:     "shippers/1",
 			pattern:  "/shippers/{shipper}",
-			expected: true,
+			expected: false,
+		},
+
+		{
+			test:     "root",
+			name:     "/",
+			pattern:  "/",
+			expected: false,
 		},
 	} {
 		tt := tt
