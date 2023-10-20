@@ -27,7 +27,7 @@ func ExampleServer_ListShelves() {
 	for _, shelf := range page1.Shelves {
 		fmt.Println(shelf.Name, shelf.Theme)
 	}
-	fmt.Println(page1.NextPageToken)
+	fmt.Println("page1.NextPageToken non-empty:", page1.NextPageToken != "")
 	page2, err := server.ListShelves(ctx, &library.ListShelvesRequest{
 		PageSize:  2,
 		PageToken: page1.NextPageToken,
@@ -38,10 +38,11 @@ func ExampleServer_ListShelves() {
 	for _, shelf := range page2.Shelves {
 		fmt.Println(shelf.Name, shelf.Theme)
 	}
-	fmt.Println(page2.NextPageToken)
+	fmt.Println("page2.NextPageToken non-empty:", page2.NextPageToken != "")
 	// Output:
 	// shelves/0001 Sci-Fi
 	// shelves/0002 Horror
-	// Nv-BAwEBCVBhZ2VUb2tlbgH_ggABAgEGT2Zmc2V0AQQAAQ9SZXF1ZXN0Q2hlY2tzdW0BBgAAAAv_ggEEAfyaywRCAA==
+	// page1.NextPageToken non-empty: true
 	// shelves/0003 Romance
+	// page2.NextPageToken non-empty: false
 }
