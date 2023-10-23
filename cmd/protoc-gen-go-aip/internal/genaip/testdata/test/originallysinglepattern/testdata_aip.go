@@ -16,6 +16,7 @@ import (
 type BookMultiPatternResourceName interface {
 	fmt.Stringer
 	MarshalString() (string, error)
+	ContainsWildcard() bool
 }
 
 func ParseBookMultiPatternResourceName(name string) (BookMultiPatternResourceName, error) {
@@ -211,6 +212,7 @@ func (n *PublishersBookResourceName) UnmarshalString(name string) error {
 type ShelfMultiPatternResourceName interface {
 	fmt.Stringer
 	MarshalString() (string, error)
+	ContainsWildcard() bool
 }
 
 func ParseShelfMultiPatternResourceName(name string) (ShelfMultiPatternResourceName, error) {
