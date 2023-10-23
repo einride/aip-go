@@ -353,6 +353,7 @@ func (r resourceNameCodeGenerator) generateMultiPatternInterface(g *protogen.Gen
 	g.P("type ", r.MultiPatternInterfaceName(), " interface {")
 	g.P(fmtStringer)
 	g.P("MarshalString() (string, error)")
+	g.P("ContainsWildcard() bool")
 	g.P("}")
 	return nil
 }
