@@ -4,6 +4,10 @@ metadata:
   name: aip-go
   description: |
     Go SDK for implementing Google API Improvement Proposals (AIP).
+  links:
+    - url: https://pkg.go.dev/go.einride.tech/aip
+      title: GoDoc
+      icon: docs
   annotations:
     github.com/project-slug: einride/aip-go
     github.com/team-slug: einride/team-cloud-control
