@@ -9,6 +9,6 @@ metadata:
     github.com/team-slug: einride/team-cloud-control
     backstage.io/source-location: url:https://github.com/einride/aip-go/tree/master/
 spec:
-  type: library
+  type: go-library
   lifecycle: production
   owner: team-cloud-control
