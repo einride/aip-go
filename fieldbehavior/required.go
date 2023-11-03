@@ -76,7 +76,14 @@ func validateRequiredFields(reflectMessage protoreflect.Message, mask *fieldmask
 	return nil
 }
 
+func isEmpty(mask *fieldmaskpb.FieldMask) bool {
+	return mask == nil || len(mask.GetPaths()) == 0
+}
+
 func hasPath(mask *fieldmaskpb.FieldMask, needle string) bool {
+	if isEmpty(mask) {
+		return true
+	}
 	for _, straw := range mask.GetPaths() {
 		if straw == "*" || straw == needle {
 			return true
