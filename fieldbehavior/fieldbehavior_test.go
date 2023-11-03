@@ -141,6 +141,20 @@ func TestValidateImmutableFieldsWithMask(t *testing.T) {
 		err := ValidateImmutableFieldsWithMask(req, req.GetUpdateMask())
 		assert.NilError(t, err)
 	})
+	t.Run("no error when immutable field not part of fieldmask", func(t *testing.T) {
+		t.Parallel()
+		req := &examplefreightv1.UpdateShipmentRequest{
+			Shipment: &examplefreightv1.Shipment{
+				ExternalReferenceId: "external-reference-id",
+				OriginSite:          "shippers/shipper1/sites/site1",
+			},
+			UpdateMask: &fieldmaskpb.FieldMask{
+				Paths: []string{"shipment.origin_site"},
+			},
+		}
+		err := ValidateImmutableFieldsWithMask(req, req.GetUpdateMask())
+		assert.NilError(t, err)
+	})
 	t.Run("errors when wildcard fieldmask used", func(t *testing.T) {
 		t.Parallel()
 		req := &examplefreightv1.UpdateShipmentRequest{
@@ -170,7 +184,7 @@ func TestValidateImmutableFieldsWithMask(t *testing.T) {
 				ExternalReferenceId: "I am immutable!",
 			},
 			UpdateMask: &fieldmaskpb.FieldMask{
-				Paths: []string{""},
+				Paths: []string{},
 			},
 		}
 		err := ValidateImmutableFieldsWithMask(req, req.GetUpdateMask())
@@ -187,7 +201,7 @@ func TestValidateImmutableFieldsWithMask(t *testing.T) {
 				},
 			},
 			UpdateMask: &fieldmaskpb.FieldMask{
-				Paths: []string{""},
+				Paths: []string{},
 			},
 		}
 		err := ValidateImmutableFieldsWithMask(req, req.GetUpdateMask())

@@ -10,7 +10,7 @@ import (
 )
 
 // ValidateImmutableFieldsWithMask returns a validation error if the message
-// or field mask contains a field that is immutable.
+// or field mask contains a field that is immutable and a change to an immutable field is requested.
 // This can be used when validating update requests and want to return
 // INVALID_ARGUMENT to the user.
 // If you want to ignore immutable fields rather than error then use ClearFields().
@@ -29,7 +29,7 @@ func validateImmutableFields(m protoreflect.Message, mask *fieldmaskpb.FieldMask
 		}
 
 		currPath += string(field.Name())
-		if isImmutable(field) && (hasPath(mask, currPath) || m.Has(field)) {
+		if isImmutable(field) && hasPath(mask, currPath) {
 			return fmt.Errorf("field is immutable: %s", currPath)
 		}
 
