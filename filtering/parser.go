@@ -74,7 +74,7 @@ func (p *Parser) ParseExpression() (_ *expr.Expr, err error) {
 			err = p.wrapf(err, start, "expression")
 		}
 	}()
-	sequences := make([]*expr.Expr, 0)
+	sequences := make([]*expr.Expr, 0, 1)
 	for {
 		_ = p.eatTokens(TokenTypeWhitespace)
 		sequence, err := p.ParseSequence()
@@ -107,7 +107,7 @@ func (p *Parser) ParseSequence() (_ *expr.Expr, err error) {
 			err = p.wrapf(err, start, "sequence")
 		}
 	}()
-	factors := make([]*expr.Expr, 0)
+	factors := make([]*expr.Expr, 0, 2)
 	for {
 		factor, err := p.ParseFactor()
 		if err != nil {
@@ -145,7 +145,7 @@ func (p *Parser) ParseFactor() (_ *expr.Expr, err error) {
 			err = p.wrapf(err, start, "factor")
 		}
 	}()
-	terms := make([]*expr.Expr, 0)
+	terms := make([]*expr.Expr, 0, 2)
 	for {
 		term, err := p.ParseTerm()
 		if err != nil {
