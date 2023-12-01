@@ -452,6 +452,7 @@ func (p *Parser) ParseComposite() (_ *expr.Expr, err error) {
 //	number
 //	  : float
 //	  | int
+//    | uint
 //	  ;
 //
 //	float
@@ -461,6 +462,11 @@ func (p *Parser) ParseComposite() (_ *expr.Expr, err error) {
 //	int
 //	  : MINUS? NUMBER
 //	  | MINUS? HEX
+//	  ;
+//
+//	uint
+//	  : NUMBER
+//	  | HEX
 //	  ;
 func (p *Parser) ParseNumber() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
@@ -600,13 +606,13 @@ func (p *Parser) ParseInt() (_ *expr.Expr, err error) {
 	return parsedInt(p.nextID(start), intValue), nil
 }
 
-// ParseInt parses an uint.
+// ParseUint parses an uint.
 //
 // EBNF
 //
 //	uint
-//	  : MINUS? NUMBER
-//	  | MINUS? HEX
+//	  : NUMBER
+//    | HEX
 //	  ;
 func (p *Parser) ParseUint() (_ *expr.Expr, err error) {
 	start := p.lexer.Position()
