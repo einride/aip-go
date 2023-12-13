@@ -22,12 +22,24 @@ func Validate(fm *fieldmaskpb.FieldMask, m proto.Message) error {
 	md0 := m.ProtoReflect().Descriptor()
 	for _, path := range fm.GetPaths() {
 		md := md0
+		var fd protoreflect.FieldDescriptor
 		if !rangeFields(path, func(field string) bool {
 			// Search the field within the message.
 			if md == nil {
 				return false // not within a message
 			}
-			fd := md.Fields().ByName(protoreflect.Name(field))
+			// Parent message is a repeated field.
+			// Targeting sub-fields is allowed with the use of wildcard
+			// https://google.aip.dev/161#wildcards
+			if fd != nil && fd.IsList() {
+				if field == WildcardPath {
+					fd = nil
+					return true
+				}
+
+				return false
+			}
+			fd = md.Fields().ByName(protoreflect.Name(field))
 			// The real field name of a group is the message name.
 			if fd == nil {
 				gd := md.Fields().ByName(protoreflect.Name(strings.ToLower(field)))

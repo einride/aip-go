@@ -430,7 +430,7 @@ func TestUpdate(t *testing.T) {
 				// can not update individual fields in a repeated message
 				name: "repeated message: deep",
 				paths: []string{
-					"repeated_message.string",
+					"repeated_message.*.string",
 				},
 				src: &syntaxv1.Message{
 					RepeatedMessage: []*syntaxv1.Message{
