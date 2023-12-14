@@ -112,8 +112,8 @@ func TestChecker(t *testing.T) {
 			},
 		},
 
-				{
-		filter: `foo = 10000000000000000001 OR foo = uint(10)`,
+		{
+			filter: `foo = 10000000000000000001 OR foo = uint(10)`,
 			declarations: []DeclarationOption{
 				DeclareStandardFunctions(),
 				DeclareIdent("foo", TypeUint),
