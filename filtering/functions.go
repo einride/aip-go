@@ -17,6 +17,7 @@ const (
 	FunctionHas           = ":"
 	FunctionDuration      = "duration"
 	FunctionTimestamp     = "timestamp"
+	FunctionUint          = "uint"
 )
 
 // StandardFunctionDeclarations returns declarations for all standard functions and their standard overloads.
@@ -34,6 +35,7 @@ func StandardFunctionDeclarations() []*expr.Decl {
 		StandardFunctionGreaterEquals(),
 		StandardFunctionEquals(),
 		StandardFunctionNotEquals(),
+		StandardFunctionUint(),
 	}
 }
 
@@ -117,6 +119,19 @@ func StandardFunctionNot() *expr.Decl {
 	return NewFunctionDeclaration(
 		FunctionNot,
 		NewFunctionOverload(FunctionOverloadNotBool, TypeBool, TypeBool),
+	)
+}
+
+// Mot overloads.
+const (
+	FunctionOverloadUintInt = FunctionUint + "_int"
+)
+
+// StandardFunctionUint returns a declaration for the standard `uint` function and all its standard overloads.
+func StandardFunctionUint() *expr.Decl {
+	return NewFunctionDeclaration(
+		FunctionUint,
+		NewFunctionOverload(FunctionOverloadUintInt, TypeUint, TypeInt),
 	)
 }
 

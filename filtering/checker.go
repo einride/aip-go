@@ -158,10 +158,6 @@ func (c *Checker) resolveCallExprFunctionOverload(
 					return nil, c.errorf(callExpr.Args[i], "unknown type")
 				}
 
-				if argType.GetPrimitive() == expr.Type_UINT64 && param.GetPrimitive() == expr.Type_INT64 {
-					param = TypeUint
-				}
-
 				if !proto.Equal(argType, param) {
 					allTypesMatch = false
 					break
