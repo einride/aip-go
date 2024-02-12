@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: aip-go
+  description: Go SDK for implementing gRPC APIs according to the AIP standard.
+  links:
+    - url: https://pkg.go.dev/go.einride.tech/aip
+      title: GoDoc
+      icon: docs
+spec:
+  type: go-library
+  lifecycle: production
+  owner: platform-engineering
+  system: backend-sdk
