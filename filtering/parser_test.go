@@ -247,7 +247,7 @@ func TestParser(t *testing.T) {
 			actual, err := parser.Parse()
 			if tt.errorContains != "" {
 				if actual != nil {
-					t.Log(actual.Expr.String())
+					t.Log(actual.GetExpr().String())
 				}
 				assert.ErrorContains(t, err, tt.errorContains)
 			} else {
@@ -255,11 +255,11 @@ func TestParser(t *testing.T) {
 				assert.DeepEqual(
 					t,
 					tt.expected,
-					actual.Expr,
+					actual.GetExpr(),
 					protocmp.Transform(),
 					protocmp.IgnoreFields(&expr.Expr{}, "id"),
 				)
-				assertUniqueExprIDs(t, actual.Expr)
+				assertUniqueExprIDs(t, actual.GetExpr())
 			}
 		})
 	}
@@ -268,11 +268,11 @@ func TestParser(t *testing.T) {
 func assertUniqueExprIDs(t *testing.T, exp *expr.Expr) {
 	t.Helper()
 	seenIDs := make(map[int64]struct{})
-	Walk(func(currExpr, parentExpr *expr.Expr) bool {
-		if _, ok := seenIDs[currExpr.Id]; ok {
-			t.Fatalf("duplicate expression ID '%d' for expr %v", currExpr.Id, currExpr)
+	Walk(func(currExpr, _ *expr.Expr) bool {
+		if _, ok := seenIDs[currExpr.GetId()]; ok {
+			t.Fatalf("duplicate expression ID '%d' for expr %v", currExpr.GetId(), currExpr)
 		}
-		seenIDs[currExpr.Id] = struct{}{}
+		seenIDs[currExpr.GetId()] = struct{}{}
 		return true
 	}, exp)
 }

@@ -80,7 +80,7 @@ func RangeParentResourcesInPackage(
 		}
 		var stop bool
 		RangeResourceDescriptorsInPackage(registry, packageName, func(resource *annotations.ResourceDescriptor) bool {
-			for _, candidatePattern := range resource.Pattern {
+			for _, candidatePattern := range resource.GetPattern() {
 				if candidatePattern == parent {
 					if !fn(resource) {
 						stop = true

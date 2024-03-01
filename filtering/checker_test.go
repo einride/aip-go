@@ -450,7 +450,7 @@ func TestChecker(t *testing.T) {
 			}
 			assert.NilError(t, err)
 			var checker Checker
-			checker.Init(parsedExpr.Expr, parsedExpr.SourceInfo, declarations)
+			checker.Init(parsedExpr.GetExpr(), parsedExpr.GetSourceInfo(), declarations)
 			checkedExpr, err := checker.Check()
 			if tt.errorContains != "" {
 				assert.ErrorContains(t, err, tt.errorContains)

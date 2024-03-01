@@ -31,7 +31,7 @@ func (e *Error) GRPCStatus() *status.Status {
 	if e.grpcStatus == nil {
 		var fields strings.Builder
 		for i, fieldViolation := range e.fieldViolations {
-			_, _ = fields.WriteString(fieldViolation.Field)
+			_, _ = fields.WriteString(fieldViolation.GetField())
 			if i < len(e.fieldViolations)-1 {
 				_, _ = fields.WriteString(", ")
 			}
@@ -54,14 +54,14 @@ func (e *Error) Error() string {
 		if len(e.fieldViolations) == 1 {
 			e.str = fmt.Sprintf(
 				"field violation on %s: %s",
-				e.fieldViolations[0].Field,
-				e.fieldViolations[0].Description,
+				e.fieldViolations[0].GetField(),
+				e.fieldViolations[0].GetDescription(),
 			)
 		} else {
 			var result strings.Builder
 			_, _ = result.WriteString("field violation on multiple fields:\n")
 			for i, fieldViolation := range e.fieldViolations {
-				_, _ = result.WriteString(fmt.Sprintf(" | %s: %s", fieldViolation.Field, fieldViolation.Description))
+				_, _ = result.WriteString(fmt.Sprintf(" | %s: %s", fieldViolation.GetField(), fieldViolation.GetDescription()))
 				if i < len(e.fieldViolations)-1 {
 					_ = result.WriteByte('\n')
 				}

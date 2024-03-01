@@ -31,21 +31,21 @@ func TestApplyMacros(t *testing.T) {
 					if callExpr == nil {
 						return
 					}
-					if callExpr.Function != FunctionEquals {
+					if callExpr.GetFunction() != FunctionEquals {
 						return
 					}
-					if len(callExpr.Args) != 2 {
+					if len(callExpr.GetArgs()) != 2 {
 						return
 					}
-					arg0Select := callExpr.Args[0].GetSelectExpr()
+					arg0Select := callExpr.GetArgs()[0].GetSelectExpr()
 					if arg0Select == nil || arg0Select.GetOperand().GetIdentExpr().GetName() != "annotations" {
 						return
 					}
-					arg1String := callExpr.Args[1].GetConstExpr().GetStringValue()
+					arg1String := callExpr.GetArgs()[1].GetConstExpr().GetStringValue()
 					if arg1String == "" {
 						return
 					}
-					cursor.Replace(Has(arg0Select.Operand, String(arg0Select.Field+"="+arg1String)))
+					cursor.Replace(Has(arg0Select.GetOperand(), String(arg0Select.GetField()+"="+arg1String)))
 				},
 			},
 			macroDeclarations: []DeclarationOption{
@@ -77,7 +77,7 @@ func TestApplyMacros(t *testing.T) {
 			assert.DeepEqual(
 				t,
 				tt.expected,
-				actual.CheckedExpr.Expr,
+				actual.CheckedExpr.GetExpr(),
 				protocmp.Transform(),
 				protocmp.IgnoreFields(&expr.Expr{}, "id"),
 			)

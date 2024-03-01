@@ -195,9 +195,9 @@ func (d *Declarations) declareFunction(name string, overloads ...*expr.Decl_Func
 NewOverloadLoop:
 	for _, newOverload := range overloads {
 		for _, existingOverload := range function.GetOverloads() {
-			if newOverload.OverloadId == existingOverload.OverloadId {
+			if newOverload.GetOverloadId() == existingOverload.GetOverloadId() {
 				if !proto.Equal(newOverload, existingOverload) {
-					return fmt.Errorf("redeclaration of overload %s", existingOverload.OverloadId)
+					return fmt.Errorf("redeclaration of overload %s", existingOverload.GetOverloadId())
 				}
 				continue NewOverloadLoop
 			}
@@ -208,7 +208,7 @@ NewOverloadLoop:
 }
 
 func (d *Declarations) declare(decl *expr.Decl) error {
-	switch decl.DeclKind.(type) {
+	switch decl.GetDeclKind().(type) {
 	case *expr.Decl_Function:
 		return d.declareFunction(decl.GetName(), decl.GetFunction().GetOverloads()...)
 	case *expr.Decl_Ident:

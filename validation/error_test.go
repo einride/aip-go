@@ -40,7 +40,7 @@ func TestError_GRPCStatus(t *testing.T) {
 			{Field: "baz", Description: "test2"},
 		},
 	}
-	s := status.Convert(NewError(expected.FieldViolations))
+	s := status.Convert(NewError(expected.GetFieldViolations()))
 	assert.Equal(t, codes.InvalidArgument, s.Code())
 	assert.Equal(t, "invalid fields: foo.bar, baz", s.Message())
 	details := s.Details()

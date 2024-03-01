@@ -112,7 +112,7 @@ func clearFieldsWithBehaviors(m proto.Message, behaviorsToClear ...annotations.F
 	rangeFieldsWithBehaviors(m, func(
 		m protoreflect.Message,
 		f protoreflect.FieldDescriptor,
-		v protoreflect.Value,
+		_ protoreflect.Value,
 		behaviors []annotations.FieldBehavior,
 	) bool {
 		if hasAnyBehavior(behaviors, behaviorsToClear) {

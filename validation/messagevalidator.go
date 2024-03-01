@@ -42,7 +42,7 @@ func (m *MessageValidator) AddFieldError(field string, err error) {
 		originalParentField := m.parentField
 		m.parentField = makeFieldWithParent(m.parentField, field)
 		for _, fieldViolation := range errValidation.fieldViolations {
-			m.AddFieldViolation(fieldViolation.Field, fieldViolation.Description)
+			m.AddFieldViolation(fieldViolation.GetField(), fieldViolation.GetDescription())
 		}
 		m.parentField = originalParentField
 	} else {
