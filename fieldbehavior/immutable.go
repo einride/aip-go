@@ -47,7 +47,7 @@ func validateImmutableFields(m protoreflect.Message, mask *fieldmaskpb.FieldMask
 					continue
 				}
 				var mapErr error
-				value.Map().Range(func(key protoreflect.MapKey, value protoreflect.Value) bool {
+				value.Map().Range(func(_ protoreflect.MapKey, value protoreflect.Value) bool {
 					if err := validateImmutableFields(value.Message(), mask, currPath); err != nil {
 						mapErr = err
 						return false

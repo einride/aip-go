@@ -25,7 +25,7 @@ func MatchAnyString(value *string) Matcher {
 		if cons == nil {
 			return false
 		}
-		if _, ok := cons.ConstantKind.(*expr.Constant_StringValue); !ok {
+		if _, ok := cons.GetConstantKind().(*expr.Constant_StringValue); !ok {
 			return false
 		}
 		*value = cons.GetStringValue()
@@ -50,7 +50,7 @@ func MatchAnyFloat(value *float64) Matcher {
 		if cons == nil {
 			return false
 		}
-		if _, ok := cons.ConstantKind.(*expr.Constant_DoubleValue); !ok {
+		if _, ok := cons.GetConstantKind().(*expr.Constant_DoubleValue); !ok {
 			return false
 		}
 		*value = cons.GetDoubleValue()
@@ -75,7 +75,7 @@ func MatchAnyInt(value *int64) Matcher {
 		if cons == nil {
 			return false
 		}
-		if _, ok := cons.ConstantKind.(*expr.Constant_Int64Value); !ok {
+		if _, ok := cons.GetConstantKind().(*expr.Constant_Int64Value); !ok {
 			return false
 		}
 		*value = cons.GetInt64Value()

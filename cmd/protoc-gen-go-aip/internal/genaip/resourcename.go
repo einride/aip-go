@@ -19,11 +19,11 @@ type resourceNameCodeGenerator struct {
 }
 
 func (r resourceNameCodeGenerator) GenerateCode(g *protogen.GeneratedFile) error {
-	if len(r.resource.Pattern) == 0 {
+	if len(r.resource.GetPattern()) == 0 {
 		return nil
 	}
-	hasMultiPattern := len(r.resource.Pattern) > 1
-	hasFutureMultiPattern := r.resource.History == annotations.ResourceDescriptor_FUTURE_MULTI_PATTERN
+	hasMultiPattern := len(r.resource.GetPattern()) > 1
+	hasFutureMultiPattern := r.resource.GetHistory() == annotations.ResourceDescriptor_FUTURE_MULTI_PATTERN
 	// Generate multi-pattern interface and parse methods if we have multiple patterns now or in the future.
 	if hasMultiPattern || hasFutureMultiPattern {
 		if err := r.generateMultiPatternInterface(g); err != nil {
@@ -35,7 +35,7 @@ func (r resourceNameCodeGenerator) GenerateCode(g *protogen.GeneratedFile) error
 	}
 
 	// Generate the single-pattern struct unless we explicitly only want multi-patterns from the start.
-	firstPattern := r.resource.Pattern[0]
+	firstPattern := r.resource.GetPattern()[0]
 	shouldGenerateSinglePatternStruct := !hasFutureMultiPattern
 	firstSinglePatternStructName := r.SinglePatternStructName()
 	if shouldGenerateSinglePatternStruct {
@@ -59,7 +59,7 @@ func (r resourceNameCodeGenerator) GenerateCode(g *protogen.GeneratedFile) error
 		}
 	}
 	// Generate multi-pattern structs for all but the first pattern.
-	for _, pattern := range r.resource.Pattern[1:] {
+	for _, pattern := range r.resource.GetPattern()[1:] {
 		if err := r.generatePatternStruct(g, pattern, r.MultiPatternStructName(pattern)); err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func (r *resourceNameCodeGenerator) generateParentConstructorMethod(
 	parent *annotations.ResourceDescriptor,
 ) error {
 	var parentPattern string
-	for _, parentCandidate := range parent.Pattern {
+	for _, parentCandidate := range parent.GetPattern() {
 		if resourcename.HasParent(pattern, parentCandidate) {
 			parentPattern = parentCandidate
 			break
@@ -193,7 +193,7 @@ func (r *resourceNameCodeGenerator) generateParentMethod(
 	parent *annotations.ResourceDescriptor,
 ) error {
 	var parentPattern string
-	for _, parentCandidate := range parent.Pattern {
+	for _, parentCandidate := range parent.GetPattern() {
 		if resourcename.HasParent(pattern, parentCandidate) {
 			parentPattern = parentCandidate
 			break
@@ -370,7 +370,7 @@ func (r *resourceNameCodeGenerator) generateMultiPatternParseMethod(g *protogen.
 	g.P()
 	g.P("func Parse", r.MultiPatternInterfaceName(), "(name string) (", r.MultiPatternInterfaceName(), ", error) {")
 	g.P("switch {")
-	for _, pattern := range r.resource.Pattern {
+	for _, pattern := range r.resource.GetPattern() {
 		g.P("case ", resourcenameMatch, "(", strconv.Quote(pattern), ", name):")
 		g.P("var result ", r.MultiPatternStructName(pattern))
 		g.P("return &result, result.UnmarshalString(name)")
@@ -383,14 +383,14 @@ func (r *resourceNameCodeGenerator) generateMultiPatternParseMethod(g *protogen.
 }
 
 func (r *resourceNameCodeGenerator) SinglePatternStructName() string {
-	return aipreflect.ResourceType(r.resource.Type).Type() + "ResourceName"
+	return aipreflect.ResourceType(r.resource.GetType()).Type() + "ResourceName"
 }
 
 func (r *resourceNameCodeGenerator) StructName(pattern string) string {
-	if r.resource.History == annotations.ResourceDescriptor_FUTURE_MULTI_PATTERN || len(r.resource.Pattern) > 1 {
+	if r.resource.GetHistory() == annotations.ResourceDescriptor_FUTURE_MULTI_PATTERN || len(r.resource.GetPattern()) > 1 {
 		return r.MultiPatternStructName(pattern)
 	}
-	if r.resource.Pattern[0] == pattern {
+	if r.resource.GetPattern()[0] == pattern {
 		return r.SinglePatternStructName()
 	}
 	return r.MultiPatternStructName(pattern)
@@ -401,7 +401,7 @@ func (r *resourceNameCodeGenerator) MultiPatternStructName(pattern string) strin
 	var sc resourcename.Scanner
 	sc.Init(pattern)
 	for sc.Scan() {
-		if !sc.Segment().IsVariable() && string(sc.Segment().Literal()) != r.resource.Plural {
+		if !sc.Segment().IsVariable() && string(sc.Segment().Literal()) != r.resource.GetPlural() {
 			_, _ = result.WriteString(strcase.UpperCamelCase(string(sc.Segment().Literal())))
 		}
 	}
@@ -410,5 +410,5 @@ func (r *resourceNameCodeGenerator) MultiPatternStructName(pattern string) strin
 }
 
 func (r *resourceNameCodeGenerator) MultiPatternInterfaceName() string {
-	return aipreflect.ResourceType(r.resource.Type).Type() + "MultiPatternResourceName"
+	return aipreflect.ResourceType(r.resource.GetType()).Type() + "MultiPatternResourceName"
 }

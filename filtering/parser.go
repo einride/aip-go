@@ -194,8 +194,8 @@ func (p *Parser) ParseTerm() (_ *expr.Expr, err error) {
 	case not, minus:
 		if minus {
 			// Simplify MINUS number to negation of the constant value.
-			if constExpr, ok := simple.ExprKind.(*expr.Expr_ConstExpr); ok {
-				switch constantKind := constExpr.ConstExpr.ConstantKind.(type) {
+			if constExpr, ok := simple.GetExprKind().(*expr.Expr_ConstExpr); ok {
+				switch constantKind := constExpr.ConstExpr.GetConstantKind().(type) {
 				case *expr.Constant_Int64Value:
 					constantKind.Int64Value *= -1
 					return simple, nil
@@ -266,7 +266,7 @@ func (p *Parser) ParseRestriction() (_ *expr.Expr, err error) {
 	// Special case for `:`
 	if comparatorToken.Type == TokenTypeHas && arg.GetIdentExpr() != nil {
 		// m:foo - true if m contains the key "foo".
-		arg = parsedString(arg.Id, arg.GetIdentExpr().GetName())
+		arg = parsedString(arg.GetId(), arg.GetIdentExpr().GetName())
 	}
 	return parsedFunction(p.nextID(start), comparatorToken.Type.Function(), comp, arg), nil
 }

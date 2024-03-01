@@ -17,7 +17,7 @@ func ParseFilter(request Request, declarations *Declarations) (Filter, error) {
 		return Filter{}, err
 	}
 	var checker Checker
-	checker.Init(parsedExpr.Expr, parsedExpr.SourceInfo, declarations)
+	checker.Init(parsedExpr.GetExpr(), parsedExpr.GetSourceInfo(), declarations)
 	checkedExpr, err := checker.Check()
 	if err != nil {
 		return Filter{}, err

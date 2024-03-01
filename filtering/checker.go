@@ -20,7 +20,7 @@ func (c *Checker) Init(exp *expr.Expr, sourceInfo *expr.SourceInfo, declarations
 		expr:         exp,
 		declarations: declarations,
 		sourceInfo:   sourceInfo,
-		typeMap:      make(map[int64]*expr.Type, len(sourceInfo.Positions)),
+		typeMap:      make(map[int64]*expr.Type, len(sourceInfo.GetPositions())),
 	}
 }
 
@@ -46,9 +46,9 @@ func (c *Checker) checkExpr(e *expr.Expr) error {
 	if e == nil {
 		return nil
 	}
-	switch e.ExprKind.(type) {
+	switch e.GetExprKind().(type) {
 	case *expr.Expr_ConstExpr:
-		switch e.GetConstExpr().ConstantKind.(type) {
+		switch e.GetConstExpr().GetConstantKind().(type) {
 		case *expr.Constant_BoolValue:
 			return c.checkBoolLiteral(e)
 		case *expr.Constant_DoubleValue:
@@ -95,17 +95,17 @@ func (c *Checker) checkSelectExpr(e *expr.Expr) (err error) {
 		}
 	}
 	selectExpr := e.GetSelectExpr()
-	if selectExpr.Operand == nil {
+	if selectExpr.GetOperand() == nil {
 		return c.errorf(e, "missing operand")
 	}
-	if err := c.checkExpr(selectExpr.Operand); err != nil {
+	if err := c.checkExpr(selectExpr.GetOperand()); err != nil {
 		return err
 	}
-	operandType, ok := c.getType(selectExpr.Operand)
+	operandType, ok := c.getType(selectExpr.GetOperand())
 	if !ok {
 		return c.errorf(e, "failed to get operand type")
 	}
-	switch operandType.TypeKind.(type) {
+	switch operandType.GetTypeKind().(type) {
 	case *expr.Type_MapType_:
 		return c.setType(e, operandType.GetMapType().GetValueType())
 	default:
@@ -125,9 +125,9 @@ func (c *Checker) checkCallExpr(e *expr.Expr) (err error) {
 			return err
 		}
 	}
-	functionDeclaration, ok := c.declarations.LookupFunction(callExpr.Function)
+	functionDeclaration, ok := c.declarations.LookupFunction(callExpr.GetFunction())
 	if !ok {
-		return c.errorf(e, "undeclared function '%s'", callExpr.Function)
+		return c.errorf(e, "undeclared function '%s'", callExpr.GetFunction())
 	}
 	functionOverload, err := c.resolveCallExprFunctionOverload(e, functionDeclaration)
 	if err != nil {
@@ -136,7 +136,7 @@ func (c *Checker) checkCallExpr(e *expr.Expr) (err error) {
 	if err := c.checkCallExprBuiltinFunctionOverloads(e, functionOverload); err != nil {
 		return err
 	}
-	return c.setType(e, functionOverload.ResultType)
+	return c.setType(e, functionOverload.GetResultType())
 }
 
 func (c *Checker) resolveCallExprFunctionOverload(
@@ -145,15 +145,15 @@ func (c *Checker) resolveCallExprFunctionOverload(
 ) (*expr.Decl_FunctionDecl_Overload, error) {
 	callExpr := e.GetCallExpr()
 	for _, overload := range functionDeclaration.GetFunction().GetOverloads() {
-		if len(callExpr.GetArgs()) != len(overload.Params) {
+		if len(callExpr.GetArgs()) != len(overload.GetParams()) {
 			continue
 		}
-		if len(overload.TypeParams) == 0 {
+		if len(overload.GetTypeParams()) == 0 {
 			allTypesMatch := true
-			for i, param := range overload.Params {
-				argType, ok := c.getType(callExpr.Args[i])
+			for i, param := range overload.GetParams() {
+				argType, ok := c.getType(callExpr.GetArgs()[i])
 				if !ok {
-					return nil, c.errorf(callExpr.Args[i], "unknown type")
+					return nil, c.errorf(callExpr.GetArgs()[i], "unknown type")
 				}
 				if !proto.Equal(argType, param) {
 					allTypesMatch = false
@@ -183,17 +183,17 @@ func (c *Checker) checkCallExprBuiltinFunctionOverloads(
 	functionOverload *expr.Decl_FunctionDecl_Overload,
 ) error {
 	callExpr := e.GetCallExpr()
-	switch functionOverload.OverloadId {
+	switch functionOverload.GetOverloadId() {
 	case FunctionOverloadTimestampString:
-		if constExpr := callExpr.Args[0].GetConstExpr(); constExpr != nil {
+		if constExpr := callExpr.GetArgs()[0].GetConstExpr(); constExpr != nil {
 			if _, err := time.Parse(time.RFC3339, constExpr.GetStringValue()); err != nil {
-				return c.errorf(callExpr.Args[0], "invalid timestamp. Should be in RFC3339 format")
+				return c.errorf(callExpr.GetArgs()[0], "invalid timestamp. Should be in RFC3339 format")
 			}
 		}
 	case FunctionOverloadDurationString:
-		if constExpr := callExpr.Args[0].GetConstExpr(); constExpr != nil {
+		if constExpr := callExpr.GetArgs()[0].GetConstExpr(); constExpr != nil {
 			if _, err := time.ParseDuration(constExpr.GetStringValue()); err != nil {
-				return c.errorf(callExpr.Args[0], "invalid duration")
+				return c.errorf(callExpr.GetArgs()[0], "invalid duration")
 			}
 		}
 	case FunctionOverloadLessThanTimestampString,
@@ -202,9 +202,9 @@ func (c *Checker) checkCallExprBuiltinFunctionOverloads(
 		FunctionOverloadGreaterEqualsTimestampString,
 		FunctionOverloadEqualsTimestampString,
 		FunctionOverloadNotEqualsTimestampString:
-		if constExpr := callExpr.Args[1].GetConstExpr(); constExpr != nil {
+		if constExpr := callExpr.GetArgs()[1].GetConstExpr(); constExpr != nil {
 			if _, err := time.Parse(time.RFC3339, constExpr.GetStringValue()); err != nil {
-				return c.errorf(callExpr.Args[0], "invalid timestamp. Should be in RFC3339 format")
+				return c.errorf(callExpr.GetArgs()[0], "invalid timestamp. Should be in RFC3339 format")
 			}
 		}
 	}
@@ -243,15 +243,15 @@ func (c *Checker) wrapf(err error, _ *expr.Expr, format string, args ...interfac
 }
 
 func (c *Checker) setType(e *expr.Expr, t *expr.Type) error {
-	if existingT, ok := c.typeMap[e.Id]; ok && !proto.Equal(t, existingT) {
+	if existingT, ok := c.typeMap[e.GetId()]; ok && !proto.Equal(t, existingT) {
 		return c.errorf(e, "type conflict between %s and %s", t, existingT)
 	}
-	c.typeMap[e.Id] = t
+	c.typeMap[e.GetId()] = t
 	return nil
 }
 
 func (c *Checker) getType(e *expr.Expr) (*expr.Type, bool) {
-	t, ok := c.typeMap[e.Id]
+	t, ok := c.typeMap[e.GetId()]
 	if !ok {
 		return nil, false
 	}
@@ -259,18 +259,18 @@ func (c *Checker) getType(e *expr.Expr) (*expr.Type, bool) {
 }
 
 func toQualifiedName(e *expr.Expr) (string, bool) {
-	switch kind := e.ExprKind.(type) {
+	switch kind := e.GetExprKind().(type) {
 	case *expr.Expr_IdentExpr:
 		return kind.IdentExpr.GetName(), true
 	case *expr.Expr_SelectExpr:
-		if kind.SelectExpr.TestOnly {
+		if kind.SelectExpr.GetTestOnly() {
 			return "", false
 		}
-		parent, ok := toQualifiedName(kind.SelectExpr.Operand)
+		parent, ok := toQualifiedName(kind.SelectExpr.GetOperand())
 		if !ok {
 			return "", false
 		}
-		return parent + "." + kind.SelectExpr.Field, true
+		return parent + "." + kind.SelectExpr.GetField(), true
 	default:
 		return "", false
 	}

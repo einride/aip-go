@@ -7,9 +7,9 @@ type Macro func(*Cursor)
 
 // ApplyMacros applies the provided macros to the filter and type-checks the result against the provided declarations.
 func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Filter, error) {
-	applyMacros(filter.CheckedExpr.Expr, filter.CheckedExpr.SourceInfo, macros...)
+	applyMacros(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), macros...)
 	var checker Checker
-	checker.Init(filter.CheckedExpr.Expr, filter.CheckedExpr.SourceInfo, declarations)
+	checker.Init(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), declarations)
 	checkedExpr, err := checker.Check()
 	if err != nil {
 		return Filter{}, err
@@ -62,7 +62,7 @@ func (c *Cursor) Expr() *expr.Expr {
 
 // Replace the current expression with a new expression.
 func (c *Cursor) Replace(newExpr *expr.Expr) {
-	Walk(func(childExpr, parentExpr *expr.Expr) bool {
+	Walk(func(childExpr, _ *expr.Expr) bool {
 		childExpr.Id = c.nextID
 		c.nextID++
 		return true
@@ -70,17 +70,17 @@ func (c *Cursor) Replace(newExpr *expr.Expr) {
 	if c.sourceInfo.MacroCalls == nil {
 		c.sourceInfo.MacroCalls = map[int64]*expr.Expr{}
 	}
-	c.sourceInfo.MacroCalls[newExpr.Id] = &expr.Expr{Id: c.currExpr.Id, ExprKind: c.currExpr.ExprKind}
-	c.currExpr.Id = newExpr.Id
-	c.currExpr.ExprKind = newExpr.ExprKind
+	c.sourceInfo.MacroCalls[newExpr.GetId()] = &expr.Expr{Id: c.currExpr.GetId(), ExprKind: c.currExpr.GetExprKind()}
+	c.currExpr.Id = newExpr.GetId()
+	c.currExpr.ExprKind = newExpr.GetExprKind()
 	c.replaced = true
 }
 
 func maxID(exp *expr.Expr) int64 {
 	var max int64
-	Walk(func(currExpr, parentExpr *expr.Expr) bool {
-		if exp.Id > max {
-			max = exp.Id
+	Walk(func(_, _ *expr.Expr) bool {
+		if exp.GetId() > max {
+			max = exp.GetId()
 		}
 		return true
 	}, exp)

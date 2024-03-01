@@ -55,7 +55,7 @@ func validateRequiredFields(reflectMessage protoreflect.Message, mask *fieldmask
 					continue
 				}
 				var mapErr error
-				value.Map().Range(func(key protoreflect.MapKey, value protoreflect.Value) bool {
+				value.Map().Range(func(_ protoreflect.MapKey, value protoreflect.Value) bool {
 					if err := validateRequiredFields(value.Message(), mask, currPath); err != nil {
 						mapErr = err
 						return false

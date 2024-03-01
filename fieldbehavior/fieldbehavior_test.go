@@ -22,9 +22,9 @@ func TestClearFields(t *testing.T) {
 			DisplayName: "site one",        // has REQUIRED field_behavior; should not be cleared.
 		}
 		ClearFields(site, annotations.FieldBehavior_OUTPUT_ONLY)
-		assert.Equal(t, site.CreateTime, (*timestamppb.Timestamp)(nil))
-		assert.Equal(t, site.DisplayName, "site one")
-		assert.Equal(t, site.Name, "site1")
+		assert.Equal(t, site.GetCreateTime(), (*timestamppb.Timestamp)(nil))
+		assert.Equal(t, site.GetDisplayName(), "site one")
+		assert.Equal(t, site.GetName(), "site1")
 	})
 }
 

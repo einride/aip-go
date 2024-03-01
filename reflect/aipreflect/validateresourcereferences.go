@@ -50,10 +50,10 @@ func ValidateResourceReferences(message proto.Message) error {
 			protoregistry.GlobalFiles,
 			field.ParentFile().Package(),
 			func(resource *annotations.ResourceDescriptor) bool {
-				if resource.Type != resourceReferenceAnnotation.GetType() {
+				if resource.GetType() != resourceReferenceAnnotation.GetType() {
 					return true
 				}
-				for _, pattern := range resource.Pattern {
+				for _, pattern := range resource.GetPattern() {
 					if resourcename.Match(pattern, fieldValue) {
 						return false
 					}
