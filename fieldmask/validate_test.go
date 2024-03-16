@@ -3,6 +3,7 @@ package fieldmask
 import (
 	"testing"
 
+	freightv1 "go.einride.tech/aip/proto/gen/einride/example/freight/v1"
 	"google.golang.org/genproto/googleapis/example/library/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -70,6 +71,23 @@ func TestValidate(t *testing.T) {
 			},
 			message:       &library.CreateBookRequest{},
 			errorContains: "invalid field path: book.foo",
+		},
+
+		{
+			name: "invalid nested in repeated field",
+			fieldMask: &fieldmaskpb.FieldMask{
+				Paths: []string{"shipment.line_items.title"},
+			},
+			message:       &freightv1.CreateShipmentRequest{},
+			errorContains: "invalid field path: shipment.line_items.title",
+		},
+
+		{
+			name: "valid nested in repeated field",
+			fieldMask: &fieldmaskpb.FieldMask{
+				Paths: []string{"shipment.line_items.*.title"},
+			},
+			message: &freightv1.CreateShipmentRequest{},
 		},
 	} {
 		tt := tt
