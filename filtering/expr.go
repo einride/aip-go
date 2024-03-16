@@ -64,6 +64,18 @@ func Int(value int64) *expr.Expr {
 	}
 }
 
+func Uint(value uint64) *expr.Expr {
+	return &expr.Expr{
+		ExprKind: &expr.Expr_ConstExpr{
+			ConstExpr: &expr.Constant{
+				ConstantKind: &expr.Constant_Uint64Value{
+					Uint64Value: value,
+				},
+			},
+		},
+	}
+}
+
 func Equals(lhs, rhs *expr.Expr) *expr.Expr {
 	return Function(FunctionEquals, lhs, rhs)
 }
