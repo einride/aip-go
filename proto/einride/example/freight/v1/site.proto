@@ -30,4 +30,6 @@ message Site {
   string display_name = 5 [(google.api.field_behavior) = REQUIRED];
   // The geographic location of the site.
   google.type.LatLng lat_lng = 6;
+  // Personnel count on site.
+  optional int64 personnel_count = 7 [(google.api.field_behavior) = REQUIRED];
 }
