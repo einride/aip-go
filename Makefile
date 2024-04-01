@@ -67,17 +67,21 @@ git-verify-no-diff: $(sagefile)
 go-generate: $(sagefile)
 	@$(sagefile) GoGenerate
 
+.PHONY: go-lines
+go-lines: $(sagefile)
+	@$(sagefile) GoLines
+
 .PHONY: go-lint
 go-lint: $(sagefile)
 	@$(sagefile) GoLint
 
+.PHONY: go-lint-fix
+go-lint-fix: $(sagefile)
+	@$(sagefile) GoLintFix
+
 .PHONY: go-mod-tidy
 go-mod-tidy: $(sagefile)
 	@$(sagefile) GoModTidy
-
-.PHONY: go-review
-go-review: $(sagefile)
-	@$(sagefile) GoReview
 
 .PHONY: go-test
 go-test: $(sagefile)

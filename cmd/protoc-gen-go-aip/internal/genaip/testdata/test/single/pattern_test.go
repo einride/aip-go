@@ -28,13 +28,21 @@ func TestBookResourceName(t *testing.T) {
 	t.Run("bad top-level", func(t *testing.T) {
 		var name BookResourceName
 		err := name.UnmarshalString("books/book")
-		assert.Error(t, err, "parse resource name 'books/book' with pattern 'shelves/{shelf}/books/{book}': segment shelves: got books")
+		assert.Error(
+			t,
+			err,
+			"parse resource name 'books/book' with pattern 'shelves/{shelf}/books/{book}': segment shelves: got books",
+		)
 	})
 
 	t.Run("bad wrong parent", func(t *testing.T) {
 		var name BookResourceName
 		err := name.UnmarshalString("others/other/books/book")
-		assert.Error(t, err, "parse resource name 'others/other/books/book' with pattern 'shelves/{shelf}/books/{book}': segment shelves: got others")
+		assert.Error(
+			t,
+			err,
+			"parse resource name 'others/other/books/book' with pattern 'shelves/{shelf}/books/{book}': segment shelves: got others",
+		)
 	})
 }
 
@@ -61,6 +69,10 @@ func TestShelfResourceName(t *testing.T) {
 	t.Run("bad wrong parent", func(t *testing.T) {
 		var name ShelfResourceName
 		err := name.UnmarshalString("others/other/shelves/shelf")
-		assert.Error(t, err, "parse resource name 'others/other/shelves/shelf' with pattern 'shelves/{shelf}': segment shelves: got others")
+		assert.Error(
+			t,
+			err,
+			"parse resource name 'others/other/shelves/shelf' with pattern 'shelves/{shelf}': segment shelves: got others",
+		)
 	})
 }
