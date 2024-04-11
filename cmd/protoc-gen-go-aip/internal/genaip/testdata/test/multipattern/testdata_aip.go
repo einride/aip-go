@@ -82,12 +82,16 @@ func (n ShelvesBookResourceName) MarshalString() (string, error) {
 }
 
 func (n *ShelvesBookResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"shelves/{shelf}/books/{book}",
 		&n.Shelf,
 		&n.Book,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }
 
 func (n ShelvesBookResourceName) ShelfResourceName() ShelfResourceName {
@@ -137,12 +141,16 @@ func (n PublishersBookResourceName) MarshalString() (string, error) {
 }
 
 func (n *PublishersBookResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"publishers/{publisher}/books/{book}",
 		&n.Publisher,
 		&n.Book,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }
 
 type ShelfMultiPatternResourceName interface {
@@ -200,11 +208,15 @@ func (n ShelfResourceName) MarshalString() (string, error) {
 }
 
 func (n *ShelfResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"shelves/{shelf}",
 		&n.Shelf,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }
 
 type LibrariesShelfResourceName struct {
@@ -248,12 +260,16 @@ func (n LibrariesShelfResourceName) MarshalString() (string, error) {
 }
 
 func (n *LibrariesShelfResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"libraries/{library}/shelves/{shelf}",
 		&n.Library,
 		&n.Shelf,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }
 
 type RoomsShelfResourceName struct {
@@ -297,10 +313,14 @@ func (n RoomsShelfResourceName) MarshalString() (string, error) {
 }
 
 func (n *RoomsShelfResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"rooms/{room}/shelves/{shelf}",
 		&n.Room,
 		&n.Shelf,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }

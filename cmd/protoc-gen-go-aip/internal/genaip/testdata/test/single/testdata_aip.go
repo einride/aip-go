@@ -46,11 +46,15 @@ func (n ShelfResourceName) MarshalString() (string, error) {
 }
 
 func (n *ShelfResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"shelves/{shelf}",
 		&n.Shelf,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }
 
 type BookResourceName struct {
@@ -103,12 +107,16 @@ func (n BookResourceName) MarshalString() (string, error) {
 }
 
 func (n *BookResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"shelves/{shelf}/books/{book}",
 		&n.Shelf,
 		&n.Book,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }
 
 func (n BookResourceName) ShelfResourceName() ShelfResourceName {

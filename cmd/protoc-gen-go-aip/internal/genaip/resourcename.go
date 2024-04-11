@@ -329,7 +329,7 @@ func (r resourceNameCodeGenerator) generateUnmarshalStringMethod(
 	})
 	g.P()
 	g.P("func (n *", typeName, ") UnmarshalString(name string) error {")
-	g.P("return ", resourcenameSscan, "(")
+	g.P("err := ", resourcenameSscan, "(")
 	g.P("name,")
 	g.P(strconv.Quote(pattern), ",")
 	var sc resourcename.Scanner
@@ -340,6 +340,10 @@ func (r resourceNameCodeGenerator) generateUnmarshalStringMethod(
 		}
 	}
 	g.P(")")
+	g.P("if err != nil {")
+	g.P("return err")
+	g.P("}")
+	g.P("return n.Validate()")
 	g.P("}")
 	return nil
 }

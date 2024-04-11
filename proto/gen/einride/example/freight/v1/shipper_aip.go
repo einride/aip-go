@@ -46,9 +46,13 @@ func (n ShipperResourceName) MarshalString() (string, error) {
 }
 
 func (n *ShipperResourceName) UnmarshalString(name string) error {
-	return resourcename.Sscan(
+	err := resourcename.Sscan(
 		name,
 		"shippers/{shipper}",
 		&n.Shipper,
 	)
+	if err != nil {
+		return err
+	}
+	return n.Validate()
 }
