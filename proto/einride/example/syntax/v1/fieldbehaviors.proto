@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package einride.example.syntax.v1;
+
+import "google/api/field_behavior.proto";
+
+message FieldBehaviorMessage {
+  string field = 1;
+  string output_only_field = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string optional_field = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  FieldBehaviorMessage message_without_field_behavior = 12;
+  FieldBehaviorMessage output_only_message = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+  FieldBehaviorMessage optional_message = 14 [(google.api.field_behavior) = OPTIONAL];
+
+  repeated FieldBehaviorMessage repeated_message = 4;
+  repeated FieldBehaviorMessage repeated_output_only_message = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated FieldBehaviorMessage repeated_optional_message = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  map<string, FieldBehaviorMessage> map_message = 7;
+  map<string, FieldBehaviorMessage> map_output_only_message = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  map<string, FieldBehaviorMessage> map_optional_message = 9 [(google.api.field_behavior) = OPTIONAL];
+
+  map<string, string> string_map = 10;
+  repeated string string_list = 11;
+
+  oneof oneof {
+    FieldBehaviorMessage field_behavior_message = 15;
+    SmallFieldBehaviorMessage small_field_behavior_message = 16;
+  }
+}
+
+message SmallFieldBehaviorMessage {
+  string field = 1;
+  string output_only_field = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string optional_field = 3 [(google.api.field_behavior) = OPTIONAL];
+}

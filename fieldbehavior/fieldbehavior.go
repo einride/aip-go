@@ -109,33 +109,72 @@ func isPresent(v protoreflect.Value, f protoreflect.FieldDescriptor) bool {
 }
 
 func clearFieldsWithBehaviors(m proto.Message, behaviorsToClear ...annotations.FieldBehavior) {
-	rangeFieldsWithBehaviors(m, func(
-		m protoreflect.Message,
-		f protoreflect.FieldDescriptor,
-		_ protoreflect.Value,
-		behaviors []annotations.FieldBehavior,
-	) bool {
-		if hasAnyBehavior(behaviors, behaviorsToClear) {
-			m.Clear(f)
-		}
-		return true
-	})
+	rangeFieldsWithBehaviors(
+		m.ProtoReflect(),
+		func(
+			m protoreflect.Message,
+			f protoreflect.FieldDescriptor,
+			_ protoreflect.Value,
+			behaviors []annotations.FieldBehavior,
+		) bool {
+			if hasAnyBehavior(behaviors, behaviorsToClear) {
+				m.Clear(f)
+			}
+			return true
+		},
+	)
 }
 
 func rangeFieldsWithBehaviors(
-	m proto.Message,
-	fn func(protoreflect.Message, protoreflect.FieldDescriptor, protoreflect.Value, []annotations.FieldBehavior) bool,
+	m protoreflect.Message,
+	fn func(
+		protoreflect.Message,
+		protoreflect.FieldDescriptor,
+		protoreflect.Value,
+		[]annotations.FieldBehavior,
+	) bool,
 ) {
-	d := m.ProtoReflect()
-	d.Range(func(f protoreflect.FieldDescriptor, v protoreflect.Value) bool {
-		if behaviors, ok := proto.GetExtension(
-			f.Options(),
-			annotations.E_FieldBehavior,
-		).([]annotations.FieldBehavior); ok {
-			return fn(d, f, v, behaviors)
-		}
-		return true
-	})
+	m.Range(
+		func(f protoreflect.FieldDescriptor, v protoreflect.Value) bool {
+			if behaviors, ok := proto.GetExtension(
+				f.Options(),
+				annotations.E_FieldBehavior,
+			).([]annotations.FieldBehavior); ok {
+				fn(m, f, v, behaviors)
+			}
+
+			switch {
+			// if field is repeated, traverse the nested message for field behaviors
+			case f.IsList() && f.Kind() == protoreflect.MessageKind:
+				for i := 0; i < v.List().Len(); i++ {
+					rangeFieldsWithBehaviors(
+						v.List().Get(i).Message(),
+						fn,
+					)
+				}
+				return true
+			// if field is map, traverse the nested message for field behaviors
+			case f.IsMap() && f.MapValue().Kind() == protoreflect.MessageKind:
+				v.Map().Range(func(_ protoreflect.MapKey, mv protoreflect.Value) bool {
+					rangeFieldsWithBehaviors(
+						mv.Message(),
+						fn,
+					)
+					return true
+				})
+				return true
+			// if field is message, traverse the message
+			// maps are also treated as Kind message and should not be traversed as messages
+			case f.Kind() == protoreflect.MessageKind && !f.IsMap():
+				rangeFieldsWithBehaviors(
+					v.Message(),
+					fn,
+				)
+				return true
+			default:
+				return true
+			}
+		})
 }
 
 func hasAnyBehavior(haystack, needles []annotations.FieldBehavior) bool {
