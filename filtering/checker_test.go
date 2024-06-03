@@ -3,8 +3,10 @@ package filtering
 import (
 	"testing"
 
-	syntaxv1 "go.einride.tech/aip/proto/gen/einride/example/syntax/v1"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"gotest.tools/v3/assert"
+
+	syntaxv1 "go.einride.tech/aip/proto/gen/einride/example/syntax/v1"
 )
 
 func TestChecker(t *testing.T) {
@@ -410,6 +412,88 @@ func TestChecker(t *testing.T) {
 				DeclareStandardFunctions(),
 				DeclareIdent("create_time", TypeTimestamp),
 			},
+		},
+
+		{
+			filter: "IsGreat = true",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("IsGreat", TypeBool),
+				DeclareConstant("true", TypeBool, &expr.Constant{ConstantKind: &expr.Constant_BoolValue{BoolValue: true}}),
+			},
+		},
+
+		{
+			filter: "IsGreat = true",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareStandardBoolConstants(),
+				DeclareIdent("IsGreat", TypeBool),
+			},
+		},
+
+		{
+			filter: "IsGreat = True",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareStandardBoolConstants(),
+				DeclareIdent("IsGreat", TypeBool),
+			},
+		},
+
+		{
+			filter: "IsGreat = TRUE",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareStandardBoolConstants(),
+				DeclareIdent("IsGreat", TypeBool),
+			},
+		},
+
+		{
+			filter: "IsGreat = false",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("IsGreat", TypeBool),
+				DeclareConstant("false", TypeBool, &expr.Constant{ConstantKind: &expr.Constant_BoolValue{BoolValue: true}}),
+			},
+		},
+
+		{
+			filter: "IsGreat = false",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareStandardBoolConstants(),
+				DeclareIdent("IsGreat", TypeBool),
+			},
+		},
+
+		{
+			filter: "IsGreat = False",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareStandardBoolConstants(),
+				DeclareIdent("IsGreat", TypeBool),
+			},
+		},
+
+		{
+			filter: "IsGreat = FALSE",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareStandardBoolConstants(),
+				DeclareIdent("IsGreat", TypeBool),
+			},
+		},
+
+		{
+			filter: "IsGreat = FalsE",
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareStandardBoolConstants(),
+				DeclareIdent("IsGreat", TypeBool),
+			},
+			errorContains: "undeclared identifier 'FalsE'",
 		},
 
 		{
