@@ -10,6 +10,7 @@ import (
 //nolint:gochecknoglobals
 var (
 	TypeInt    = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_INT64}}
+	TypeUint   = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_UINT64}}
 	TypeFloat  = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_DOUBLE}}
 	TypeString = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_STRING}}
 	TypeBool   = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_BOOL}}

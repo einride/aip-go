@@ -97,6 +97,38 @@ func TestChecker(t *testing.T) {
 		},
 
 		{
+			filter: `foo = 10000000000000000001`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeUint),
+			},
+		},
+
+		{
+			filter: `foo = uint(1)`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeUint),
+			},
+		},
+
+		{
+			filter: `foo = uint(10) OR foo = 10000000000000000001`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeUint),
+			},
+		},
+
+		{
+			filter: `foo = 10000000000000000001 OR foo = uint(10)`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeUint),
+			},
+		},
+
+		{
 			filter: "NOT (a OR b)",
 			declarations: []DeclarationOption{
 				DeclareStandardFunctions(),
