@@ -56,6 +56,15 @@ func TestParser(t *testing.T) {
 				GreaterEquals(Text("a"), Int(100)),
 			),
 		},
+
+		{
+			filter: " a < 10 OR a >= 10000000000000000001",
+			expected: Or(
+				LessThan(Text("a"), Int(10)),
+				GreaterEquals(Text("a"), Uint(10000000000000000001)),
+			),
+		},
+
 		{
 			filter: "a OR b OR c",
 			expected: Or(
