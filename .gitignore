@@ -1,5 +1,7 @@
 .idea
+.vscode
 
 # Go workspace files
 go.work
 go.work.sum
+.semrel

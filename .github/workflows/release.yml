@@ -18,8 +18,7 @@ jobs:
       - name: Make
         run: make
 
-      - name: Release
-        uses: go-semantic-release/action@v1.23
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          allow-initial-development-versions: true
+      - name: Run semantic-release
+        run: make semantic-release repo=${{ github.repository }} dry=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

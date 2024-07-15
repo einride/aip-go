@@ -10,6 +10,7 @@ import (
 	"go.einride.tech/sage/tools/sggo"
 	"go.einride.tech/sage/tools/sggolangcilint"
 	"go.einride.tech/sage/tools/sggolines"
+	"go.einride.tech/sage/tools/sggosemanticrelease"
 	"go.einride.tech/sage/tools/sgmdformat"
 	"go.einride.tech/sage/tools/sgyamlfmt"
 )
@@ -90,4 +91,19 @@ func GoGenerate(ctx context.Context) error {
 	sg.Deps(ctx, Stringer)
 	sg.Logger(ctx).Println("generating Go code...")
 	return sg.Command(ctx, "go", "generate", "./...").Run()
+}
+
+func SemanticRelease(ctx context.Context, repo string, dry bool) error {
+	sg.Logger(ctx).Println("triggering release...")
+	args := []string{
+		"--allow-initial-development-versions",
+		"--allow-no-changes",
+		"--ci-condition=default",
+		"--provider=github",
+		"--provider-opt=slug=" + repo,
+	}
+	if dry {
+		args = append(args, "--dry")
+	}
+	return sggosemanticrelease.Command(ctx, args...).Run()
 }
