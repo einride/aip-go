@@ -62,12 +62,15 @@ func CopyFields(dst, src proto.Message, behaviorsToCopy ...annotations.FieldBeha
 }
 
 func isMessageFieldPresent(m protoreflect.Message, f protoreflect.FieldDescriptor) bool {
-	return isPresent(m.Get(f), f)
+	return isPresent(m.Get(f), f, m.Has(f))
 }
 
-func isPresent(v protoreflect.Value, f protoreflect.FieldDescriptor) bool {
+func isPresent(v protoreflect.Value, f protoreflect.FieldDescriptor, populated bool) bool {
 	if !v.IsValid() {
 		return false
+	}
+	if f.HasOptionalKeyword() && populated {
+		return true
 	}
 	if f.IsList() {
 		return v.List().Len() > 0
