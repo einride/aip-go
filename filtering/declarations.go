@@ -73,11 +73,30 @@ type Declarations struct {
 // DeclarationOption configures Declarations.
 type DeclarationOption func(*Declarations) error
 
-// DeclareStandardFunction is a DeclarationOption that declares all standard functions and their overloads.
+// DeclareStandardFunctions is a DeclarationOption that declares all standard functions and their overloads.
 func DeclareStandardFunctions() DeclarationOption {
 	return func(declarations *Declarations) error {
 		for _, declaration := range StandardFunctionDeclarations() {
 			if err := declarations.declare(declaration); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+// DeclareStandardBoolConstants is a DeclarationOption that adds a number of variations of "true" and "false" as constant values.
+func DeclareStandardBoolConstants() DeclarationOption {
+	return func(declarations *Declarations) error {
+		for n, v := range map[string]bool{
+			"true":  true,
+			"True":  true,
+			"TRUE":  true,
+			"false": false,
+			"False": false,
+			"FALSE": false,
+		} {
+			if err := declarations.declareConstant(n, TypeBool, &expr.Constant{ConstantKind: &expr.Constant_BoolValue{BoolValue: v}}); err != nil {
 				return err
 			}
 		}
@@ -99,9 +118,17 @@ func DeclareIdent(name string, t *expr.Type) DeclarationOption {
 	}
 }
 
+// DeclareEnumIdent is a DeclarationOption that declares an enumeration.
 func DeclareEnumIdent(name string, enumType protoreflect.EnumType) DeclarationOption {
 	return func(declarations *Declarations) error {
 		return declarations.declareEnumIdent(name, enumType)
+	}
+}
+
+// DeclareConstant is a DeclarationOption that adds a constant value to the declarations.
+func DeclareConstant(name string, constantType *expr.Type, constantValue *expr.Constant) DeclarationOption {
+	return func(declarations *Declarations) error {
+		return declarations.declareConstant(name, constantType, constantValue)
 	}
 }
 
