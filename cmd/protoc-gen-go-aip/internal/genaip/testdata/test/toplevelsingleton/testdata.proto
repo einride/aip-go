@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package test.toplevelsingleton;
+
+import "google/api/resource.proto";
+
+message Config {
+  option (google.api.resource) = {
+    type: "test1.testdata/Config"
+    singular: "config"
+    plural: "configs"
+    pattern: "config"
+  };
+
+  // The resource name of the config.
+  string name = 1;
+}
