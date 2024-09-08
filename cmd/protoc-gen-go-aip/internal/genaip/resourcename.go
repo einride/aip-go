@@ -12,6 +12,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
+const (
+	fmtPackage          = protogen.GoImportPath("fmt")
+	resourcenamePackage = protogen.GoImportPath("go.einride.tech/aip/resourcename")
+	stringsPackage      = protogen.GoImportPath("strings")
+)
+
 type resourceNameCodeGenerator struct {
 	resource *annotations.ResourceDescriptor
 	file     *protogen.File
@@ -225,14 +231,8 @@ func (r resourceNameCodeGenerator) generateValidateMethod(
 	pattern string,
 	typeName string,
 ) error {
-	stringsIndexByte := g.QualifiedGoIdent(protogen.GoIdent{
-		GoImportPath: "strings",
-		GoName:       "IndexByte",
-	})
-	fmtErrorf := g.QualifiedGoIdent(protogen.GoIdent{
-		GoImportPath: "fmt",
-		GoName:       "Errorf",
-	})
+	stringsIndexByte := stringsPackage.Ident("IndexByte")
+	fmtErrorf := fmtPackage.Ident("Errorf")
 	g.P()
 	g.P("func (n ", typeName, ") Validate() error {")
 	var sc resourcename.Scanner
@@ -284,10 +284,7 @@ func (r *resourceNameCodeGenerator) generateStringMethod(
 	pattern string,
 	typeName string,
 ) error {
-	resourcenameSprint := g.QualifiedGoIdent(protogen.GoIdent{
-		GoImportPath: "go.einride.tech/aip/resourcename",
-		GoName:       "Sprint",
-	})
+	resourcenameSprint := resourcenamePackage.Ident("Sprint")
 	g.P()
 	g.P("func (n ", typeName, ") String() string {")
 	g.P("return ", resourcenameSprint, "(")
@@ -323,10 +320,7 @@ func (r resourceNameCodeGenerator) generateUnmarshalStringMethod(
 	pattern string,
 	typeName string,
 ) error {
-	resourcenameSscan := g.QualifiedGoIdent(protogen.GoIdent{
-		GoImportPath: "go.einride.tech/aip/resourcename",
-		GoName:       "Sscan",
-	})
+	resourcenameSscan := resourcenamePackage.Ident("Sscan")
 	g.P()
 	g.P("func (n *", typeName, ") UnmarshalString(name string) error {")
 	g.P("err := ", resourcenameSscan, "(")
@@ -349,10 +343,7 @@ func (r resourceNameCodeGenerator) generateUnmarshalStringMethod(
 }
 
 func (r resourceNameCodeGenerator) generateMultiPatternInterface(g *protogen.GeneratedFile) error {
-	fmtStringer := g.QualifiedGoIdent(protogen.GoIdent{
-		GoImportPath: "fmt",
-		GoName:       "Stringer",
-	})
+	fmtStringer := fmtPackage.Ident("Stringer")
 	g.P()
 	g.P("type ", r.MultiPatternInterfaceName(), " interface {")
 	g.P(fmtStringer)
@@ -363,14 +354,8 @@ func (r resourceNameCodeGenerator) generateMultiPatternInterface(g *protogen.Gen
 }
 
 func (r *resourceNameCodeGenerator) generateMultiPatternParseMethod(g *protogen.GeneratedFile) error {
-	resourcenameMatch := g.QualifiedGoIdent(protogen.GoIdent{
-		GoImportPath: "go.einride.tech/aip/resourcename",
-		GoName:       "Match",
-	})
-	fmtErrorf := g.QualifiedGoIdent(protogen.GoIdent{
-		GoImportPath: "fmt",
-		GoName:       "Errorf",
-	})
+	resourcenameMatch := resourcenamePackage.Ident("Match")
+	fmtErrorf := fmtPackage.Ident("Errorf")
 	g.P()
 	g.P("func Parse", r.MultiPatternInterfaceName(), "(name string) (", r.MultiPatternInterfaceName(), ", error) {")
 	g.P("switch {")
