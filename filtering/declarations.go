@@ -63,11 +63,18 @@ func NewConstantDeclaration(name string, constantType *expr.Type, constantValue 
 	}
 }
 
+type DeclarationResolver interface {
+	LookupIdent(name string) (*expr.Decl, bool)
+	LookupFunction(name string) (*expr.Decl, bool)
+	LookupEnumIdent(name string) (protoreflect.EnumType, bool)
+}
+
 // Declarations contain declarations for type-checking filter expressions.
 type Declarations struct {
 	idents    map[string]*expr.Decl
 	functions map[string]*expr.Decl
 	enums     map[string]protoreflect.EnumType
+	resolver  DeclarationResolver
 }
 
 // DeclarationOption configures Declarations.
@@ -105,6 +112,13 @@ func DeclareEnumIdent(name string, enumType protoreflect.EnumType) DeclarationOp
 	}
 }
 
+func SetDeclarationResolver(resolver DeclarationResolver) DeclarationOption {
+	return func(declarations *Declarations) error {
+		declarations.resolver = resolver
+		return nil
+	}
+}
+
 // NewDeclarations creates a new set of Declarations for filter expression type-checking.
 func NewDeclarations(opts ...DeclarationOption) (*Declarations, error) {
 	d := &Declarations{
@@ -122,17 +136,26 @@ func NewDeclarations(opts ...DeclarationOption) (*Declarations, error) {
 
 func (d *Declarations) LookupIdent(name string) (*expr.Decl, bool) {
 	result, ok := d.idents[name]
-	return result, ok
+	if ok || d.resolver == nil {
+		return result, ok
+	}
+	return d.resolver.LookupIdent(name)
 }
 
 func (d *Declarations) LookupFunction(name string) (*expr.Decl, bool) {
 	result, ok := d.functions[name]
-	return result, ok
+	if ok || d.resolver == nil {
+		return result, ok
+	}
+	return d.resolver.LookupFunction(name)
 }
 
 func (d *Declarations) LookupEnumIdent(name string) (protoreflect.EnumType, bool) {
 	result, ok := d.enums[name]
-	return result, ok
+	if ok || d.resolver == nil {
+		return result, ok
+	}
+	return d.resolver.LookupEnumIdent(name)
 }
 
 func (d *Declarations) declareIdent(name string, t *expr.Type) error {
