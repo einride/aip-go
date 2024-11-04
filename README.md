@@ -5,13 +5,11 @@
 Go SDK for implementing [Google API Improvement Proposals](https://aip.dev/)
 (AIP).
 
-## Installing
+## Example library usage
 
 ```bash
-$ go get -u go.einride.tech/aip
+go get -u go.einride.tech/aip
 ```
-
-## Examples
 
 ### [AIP-132](https://google.aip.dev/132) (Standard method: List)
 
