@@ -5,10 +5,6 @@
 Go SDK for implementing [Google API Improvement Proposals](https://aip.dev/)
 (AIP).
 
-## Documentation
-
-See [https://aip.dev](https://aip.dev/) for the full AIP documentation.
-
 ## Installing
 
 ```bash
