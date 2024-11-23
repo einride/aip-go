@@ -19,3 +19,12 @@ func TestNewSystemGeneratedBase32(t *testing.T) {
 	const base32Regexp = `^[a-z2-7]{26}$`
 	assert.Assert(t, cmp.Regexp(regexp.MustCompile(base32Regexp), NewSystemGeneratedBase32()))
 }
+
+func TestNewSystemGeneratedBase32FollowingAIP122(t *testing.T) {
+	t.Parallel()
+	for i := 0; i < 100; i++ {
+		// https://google.aip.dev/122#resource-id-segments
+		const base32Regexp = `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`
+		assert.Assert(t, cmp.Regexp(regexp.MustCompile(base32Regexp), NewSystemGeneratedBase32()))
+	}
+}
