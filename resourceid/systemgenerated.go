@@ -15,6 +15,8 @@ func NewSystemGenerated() string {
 }
 
 // NewSystemGenerated returns a new system-generated resource ID encoded as base32 lowercase.
+// Note that this function does not necessarily create valid user-settable IDs in compliance
+// with AIP-122.
 func NewSystemGeneratedBase32() string {
 	id := uuid.New()
 	return base32Encoding.EncodeToString(id[:])
