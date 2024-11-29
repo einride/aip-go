@@ -3,8 +3,9 @@ package filtering
 import (
 	"testing"
 
-	syntaxv1 "go.einride.tech/aip/proto/gen/einride/example/syntax/v1"
 	"gotest.tools/v3/assert"
+
+	syntaxv1 "go.einride.tech/aip/proto/gen/einride/example/syntax/v1"
 )
 
 func TestChecker(t *testing.T) {
@@ -354,7 +355,22 @@ func TestChecker(t *testing.T) {
 				DeclareEnumIdent("enum2", syntaxv1.Enum(0).Type()),
 			},
 		},
-
+		{
+			filter: `enum = ENUM_ONE AND NOT enum2 = ENUM_TWO`,
+			declarations: []DeclarationOption{
+				SetDeclarationResolver(func() *Declarations {
+					decls, err := NewDeclarations(
+						DeclareStandardFunctions(),
+						DeclareEnumIdent("enum", syntaxv1.Enum(0).Type()),
+						DeclareEnumIdent("enum2", syntaxv1.Enum(0).Type()),
+					)
+					if err != nil {
+						panic(err)
+					}
+					return decls
+				}()),
+			},
+		},
 		{
 			filter: `create_time = "2022-08-12 22:22:22"`,
 			declarations: []DeclarationOption{
@@ -379,7 +395,6 @@ func TestChecker(t *testing.T) {
 				DeclareIdent("create_time", TypeTimestamp),
 			},
 		},
-
 		{
 			filter: `create_time < "2022-08-12T22:22:22+01:00"`,
 			declarations: []DeclarationOption{
@@ -387,7 +402,6 @@ func TestChecker(t *testing.T) {
 				DeclareIdent("create_time", TypeTimestamp),
 			},
 		},
-
 		{
 			filter: `create_time > "2022-08-12T22:22:22+01:00"`,
 			declarations: []DeclarationOption{
@@ -395,7 +409,21 @@ func TestChecker(t *testing.T) {
 				DeclareIdent("create_time", TypeTimestamp),
 			},
 		},
-
+		{
+			filter: `create_time > "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				SetDeclarationResolver(func() *Declarations {
+					decls, err := NewDeclarations(
+						DeclareStandardFunctions(),
+						DeclareIdent("create_time", TypeTimestamp),
+					)
+					if err != nil {
+						panic(err)
+					}
+					return decls
+				}()),
+			},
+		},
 		{
 			filter: `create_time <= "2022-08-12T22:22:22+01:00"`,
 			declarations: []DeclarationOption{
@@ -411,7 +439,13 @@ func TestChecker(t *testing.T) {
 				DeclareIdent("create_time", TypeTimestamp),
 			},
 		},
-
+		{
+			filter: `create_time >= "2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
 		{
 			filter:        "<",
 			errorContains: "unexpected token <",
