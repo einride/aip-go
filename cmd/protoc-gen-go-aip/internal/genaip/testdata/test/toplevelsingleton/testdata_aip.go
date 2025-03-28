@@ -45,3 +45,7 @@ func (n *ConfigResourceName) UnmarshalString(name string) error {
 	}
 	return n.Validate()
 }
+
+func (n ConfigResourceName) Type() string {
+	return "test1.testdata/Config"
+}

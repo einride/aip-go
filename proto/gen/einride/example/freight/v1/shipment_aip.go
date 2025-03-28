@@ -75,6 +75,10 @@ func (n *ShipmentResourceName) UnmarshalString(name string) error {
 	return n.Validate()
 }
 
+func (n ShipmentResourceName) Type() string {
+	return "freight-example.einride.tech/Shipment"
+}
+
 func (n ShipmentResourceName) ShipperResourceName() ShipperResourceName {
 	return ShipperResourceName{
 		Shipper: n.Shipper,
