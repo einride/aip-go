@@ -119,6 +119,9 @@ func (r resourceNameCodeGenerator) generatePatternStruct(
 	if err := r.generateUnmarshalStringMethod(g, pattern, typeName); err != nil {
 		return err
 	}
+	if err := r.generateTypeMethod(g, typeName); err != nil {
+		return err
+	}
 	var parentErr error
 	aipreflect.RangeParentResourcesInPackage(
 		r.files,
@@ -338,6 +341,17 @@ func (r resourceNameCodeGenerator) generateUnmarshalStringMethod(
 	g.P("return err")
 	g.P("}")
 	g.P("return n.Validate()")
+	g.P("}")
+	return nil
+}
+
+func (r resourceNameCodeGenerator) generateTypeMethod(
+	g *protogen.GeneratedFile,
+	typeName string,
+) error {
+	g.P()
+	g.P("func (n ", typeName, ") Type() string {")
+	g.P("return ", strconv.Quote(r.resource.GetType()))
 	g.P("}")
 	return nil
 }

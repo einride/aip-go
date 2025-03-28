@@ -57,6 +57,10 @@ func (n *ShelfResourceName) UnmarshalString(name string) error {
 	return n.Validate()
 }
 
+func (n ShelfResourceName) Type() string {
+	return "test1.testdata/Shelf"
+}
+
 type BookResourceName struct {
 	Shelf string
 	Book  string
@@ -117,6 +121,10 @@ func (n *BookResourceName) UnmarshalString(name string) error {
 		return err
 	}
 	return n.Validate()
+}
+
+func (n BookResourceName) Type() string {
+	return "test1.testdata/Book"
 }
 
 func (n BookResourceName) ShelfResourceName() ShelfResourceName {

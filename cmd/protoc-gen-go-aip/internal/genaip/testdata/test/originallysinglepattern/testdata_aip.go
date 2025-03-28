@@ -94,6 +94,10 @@ func (n *BookResourceName) UnmarshalString(name string) error {
 	return n.Validate()
 }
 
+func (n BookResourceName) Type() string {
+	return "test1.testdata/Book"
+}
+
 func (n BookResourceName) ShelfResourceName() ShelfResourceName {
 	return ShelfResourceName{
 		Shelf: n.Shelf,
@@ -162,6 +166,10 @@ func (n *ShelvesBookResourceName) UnmarshalString(name string) error {
 	return n.Validate()
 }
 
+func (n ShelvesBookResourceName) Type() string {
+	return "test1.testdata/Book"
+}
+
 func (n ShelvesBookResourceName) ShelfResourceName() ShelfResourceName {
 	return ShelfResourceName{
 		Shelf: n.Shelf,
@@ -219,6 +227,10 @@ func (n *PublishersBookResourceName) UnmarshalString(name string) error {
 		return err
 	}
 	return n.Validate()
+}
+
+func (n PublishersBookResourceName) Type() string {
+	return "test1.testdata/Book"
 }
 
 type ShelfMultiPatternResourceName interface {
@@ -287,6 +299,10 @@ func (n *ShelfResourceName) UnmarshalString(name string) error {
 	return n.Validate()
 }
 
+func (n ShelfResourceName) Type() string {
+	return "test1.testdata/Shelf"
+}
+
 type LibrariesShelfResourceName struct {
 	Library string
 	Shelf   string
@@ -340,6 +356,10 @@ func (n *LibrariesShelfResourceName) UnmarshalString(name string) error {
 	return n.Validate()
 }
 
+func (n LibrariesShelfResourceName) Type() string {
+	return "test1.testdata/Shelf"
+}
+
 type RoomsShelfResourceName struct {
 	Room  string
 	Shelf string
@@ -391,4 +411,8 @@ func (n *RoomsShelfResourceName) UnmarshalString(name string) error {
 		return err
 	}
 	return n.Validate()
+}
+
+func (n RoomsShelfResourceName) Type() string {
+	return "test1.testdata/Shelf"
 }
