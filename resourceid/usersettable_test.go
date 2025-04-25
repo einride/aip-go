@@ -1,6 +1,7 @@
 package resourceid
 
 import (
+	"strings"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -14,7 +15,8 @@ func TestValidateUserSettable(t *testing.T) {
 	}{
 		{id: "abcd"},
 		{id: "abcd-efgh-1234"},
-		{id: "abc", errorContains: "must be between 4 and 63 characters"},
+		{id: "", errorContains: "must be between 1 and 63 characters"},
+		{id: strings.Repeat("a", 64), errorContains: "must be between 1 and 63 characters"},
 		{id: "-abc", errorContains: "must begin with a letter"},
 		{id: "abc-", errorContains: "must end with a letter or number"},
 		{id: "123-abc", errorContains: "must begin with a letter"},
