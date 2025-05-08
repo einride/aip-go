@@ -393,12 +393,10 @@ func (r resourceNameCodeGenerator) generateTypeMethod(
 func (r resourceNameCodeGenerator) generateMultiPatternInterface(g *protogen.GeneratedFile) error {
 	fmtStringer := fmtPackage.Ident("Stringer")
 	textMarshaler := encodingPackage.Ident("TextMarshaler")
-	textUnmarshaler := encodingPackage.Ident("TextUnmarshaler")
 	g.P()
 	g.P("type ", r.MultiPatternInterfaceName(), " interface {")
 	g.P(fmtStringer)
 	g.P(textMarshaler)
-	g.P(textUnmarshaler)
 	g.P("MarshalString() (string, error)")
 	g.P("ContainsWildcard() bool")
 	g.P("}")

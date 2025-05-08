@@ -17,7 +17,6 @@ import (
 type BookMultiPatternResourceName interface {
 	fmt.Stringer
 	encoding.TextMarshaler
-	encoding.TextUnmarshaler
 	MarshalString() (string, error)
 	ContainsWildcard() bool
 }
@@ -193,7 +192,6 @@ func (n PublishersBookResourceName) Type() string {
 type ShelfMultiPatternResourceName interface {
 	fmt.Stringer
 	encoding.TextMarshaler
-	encoding.TextUnmarshaler
 	MarshalString() (string, error)
 	ContainsWildcard() bool
 }
