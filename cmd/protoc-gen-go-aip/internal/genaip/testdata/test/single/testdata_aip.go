@@ -45,6 +45,14 @@ func (n ShelfResourceName) MarshalString() (string, error) {
 	return n.String(), nil
 }
 
+// MarshalText implements the encoding.TextMarshaler interface.
+func (n ShelfResourceName) MarshalText() ([]byte, error) {
+	if err := n.Validate(); err != nil {
+		return nil, err
+	}
+	return []byte(n.String()), nil
+}
+
 func (n *ShelfResourceName) UnmarshalString(name string) error {
 	err := resourcename.Sscan(
 		name,
@@ -55,6 +63,11 @@ func (n *ShelfResourceName) UnmarshalString(name string) error {
 		return err
 	}
 	return n.Validate()
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface.
+func (n *ShelfResourceName) UnmarshalText(text []byte) error {
+	return n.UnmarshalString(string(text))
 }
 
 func (n ShelfResourceName) Type() string {
@@ -110,6 +123,14 @@ func (n BookResourceName) MarshalString() (string, error) {
 	return n.String(), nil
 }
 
+// MarshalText implements the encoding.TextMarshaler interface.
+func (n BookResourceName) MarshalText() ([]byte, error) {
+	if err := n.Validate(); err != nil {
+		return nil, err
+	}
+	return []byte(n.String()), nil
+}
+
 func (n *BookResourceName) UnmarshalString(name string) error {
 	err := resourcename.Sscan(
 		name,
@@ -121,6 +142,11 @@ func (n *BookResourceName) UnmarshalString(name string) error {
 		return err
 	}
 	return n.Validate()
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface.
+func (n *BookResourceName) UnmarshalText(text []byte) error {
+	return n.UnmarshalString(string(text))
 }
 
 func (n BookResourceName) Type() string {

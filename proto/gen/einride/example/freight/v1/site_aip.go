@@ -62,6 +62,14 @@ func (n SiteResourceName) MarshalString() (string, error) {
 	return n.String(), nil
 }
 
+// MarshalText implements the encoding.TextMarshaler interface.
+func (n SiteResourceName) MarshalText() ([]byte, error) {
+	if err := n.Validate(); err != nil {
+		return nil, err
+	}
+	return []byte(n.String()), nil
+}
+
 func (n *SiteResourceName) UnmarshalString(name string) error {
 	err := resourcename.Sscan(
 		name,
@@ -73,6 +81,11 @@ func (n *SiteResourceName) UnmarshalString(name string) error {
 		return err
 	}
 	return n.Validate()
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface.
+func (n *SiteResourceName) UnmarshalText(text []byte) error {
+	return n.UnmarshalString(string(text))
 }
 
 func (n SiteResourceName) Type() string {

@@ -16,6 +16,7 @@ const (
 	fmtPackage          = protogen.GoImportPath("fmt")
 	resourcenamePackage = protogen.GoImportPath("go.einride.tech/aip/resourcename")
 	stringsPackage      = protogen.GoImportPath("strings")
+	encodingPackage     = protogen.GoImportPath("encoding")
 )
 
 type resourceNameCodeGenerator struct {
@@ -116,7 +117,13 @@ func (r resourceNameCodeGenerator) generatePatternStruct(
 	if err := r.generateMarshalStringMethod(g, typeName); err != nil {
 		return err
 	}
+	if err := r.generateMarshalTextMethod(g, typeName); err != nil {
+		return err
+	}
 	if err := r.generateUnmarshalStringMethod(g, pattern, typeName); err != nil {
+		return err
+	}
+	if err := r.generateUnmarshalTextMethod(g, typeName); err != nil {
 		return err
 	}
 	if err := r.generateTypeMethod(g, typeName); err != nil {
@@ -345,6 +352,33 @@ func (r resourceNameCodeGenerator) generateUnmarshalStringMethod(
 	return nil
 }
 
+func (r resourceNameCodeGenerator) generateMarshalTextMethod(
+	g *protogen.GeneratedFile,
+	typeName string,
+) error {
+	g.P()
+	g.P("// MarshalText implements the encoding.TextMarshaler interface.")
+	g.P("func (n ", typeName, ") MarshalText() ([]byte, error) {")
+	g.P("if err := n.Validate(); err != nil {")
+	g.P("return nil, err")
+	g.P("}")
+	g.P("return []byte(n.String()), nil")
+	g.P("}")
+	return nil
+}
+
+func (r resourceNameCodeGenerator) generateUnmarshalTextMethod(
+	g *protogen.GeneratedFile,
+	typeName string,
+) error {
+	g.P()
+	g.P("// UnmarshalText implements the encoding.TextUnmarshaler interface.")
+	g.P("func (n *", typeName, ") UnmarshalText(text []byte) error {")
+	g.P("return n.UnmarshalString(string(text))")
+	g.P("}")
+	return nil
+}
+
 func (r resourceNameCodeGenerator) generateTypeMethod(
 	g *protogen.GeneratedFile,
 	typeName string,
@@ -358,9 +392,13 @@ func (r resourceNameCodeGenerator) generateTypeMethod(
 
 func (r resourceNameCodeGenerator) generateMultiPatternInterface(g *protogen.GeneratedFile) error {
 	fmtStringer := fmtPackage.Ident("Stringer")
+	textMarshaler := encodingPackage.Ident("TextMarshaler")
+	textUnmarshaler := encodingPackage.Ident("TextUnmarshaler")
 	g.P()
 	g.P("type ", r.MultiPatternInterfaceName(), " interface {")
 	g.P(fmtStringer)
+	g.P(textMarshaler)
+	g.P(textUnmarshaler)
 	g.P("MarshalString() (string, error)")
 	g.P("ContainsWildcard() bool")
 	g.P("}")

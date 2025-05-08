@@ -35,6 +35,14 @@ func (n ConfigResourceName) MarshalString() (string, error) {
 	return n.String(), nil
 }
 
+// MarshalText implements the encoding.TextMarshaler interface.
+func (n ConfigResourceName) MarshalText() ([]byte, error) {
+	if err := n.Validate(); err != nil {
+		return nil, err
+	}
+	return []byte(n.String()), nil
+}
+
 func (n *ConfigResourceName) UnmarshalString(name string) error {
 	err := resourcename.Sscan(
 		name,
@@ -44,6 +52,11 @@ func (n *ConfigResourceName) UnmarshalString(name string) error {
 		return err
 	}
 	return n.Validate()
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface.
+func (n *ConfigResourceName) UnmarshalText(text []byte) error {
+	return n.UnmarshalString(string(text))
 }
 
 func (n ConfigResourceName) Type() string {
