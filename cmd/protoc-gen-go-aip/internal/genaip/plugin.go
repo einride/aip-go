@@ -8,6 +8,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 // PluginName is the name of the AIP Go protobuf compiler plugin.
@@ -21,6 +23,10 @@ type Config struct {
 
 // Run the AIP Go protobuf compiler plugin.
 func Run(gen *protogen.Plugin, config Config) error {
+	gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL) |
+		uint64(pluginpb.CodeGeneratorResponse_FEATURE_SUPPORTS_EDITIONS)
+	gen.SupportedEditionsMinimum = descriptorpb.Edition_EDITION_PROTO3
+	gen.SupportedEditionsMaximum = descriptorpb.Edition_EDITION_2023
 	var files protoregistry.Files
 	for _, file := range gen.Files {
 		if err := files.RegisterFile(file.Desc); err != nil {
