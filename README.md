@@ -53,7 +53,7 @@ go get -u go.einride.tech/aip
   ) (*library.ListShelvesResponse, error) {
       // Handle request constraints.
       const (
-  §           maxPageSize     = 1000
+          maxPageSize     = 1000
           defaultPageSize = 100
       )
       switch {
