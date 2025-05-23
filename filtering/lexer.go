@@ -44,6 +44,8 @@ func (l *Lexer) Lex() (Token, error) {
 		return l.emit(TokenType(l.tokenValue()))
 	// String?
 	case '\'', '"':
+		quote := r
+		escaped := false
 		for {
 			r2, err := l.nextRune()
 			if err != nil {
@@ -52,9 +54,14 @@ func (l *Lexer) Lex() (Token, error) {
 				}
 				return Token{}, err
 			}
-			if r == r2 {
+			if r2 == '\\' && !escaped {
+				escaped = true
+				continue
+			}
+			if r2 == quote && !escaped {
 				return l.emit(TokenTypeString)
 			}
+			escaped = false
 		}
 	// Number?
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':

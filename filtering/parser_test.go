@@ -85,9 +85,54 @@ func TestParser(t *testing.T) {
 			expected: Equals(Text("package"), Member(Text("com"), "google")),
 		},
 
+		// Simple string unescaping tests.
 		{
 			filter:   `msg != 'hello'`,
-			expected: NotEquals(Text("msg"), String("hello")),
+			expected: NotEquals(Text("msg"), String(`hello`)),
+		},
+		{
+			filter:   `msg != "hello"`,
+			expected: NotEquals(Text("msg"), String(`hello`)),
+		},
+		{
+			filter:   `msg != ""`,
+			expected: NotEquals(Text("msg"), String(``)),
+		},
+		{
+			filter:   `msg != "\\\""`,
+			expected: NotEquals(Text("msg"), String(`\"`)),
+		},
+		{
+			filter:   `msg != "\\"`,
+			expected: NotEquals(Text("msg"), String(`\`)),
+		},
+		{
+			filter:   `msg != "\303\277"`,
+			expected: NotEquals(Text("msg"), String(`Ã¿`)),
+		},
+		{
+			filter:   `msg != "\377"`,
+			expected: NotEquals(Text("msg"), String(`ÿ`)),
+		},
+		{
+			filter:   `msg != "\u263A\u263A"`,
+			expected: NotEquals(Text("msg"), String(`☺☺`)),
+		},
+		{
+			filter:   `msg != "\a\b\f\n\r\t\v\'\"\\\? Legal escapes"`,
+			expected: NotEquals(Text("msg"), String("\a\b\f\n\r\t\v'\"\\? Legal escapes")),
+		},
+		{
+			filter:   `msg != "[ 'hello' ]"`,
+			expected: NotEquals(Text("msg"), String(`[ 'hello' ]`)),
+		},
+		{
+			filter:   `msg != "[ \'hello\' ]"`,
+			expected: NotEquals(Text("msg"), String(`[ 'hello' ]`)),
+		},
+		{
+			filter:   `msg != "[ \"hello\" ]"`,
+			expected: NotEquals(Text("msg"), String(`[ "hello" ]`)),
 		},
 
 		{
@@ -188,7 +233,7 @@ func TestParser(t *testing.T) {
 
 		{
 			filter: `
-				start_time > timestamp("2006-01-02T15:04:05+07:00") AND 
+				start_time > timestamp("2006-01-02T15:04:05+07:00") AND
 				(driver = "driver1" OR start_driver = "driver1" OR end_driver = "driver1")
 			`,
 			expected: And(
