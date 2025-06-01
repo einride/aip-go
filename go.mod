@@ -8,11 +8,11 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/stoewer/go-strcase v1.3.0
 	google.golang.org/genproto v0.0.0-20240711142825-46eb208f015d
-	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142
-	google.golang.org/grpc v1.67.0
-	google.golang.org/protobuf v1.34.2
-	gotest.tools/v3 v3.5.1
+	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a
+	google.golang.org/grpc v1.72.2
+	google.golang.org/protobuf v1.36.5
+	gotest.tools/v3 v3.5.2
 )
 
 require (
