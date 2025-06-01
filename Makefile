@@ -37,7 +37,7 @@ sage:
 
 .PHONY: update-sage
 update-sage: $(go)
-	@cd .sage && $(go) get -d go.einride.tech/sage@latest && $(go) mod tidy && $(go) run .
+	@cd .sage && $(go) get go.einride.tech/sage@latest && $(go) mod tidy && $(go) run .
 
 .PHONY: clean-sage
 clean-sage:
