@@ -315,6 +315,24 @@ func TestLexer(t *testing.T) {
 			filter:        "invalid = foo\xa0\x01bar",
 			errorContains: "invalid UTF-8",
 		},
+		{
+			filter: `object_id = "�g/ml" OR object_id = "µg/ml"`, // replacement character is valid UTF-8
+			expected: []Token{
+				{Position: Position{Offset: 0, Column: 1, Line: 1}, Type: TokenTypeText, Value: "object_id"},
+				{Position: Position{Offset: 9, Column: 10, Line: 1}, Type: TokenTypeWhitespace, Value: " "},
+				{Position: Position{Offset: 10, Column: 11, Line: 1}, Type: TokenTypeEquals, Value: "="},
+				{Position: Position{Offset: 11, Column: 12, Line: 1}, Type: TokenTypeWhitespace, Value: " "},
+				{Position: Position{Offset: 12, Column: 13, Line: 1}, Type: TokenTypeString, Value: `"�g/ml"`},
+				{Position: Position{Offset: 21, Column: 20, Line: 1}, Type: TokenTypeWhitespace, Value: " "},
+				{Position: Position{Offset: 22, Column: 21, Line: 1}, Type: TokenTypeOr, Value: "OR"},
+				{Position: Position{Offset: 24, Column: 23, Line: 1}, Type: TokenTypeWhitespace, Value: " "},
+				{Position: Position{Offset: 25, Column: 24, Line: 1}, Type: TokenTypeText, Value: "object_id"},
+				{Position: Position{Offset: 34, Column: 33, Line: 1}, Type: TokenTypeWhitespace, Value: " "},
+				{Position: Position{Offset: 35, Column: 34, Line: 1}, Type: TokenTypeEquals, Value: "="},
+				{Position: Position{Offset: 36, Column: 35, Line: 1}, Type: TokenTypeWhitespace, Value: " "},
+				{Position: Position{Offset: 37, Column: 36, Line: 1}, Type: TokenTypeString, Value: `"µg/ml"`},
+			},
+		},
 	} {
 		tt := tt
 		t.Run(tt.filter, func(t *testing.T) {
