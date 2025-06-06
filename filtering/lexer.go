@@ -123,7 +123,11 @@ func (l *Lexer) nextRune() (rune, error) {
 	switch {
 	case n == 0:
 		return r, io.EOF
-	case r == utf8.RuneError:
+	// If the input rune was the replacement character (`\uFFFD`) preserve it.
+	//
+	// If the input rune was invalid (and converted to replacement character)
+	// return an error.
+	case r == utf8.RuneError && (n != 3 || l.remainingFilter()[:3] != "\xef\xbf\xbd"):
 		return r, l.errorf("invalid UTF-8")
 	}
 	if r == '\n' {
