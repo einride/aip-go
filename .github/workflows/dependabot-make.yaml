@@ -1,0 +1,75 @@
+name: Run Make on dependabot PRs
+
+on:
+  pull_request:
+    types:
+      # only run when new PR is opened or reopened
+      - opened
+      - reopened
+      # If you want to run on every commit to the PR, uncomment this
+      # - synchronize
+    branches:
+      - master
+
+env:
+  GOPRIVATE: github.com/einride/*,github.com/einride-labs/*
+  GITHUB_TOKEN: ${{ secrets.EINRIDEBOT_PERSONAL_ACCESS_TOKEN }}
+
+jobs:
+  run-make:
+    # Only run if it's a dependabot PR
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Turn off persistence so we can push commits to this branch and trigger CI jobs to rerun in the same PR
+          persist-credentials: false
+          # Needed for conventional commit linting.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          check-latest: true
+
+      - name: Checkout PR
+        run: gh pr checkout ${{ github.event.pull_request.number }}
+
+      - name: Configure Git
+        run: |
+          gh auth setup-git
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Run make
+        run: |
+          make all-no-git
+          
+      - name: Check for changes
+        id: check-changes
+        run: |
+          # Check if there are any changes after running make
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected after running make"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changes detected after running make"
+          fi
+
+      - name: Push on changes
+        if: steps.check-changes.outputs.changes == 'true'
+        run: |
+          git add .
+          git commit --amend --no-edit
+          git push --force-with-lease
