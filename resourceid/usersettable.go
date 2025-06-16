@@ -3,8 +3,6 @@ package resourceid
 import (
 	"fmt"
 	"unicode"
-
-	"github.com/google/uuid"
 )
 
 // ValidateUserSettable validates a user-settable resource ID.
@@ -27,9 +25,6 @@ func ValidateUserSettable(id string) error {
 	}
 	if id[len(id)-1] == '-' {
 		return fmt.Errorf("user-settable ID must end with a letter or number")
-	}
-	if _, err := uuid.Parse(id); err == nil {
-		return fmt.Errorf("user-settable ID must not be a valid UUIDv4")
 	}
 	for position, character := range id {
 		switch character {
