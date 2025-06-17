@@ -23,7 +23,6 @@ func TestValidateUserSettable(t *testing.T) {
 		{id: "daf1cb3e-f33b-43f1-81cc-e65fda51efa5"},
 		{id: "abcd/efgh", errorContains: "must only contain lowercase, numbers and hyphens"},
 	} {
-		tt := tt
 		t.Run(tt.id, func(t *testing.T) {
 			t.Parallel()
 			err := ValidateUserSettable(tt.id)

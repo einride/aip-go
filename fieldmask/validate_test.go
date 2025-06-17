@@ -72,7 +72,6 @@ func TestValidate(t *testing.T) {
 			errorContains: "invalid field path: book.foo",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if tt.errorContains != "" {

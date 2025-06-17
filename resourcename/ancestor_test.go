@@ -58,7 +58,6 @@ func TestAncestor(t *testing.T) {
 			expectedOK: true,
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			actual, ok := Ancestor(tt.input, tt.pattern)

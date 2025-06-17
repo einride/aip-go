@@ -81,7 +81,6 @@ func TestSegmentScanner(t *testing.T) {
 			segments:    []Segment{},
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			actualSegments := make([]Segment, 0, len(tt.segments))

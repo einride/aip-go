@@ -55,7 +55,6 @@ func TestApplyMacros(t *testing.T) {
 			expected: Has(Text("annotations"), String("schedule=test")),
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			declarations, err := NewDeclarations(tt.declarations...)

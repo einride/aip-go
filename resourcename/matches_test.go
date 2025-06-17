@@ -85,7 +85,6 @@ func TestMatches(t *testing.T) {
 			expected: true,
 		},
 	} {
-		tt := tt
 		t.Run(tt.test, func(t *testing.T) {
 			t.Parallel()
 			assert.Check(

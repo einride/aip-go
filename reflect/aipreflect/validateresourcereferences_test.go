@@ -77,7 +77,6 @@ func TestValidateResourceReferences(t *testing.T) {
 				" for freight-example.einride.tech/Site",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := ValidateResourceReferences(tt.message)

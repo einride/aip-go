@@ -88,7 +88,6 @@ func TestValidate(t *testing.T) {
 			input: "//example.com/foo/bar",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := Validate(tt.input)
@@ -198,7 +197,6 @@ func TestValidatePattern(t *testing.T) {
 			input: "fooBars/{foo_bar}",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := ValidatePattern(tt.input)

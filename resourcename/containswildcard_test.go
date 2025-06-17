@@ -55,7 +55,6 @@ func TestContainsWildcard(t *testing.T) {
 			expected: true,
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, ContainsWildcard(tt.input))

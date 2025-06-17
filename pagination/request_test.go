@@ -87,7 +87,6 @@ func TestCalculateRequestChecksum(t *testing.T) {
 			equal: true,
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			checksum1, err := calculateRequestChecksum(tt.request1)

@@ -16,7 +16,6 @@ func Test_initialUpperCase(t *testing.T) {
 		{s: "a", expected: "A"},
 		{s: "aaa", expected: "Aaa"},
 	} {
-		tt := tt
 		t.Run(tt.s, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, initialUpperCase(tt.s))
