@@ -18,7 +18,6 @@ func TestGrammaticalName_Validate(t *testing.T) {
 		{name: "UserEvents", errorContains: "must be lowerCamelCase"},
 		{name: "user events", errorContains: "contains forbidden character ' '"},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := GrammaticalName(tt.name).Validate()

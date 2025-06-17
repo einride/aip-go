@@ -55,7 +55,6 @@ func TestOrderBy_UnmarshalString(t *testing.T) {
 		{orderBy: "foo/bar", errorContains: "invalid character '/'"},
 		{orderBy: "foo bar", errorContains: "invalid format"},
 	} {
-		tt := tt
 		t.Run(tt.orderBy, func(t *testing.T) {
 			t.Parallel()
 			var actual OrderBy
@@ -130,7 +129,6 @@ func TestOrderBy_ValidateForPaths(t *testing.T) {
 			errorContains: "invalid field path: book.foo",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if tt.errorContains != "" {
@@ -202,7 +200,6 @@ func TestOrderBy_ValidateForMessage(t *testing.T) {
 			errorContains: "invalid field path: book.foo",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if tt.errorContains != "" {
@@ -239,7 +236,6 @@ func TestField_SubFields(t *testing.T) {
 			expected: []string{"foo", "bar"},
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.DeepEqual(t, tt.expected, tt.field.SubFields())

@@ -169,7 +169,6 @@ func TestJoin(t *testing.T) {
 			expected: "parent/1/child/2/extra/3",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			actual := Join(tt.input...)

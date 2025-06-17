@@ -132,7 +132,6 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 		} {
-			tt := tt
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				srcClone := proto.Clone(tt.src)
@@ -339,7 +338,6 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 		} {
-			tt := tt
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				Update(nil, tt.dst, tt.src)
@@ -786,7 +784,6 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 		} {
-			tt := tt
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				Update(&fieldmaskpb.FieldMask{Paths: tt.paths}, tt.dst, tt.src)

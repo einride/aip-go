@@ -62,7 +62,6 @@ func TestSprint(t *testing.T) {
 			expected:  "publishers/foo/books//settings",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, Sprint(tt.pattern, tt.variables...))

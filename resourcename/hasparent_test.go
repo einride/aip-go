@@ -133,7 +133,6 @@ func TestHasParent(t *testing.T) {
 			expected: true,
 		},
 	} {
-		tt := tt
 		t.Run(tt.test, func(t *testing.T) {
 			t.Parallel()
 			assert.Assert(t, HasParent(tt.name, tt.parent) == tt.expected)

@@ -28,7 +28,6 @@ func TestResourceTypeName_Validate(t *testing.T) {
 			errorContains: "type: must be UpperCamelCase",
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if tt.errorContains != "" {

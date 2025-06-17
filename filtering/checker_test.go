@@ -432,7 +432,6 @@ func TestChecker(t *testing.T) {
 			errorContains: "invalid UTF-8",
 		},
 	} {
-		tt := tt
 		t.Run(tt.filter, func(t *testing.T) {
 			t.Parallel()
 			var parser Parser

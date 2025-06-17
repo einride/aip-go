@@ -28,7 +28,6 @@ func Run(gen *protogen.Plugin, config Config) error {
 		}
 	}
 	for _, file := range gen.Files {
-		file := file
 		if !file.Generate {
 			continue
 		}

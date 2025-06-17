@@ -158,7 +158,6 @@ func TestMatch(t *testing.T) {
 			),
 		},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got := tt.matcher(tt.expr)
