@@ -7,14 +7,9 @@ updates:
       interval: monthly
 
   - package-ecosystem: gomod
-    directory: /
+    directories: [".", ".sage"]
     schedule:
       interval: monthly
     groups:
-      all:
+      go-dependencies:
         patterns: ["*"]
-
-  - package-ecosystem: gomod
-    directory: .sage
-    schedule:
-      interval: monthly
