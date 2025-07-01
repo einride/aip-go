@@ -13,7 +13,7 @@ jobs:
       - name: Setup Sage
         uses: einride/sage/actions/setup@master
         with:
-          go-version: "1.22"
+          go-version-file: .sage/go.mod
 
       - name: Make
         run: make
