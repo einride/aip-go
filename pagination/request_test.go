@@ -89,9 +89,9 @@ func TestCalculateRequestChecksum(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			checksum1, err := calculateRequestChecksum(tt.request1)
+			checksum1, err := CalculateRequestChecksum(tt.request1)
 			assert.NilError(t, err)
-			checksum2, err := calculateRequestChecksum(tt.request2)
+			checksum2, err := CalculateRequestChecksum(tt.request2)
 			assert.NilError(t, err)
 			if tt.equal {
 				assert.Assert(t, checksum1 == checksum2)

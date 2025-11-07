@@ -25,8 +25,8 @@ type skipRequest interface {
 	GetSkip() int32
 }
 
-// calculateRequestChecksum calculates a checksum for all fields of the request that must be the same across calls.
-func calculateRequestChecksum(request Request) (uint32, error) {
+// CalculateRequestChecksum calculates a checksum for all fields of the request that must be the same across calls.
+func CalculateRequestChecksum(request Request) (uint32, error) {
 	// Clone the original request, clear fields that may vary across calls, then checksum the resulting message.
 	clonedRequest := proto.Clone(request)
 	r := clonedRequest.ProtoReflect()
