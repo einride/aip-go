@@ -26,7 +26,7 @@ func ParsePageToken(request Request) (_ PageToken, err error) {
 			err = fmt.Errorf("parse offset page token: %w", err)
 		}
 	}()
-	requestChecksum, err := calculateRequestChecksum(request)
+	requestChecksum, err := CalculateRequestChecksum(request)
 	if err != nil {
 		return PageToken{}, err
 	}
