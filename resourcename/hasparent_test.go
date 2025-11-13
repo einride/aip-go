@@ -43,6 +43,12 @@ func TestHasParent(t *testing.T) {
 		},
 
 		{
+			test:     "singleton",
+			name:     "shippers/1/settings",
+			parent:   "shippers/1",
+			expected: true,
+		},
+		{
 			test:     "singleton child",
 			name:     "shippers/1/sites/1/settings",
 			parent:   "shippers/1/sites/1",
