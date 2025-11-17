@@ -39,6 +39,24 @@ message Message {
   repeated Enum repeated_enum = 33;
   repeated Message repeated_message = 34;
 
+  optional double optional_double = 41;
+  optional float optional_float = 42;
+  optional int32 optional_int32 = 43;
+  optional int64 optional_int64 = 44;
+  optional uint32 optional_uint32 = 45;
+  optional uint64 optional_uint64 = 46;
+  optional sint32 optional_sint32 = 47;
+  optional sint64 optional_sint64 = 48;
+  optional fixed32 optional_fixed32 = 49;
+  optional fixed64 optional_fixed64 = 50;
+  optional sfixed32 optional_sfixed32 = 51;
+  optional sfixed64 optional_sfixed64 = 52;
+  optional bool optional_bool = 53;
+  optional string optional_string = 54;
+  optional bytes optional_bytes = 55;
+  optional Enum optional_enum = 56;
+  optional Message optional_message = 57;
+
   map<string, string> map_string_string = 35;
   map<string, Message> map_string_message = 36;
 

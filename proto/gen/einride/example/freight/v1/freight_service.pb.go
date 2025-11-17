@@ -75,7 +75,7 @@ type ListShippersRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Requested page size. Server may return fewer shippers than requested.
 	// If unspecified, server will pick an appropriate default.
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageSize *int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3,oneof" json:"page_size,omitempty"`
 	// A token identifying a page of results the server should return.
 	// Typically, this is the value of
 	// [ListShippersResponse.next_page_token][einride.example.freight.v1.ListShippersResponse.next_page_token]
@@ -116,8 +116,8 @@ func (*ListShippersRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *ListShippersRequest) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
+	if x != nil && x.PageSize != nil {
+		return *x.PageSize
 	}
 	return 0
 }
@@ -1132,11 +1132,13 @@ const file_einride_example_freight_v1_freight_service_proto_rawDesc = "" +
 	"0einride/example/freight/v1/freight_service.proto\x12\x1aeinride.example.freight.v1\x1a)einride/example/freight/v1/shipment.proto\x1a(einride/example/freight/v1/shipper.proto\x1a%einride/example/freight/v1/site.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a google/protobuf/field_mask.proto\"V\n" +
 	"\x11GetShipperRequest\x12A\n" +
 	"\x04name\x18\x01 \x01(\tB-\xe2A\x01\x02\xfaA&\n" +
-	"$freight-example.einride.tech/ShipperR\x04name\"Q\n" +
-	"\x13ListShippersRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"$freight-example.einride.tech/ShipperR\x04name\"d\n" +
+	"\x13ListShippersRequest\x12 \n" +
+	"\tpage_size\x18\x01 \x01(\x05H\x00R\bpageSize\x88\x01\x01\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x7f\n" +
+	"page_token\x18\x02 \x01(\tR\tpageTokenB\f\n" +
+	"\n" +
+	"_page_size\"\x7f\n" +
 	"\x14ListShippersResponse\x12?\n" +
 	"\bshippers\x18\x01 \x03(\v2#.einride.example.freight.v1.ShipperR\bshippers\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"[\n" +
@@ -1326,6 +1328,7 @@ func file_einride_example_freight_v1_freight_service_proto_init() {
 	file_einride_example_freight_v1_shipment_proto_init()
 	file_einride_example_freight_v1_shipper_proto_init()
 	file_einride_example_freight_v1_site_proto_init()
+	file_einride_example_freight_v1_freight_service_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

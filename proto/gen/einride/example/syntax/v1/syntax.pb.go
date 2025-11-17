@@ -106,6 +106,23 @@ type Message struct {
 	RepeatedBytes    [][]byte               `protobuf:"bytes,32,rep,name=repeated_bytes,json=repeatedBytes,proto3" json:"repeated_bytes,omitempty"`
 	RepeatedEnum     []Enum                 `protobuf:"varint,33,rep,packed,name=repeated_enum,json=repeatedEnum,proto3,enum=einride.example.syntax.v1.Enum" json:"repeated_enum,omitempty"`
 	RepeatedMessage  []*Message             `protobuf:"bytes,34,rep,name=repeated_message,json=repeatedMessage,proto3" json:"repeated_message,omitempty"`
+	OptionalDouble   *float64               `protobuf:"fixed64,41,opt,name=optional_double,json=optionalDouble,proto3,oneof" json:"optional_double,omitempty"`
+	OptionalFloat    *float32               `protobuf:"fixed32,42,opt,name=optional_float,json=optionalFloat,proto3,oneof" json:"optional_float,omitempty"`
+	OptionalInt32    *int32                 `protobuf:"varint,43,opt,name=optional_int32,json=optionalInt32,proto3,oneof" json:"optional_int32,omitempty"`
+	OptionalInt64    *int64                 `protobuf:"varint,44,opt,name=optional_int64,json=optionalInt64,proto3,oneof" json:"optional_int64,omitempty"`
+	OptionalUint32   *uint32                `protobuf:"varint,45,opt,name=optional_uint32,json=optionalUint32,proto3,oneof" json:"optional_uint32,omitempty"`
+	OptionalUint64   *uint64                `protobuf:"varint,46,opt,name=optional_uint64,json=optionalUint64,proto3,oneof" json:"optional_uint64,omitempty"`
+	OptionalSint32   *int32                 `protobuf:"zigzag32,47,opt,name=optional_sint32,json=optionalSint32,proto3,oneof" json:"optional_sint32,omitempty"`
+	OptionalSint64   *int64                 `protobuf:"zigzag64,48,opt,name=optional_sint64,json=optionalSint64,proto3,oneof" json:"optional_sint64,omitempty"`
+	OptionalFixed32  *uint32                `protobuf:"fixed32,49,opt,name=optional_fixed32,json=optionalFixed32,proto3,oneof" json:"optional_fixed32,omitempty"`
+	OptionalFixed64  *uint64                `protobuf:"fixed64,50,opt,name=optional_fixed64,json=optionalFixed64,proto3,oneof" json:"optional_fixed64,omitempty"`
+	OptionalSfixed32 *int32                 `protobuf:"fixed32,51,opt,name=optional_sfixed32,json=optionalSfixed32,proto3,oneof" json:"optional_sfixed32,omitempty"`
+	OptionalSfixed64 *int64                 `protobuf:"fixed64,52,opt,name=optional_sfixed64,json=optionalSfixed64,proto3,oneof" json:"optional_sfixed64,omitempty"`
+	OptionalBool     *bool                  `protobuf:"varint,53,opt,name=optional_bool,json=optionalBool,proto3,oneof" json:"optional_bool,omitempty"`
+	OptionalString   *string                `protobuf:"bytes,54,opt,name=optional_string,json=optionalString,proto3,oneof" json:"optional_string,omitempty"`
+	OptionalBytes    []byte                 `protobuf:"bytes,55,opt,name=optional_bytes,json=optionalBytes,proto3,oneof" json:"optional_bytes,omitempty"`
+	OptionalEnum     *Enum                  `protobuf:"varint,56,opt,name=optional_enum,json=optionalEnum,proto3,enum=einride.example.syntax.v1.Enum,oneof" json:"optional_enum,omitempty"`
+	OptionalMessage  *Message               `protobuf:"bytes,57,opt,name=optional_message,json=optionalMessage,proto3,oneof" json:"optional_message,omitempty"`
 	MapStringString  map[string]string      `protobuf:"bytes,35,rep,name=map_string_string,json=mapStringString,proto3" json:"map_string_string,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	MapStringMessage map[string]*Message    `protobuf:"bytes,36,rep,name=map_string_message,json=mapStringMessage,proto3" json:"map_string_message,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Types that are valid to be assigned to Oneof:
@@ -387,6 +404,125 @@ func (x *Message) GetRepeatedMessage() []*Message {
 	return nil
 }
 
+func (x *Message) GetOptionalDouble() float64 {
+	if x != nil && x.OptionalDouble != nil {
+		return *x.OptionalDouble
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalFloat() float32 {
+	if x != nil && x.OptionalFloat != nil {
+		return *x.OptionalFloat
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalInt32() int32 {
+	if x != nil && x.OptionalInt32 != nil {
+		return *x.OptionalInt32
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalInt64() int64 {
+	if x != nil && x.OptionalInt64 != nil {
+		return *x.OptionalInt64
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalUint32() uint32 {
+	if x != nil && x.OptionalUint32 != nil {
+		return *x.OptionalUint32
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalUint64() uint64 {
+	if x != nil && x.OptionalUint64 != nil {
+		return *x.OptionalUint64
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalSint32() int32 {
+	if x != nil && x.OptionalSint32 != nil {
+		return *x.OptionalSint32
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalSint64() int64 {
+	if x != nil && x.OptionalSint64 != nil {
+		return *x.OptionalSint64
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalFixed32() uint32 {
+	if x != nil && x.OptionalFixed32 != nil {
+		return *x.OptionalFixed32
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalFixed64() uint64 {
+	if x != nil && x.OptionalFixed64 != nil {
+		return *x.OptionalFixed64
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalSfixed32() int32 {
+	if x != nil && x.OptionalSfixed32 != nil {
+		return *x.OptionalSfixed32
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalSfixed64() int64 {
+	if x != nil && x.OptionalSfixed64 != nil {
+		return *x.OptionalSfixed64
+	}
+	return 0
+}
+
+func (x *Message) GetOptionalBool() bool {
+	if x != nil && x.OptionalBool != nil {
+		return *x.OptionalBool
+	}
+	return false
+}
+
+func (x *Message) GetOptionalString() string {
+	if x != nil && x.OptionalString != nil {
+		return *x.OptionalString
+	}
+	return ""
+}
+
+func (x *Message) GetOptionalBytes() []byte {
+	if x != nil {
+		return x.OptionalBytes
+	}
+	return nil
+}
+
+func (x *Message) GetOptionalEnum() Enum {
+	if x != nil && x.OptionalEnum != nil {
+		return *x.OptionalEnum
+	}
+	return Enum_ENUM_UNSPECIFIED
+}
+
+func (x *Message) GetOptionalMessage() *Message {
+	if x != nil {
+		return x.OptionalMessage
+	}
+	return nil
+}
+
 func (x *Message) GetMapStringString() map[string]string {
 	if x != nil {
 		return x.MapStringString
@@ -476,7 +612,7 @@ var File_einride_example_syntax_v1_syntax_proto protoreflect.FileDescriptor
 
 const file_einride_example_syntax_v1_syntax_proto_rawDesc = "" +
 	"\n" +
-	"&einride/example/syntax/v1/syntax.proto\x12\x19einride.example.syntax.v1\"\xe4\x0e\n" +
+	"&einride/example/syntax/v1/syntax.proto\x12\x19einride.example.syntax.v1\"\x88\x18\n" +
 	"\aMessage\x12\x16\n" +
 	"\x06double\x18\x01 \x01(\x01R\x06double\x12\x14\n" +
 	"\x05float\x18\x02 \x01(\x02R\x05float\x12\x14\n" +
@@ -512,7 +648,25 @@ const file_einride_example_syntax_v1_syntax_proto_rawDesc = "" +
 	"\x0frepeated_string\x18\x1f \x03(\tR\x0erepeatedString\x12%\n" +
 	"\x0erepeated_bytes\x18  \x03(\fR\rrepeatedBytes\x12D\n" +
 	"\rrepeated_enum\x18! \x03(\x0e2\x1f.einride.example.syntax.v1.EnumR\frepeatedEnum\x12M\n" +
-	"\x10repeated_message\x18\" \x03(\v2\".einride.example.syntax.v1.MessageR\x0frepeatedMessage\x12c\n" +
+	"\x10repeated_message\x18\" \x03(\v2\".einride.example.syntax.v1.MessageR\x0frepeatedMessage\x12,\n" +
+	"\x0foptional_double\x18) \x01(\x01H\x01R\x0eoptionalDouble\x88\x01\x01\x12*\n" +
+	"\x0eoptional_float\x18* \x01(\x02H\x02R\roptionalFloat\x88\x01\x01\x12*\n" +
+	"\x0eoptional_int32\x18+ \x01(\x05H\x03R\roptionalInt32\x88\x01\x01\x12*\n" +
+	"\x0eoptional_int64\x18, \x01(\x03H\x04R\roptionalInt64\x88\x01\x01\x12,\n" +
+	"\x0foptional_uint32\x18- \x01(\rH\x05R\x0eoptionalUint32\x88\x01\x01\x12,\n" +
+	"\x0foptional_uint64\x18. \x01(\x04H\x06R\x0eoptionalUint64\x88\x01\x01\x12,\n" +
+	"\x0foptional_sint32\x18/ \x01(\x11H\aR\x0eoptionalSint32\x88\x01\x01\x12,\n" +
+	"\x0foptional_sint64\x180 \x01(\x12H\bR\x0eoptionalSint64\x88\x01\x01\x12.\n" +
+	"\x10optional_fixed32\x181 \x01(\aH\tR\x0foptionalFixed32\x88\x01\x01\x12.\n" +
+	"\x10optional_fixed64\x182 \x01(\x06H\n" +
+	"R\x0foptionalFixed64\x88\x01\x01\x120\n" +
+	"\x11optional_sfixed32\x183 \x01(\x0fH\vR\x10optionalSfixed32\x88\x01\x01\x120\n" +
+	"\x11optional_sfixed64\x184 \x01(\x10H\fR\x10optionalSfixed64\x88\x01\x01\x12(\n" +
+	"\roptional_bool\x185 \x01(\bH\rR\foptionalBool\x88\x01\x01\x12,\n" +
+	"\x0foptional_string\x186 \x01(\tH\x0eR\x0eoptionalString\x88\x01\x01\x12*\n" +
+	"\x0eoptional_bytes\x187 \x01(\fH\x0fR\roptionalBytes\x88\x01\x01\x12I\n" +
+	"\roptional_enum\x188 \x01(\x0e2\x1f.einride.example.syntax.v1.EnumH\x10R\foptionalEnum\x88\x01\x01\x12R\n" +
+	"\x10optional_message\x189 \x01(\v2\".einride.example.syntax.v1.MessageH\x11R\x0foptionalMessage\x88\x01\x01\x12c\n" +
 	"\x11map_string_string\x18# \x03(\v27.einride.example.syntax.v1.Message.MapStringStringEntryR\x0fmapStringString\x12f\n" +
 	"\x12map_string_message\x18$ \x03(\v28.einride.example.syntax.v1.Message.MapStringMessageEntryR\x10mapStringMessage\x12#\n" +
 	"\foneof_string\x18% \x01(\tH\x00R\voneofString\x12@\n" +
@@ -526,7 +680,24 @@ const file_einride_example_syntax_v1_syntax_proto_rawDesc = "" +
 	"\x15MapStringMessageEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
 	"\x05value\x18\x02 \x01(\v2\".einride.example.syntax.v1.MessageR\x05value:\x028\x01B\a\n" +
-	"\x05oneof*8\n" +
+	"\x05oneofB\x12\n" +
+	"\x10_optional_doubleB\x11\n" +
+	"\x0f_optional_floatB\x11\n" +
+	"\x0f_optional_int32B\x11\n" +
+	"\x0f_optional_int64B\x12\n" +
+	"\x10_optional_uint32B\x12\n" +
+	"\x10_optional_uint64B\x12\n" +
+	"\x10_optional_sint32B\x12\n" +
+	"\x10_optional_sint64B\x13\n" +
+	"\x11_optional_fixed32B\x13\n" +
+	"\x11_optional_fixed64B\x14\n" +
+	"\x12_optional_sfixed32B\x14\n" +
+	"\x12_optional_sfixed64B\x10\n" +
+	"\x0e_optional_boolB\x12\n" +
+	"\x10_optional_stringB\x11\n" +
+	"\x0f_optional_bytesB\x10\n" +
+	"\x0e_optional_enumB\x13\n" +
+	"\x11_optional_message*8\n" +
 	"\x04Enum\x12\x14\n" +
 	"\x10ENUM_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bENUM_ONE\x10\x01\x12\f\n" +
@@ -558,17 +729,19 @@ var file_einride_example_syntax_v1_syntax_proto_depIdxs = []int32{
 	1,  // 1: einride.example.syntax.v1.Message.message:type_name -> einride.example.syntax.v1.Message
 	0,  // 2: einride.example.syntax.v1.Message.repeated_enum:type_name -> einride.example.syntax.v1.Enum
 	1,  // 3: einride.example.syntax.v1.Message.repeated_message:type_name -> einride.example.syntax.v1.Message
-	2,  // 4: einride.example.syntax.v1.Message.map_string_string:type_name -> einride.example.syntax.v1.Message.MapStringStringEntry
-	3,  // 5: einride.example.syntax.v1.Message.map_string_message:type_name -> einride.example.syntax.v1.Message.MapStringMessageEntry
-	0,  // 6: einride.example.syntax.v1.Message.oneof_enum:type_name -> einride.example.syntax.v1.Enum
-	1,  // 7: einride.example.syntax.v1.Message.oneof_message1:type_name -> einride.example.syntax.v1.Message
-	1,  // 8: einride.example.syntax.v1.Message.oneof_message2:type_name -> einride.example.syntax.v1.Message
-	1,  // 9: einride.example.syntax.v1.Message.MapStringMessageEntry.value:type_name -> einride.example.syntax.v1.Message
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	0,  // 4: einride.example.syntax.v1.Message.optional_enum:type_name -> einride.example.syntax.v1.Enum
+	1,  // 5: einride.example.syntax.v1.Message.optional_message:type_name -> einride.example.syntax.v1.Message
+	2,  // 6: einride.example.syntax.v1.Message.map_string_string:type_name -> einride.example.syntax.v1.Message.MapStringStringEntry
+	3,  // 7: einride.example.syntax.v1.Message.map_string_message:type_name -> einride.example.syntax.v1.Message.MapStringMessageEntry
+	0,  // 8: einride.example.syntax.v1.Message.oneof_enum:type_name -> einride.example.syntax.v1.Enum
+	1,  // 9: einride.example.syntax.v1.Message.oneof_message1:type_name -> einride.example.syntax.v1.Message
+	1,  // 10: einride.example.syntax.v1.Message.oneof_message2:type_name -> einride.example.syntax.v1.Message
+	1,  // 11: einride.example.syntax.v1.Message.MapStringMessageEntry.value:type_name -> einride.example.syntax.v1.Message
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_einride_example_syntax_v1_syntax_proto_init() }
