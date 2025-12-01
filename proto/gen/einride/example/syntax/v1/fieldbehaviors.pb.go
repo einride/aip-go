@@ -27,6 +27,7 @@ type FieldBehaviorMessage struct {
 	Field                       string                           `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
 	OutputOnlyField             string                           `protobuf:"bytes,2,opt,name=output_only_field,json=outputOnlyField,proto3" json:"output_only_field,omitempty"`
 	OptionalField               string                           `protobuf:"bytes,3,opt,name=optional_field,json=optionalField,proto3" json:"optional_field,omitempty"`
+	ImmutableField              string                           `protobuf:"bytes,17,opt,name=immutable_field,json=immutableField,proto3" json:"immutable_field,omitempty"`
 	MessageWithoutFieldBehavior *FieldBehaviorMessage            `protobuf:"bytes,12,opt,name=message_without_field_behavior,json=messageWithoutFieldBehavior,proto3" json:"message_without_field_behavior,omitempty"`
 	OutputOnlyMessage           *FieldBehaviorMessage            `protobuf:"bytes,13,opt,name=output_only_message,json=outputOnlyMessage,proto3" json:"output_only_message,omitempty"`
 	OptionalMessage             *FieldBehaviorMessage            `protobuf:"bytes,14,opt,name=optional_message,json=optionalMessage,proto3" json:"optional_message,omitempty"`
@@ -94,6 +95,13 @@ func (x *FieldBehaviorMessage) GetOutputOnlyField() string {
 func (x *FieldBehaviorMessage) GetOptionalField() string {
 	if x != nil {
 		return x.OptionalField
+	}
+	return ""
+}
+
+func (x *FieldBehaviorMessage) GetImmutableField() string {
+	if x != nil {
+		return x.ImmutableField
 	}
 	return ""
 }
@@ -280,11 +288,12 @@ var File_einride_example_syntax_v1_fieldbehaviors_proto protoreflect.FileDescrip
 
 const file_einride_example_syntax_v1_fieldbehaviors_proto_rawDesc = "" +
 	"\n" +
-	".einride/example/syntax/v1/fieldbehaviors.proto\x12\x19einride.example.syntax.v1\x1a\x1fgoogle/api/field_behavior.proto\"\x88\x0f\n" +
+	".einride/example/syntax/v1/fieldbehaviors.proto\x12\x19einride.example.syntax.v1\x1a\x1fgoogle/api/field_behavior.proto\"\xb7\x0f\n" +
 	"\x14FieldBehaviorMessage\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x120\n" +
 	"\x11output_only_field\x18\x02 \x01(\tB\x04\xe2A\x01\x03R\x0foutputOnlyField\x12+\n" +
-	"\x0eoptional_field\x18\x03 \x01(\tB\x04\xe2A\x01\x01R\roptionalField\x12t\n" +
+	"\x0eoptional_field\x18\x03 \x01(\tB\x04\xe2A\x01\x01R\roptionalField\x12-\n" +
+	"\x0fimmutable_field\x18\x11 \x01(\tB\x04\xe2A\x01\x05R\x0eimmutableField\x12t\n" +
 	"\x1emessage_without_field_behavior\x18\f \x01(\v2/.einride.example.syntax.v1.FieldBehaviorMessageR\x1bmessageWithoutFieldBehavior\x12e\n" +
 	"\x13output_only_message\x18\r \x01(\v2/.einride.example.syntax.v1.FieldBehaviorMessageB\x04\xe2A\x01\x03R\x11outputOnlyMessage\x12`\n" +
 	"\x10optional_message\x18\x0e \x01(\v2/.einride.example.syntax.v1.FieldBehaviorMessageB\x04\xe2A\x01\x01R\x0foptionalMessage\x12Z\n" +

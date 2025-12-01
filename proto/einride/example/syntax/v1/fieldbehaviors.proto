@@ -8,6 +8,7 @@ message FieldBehaviorMessage {
   string field = 1;
   string output_only_field = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   string optional_field = 3 [(google.api.field_behavior) = OPTIONAL];
+  string immutable_field = 17 [(google.api.field_behavior) = IMMUTABLE];
 
   FieldBehaviorMessage message_without_field_behavior = 12;
   FieldBehaviorMessage output_only_message = 13 [(google.api.field_behavior) = OUTPUT_ONLY];

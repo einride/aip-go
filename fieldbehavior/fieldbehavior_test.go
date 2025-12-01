@@ -476,3 +476,437 @@ func TestValidateImmutableFieldsWithMask(t *testing.T) {
 		assert.ErrorContains(t, err, "field is immutable")
 	})
 }
+
+func TestValidateImmutableFieldsNotChanged(t *testing.T) {
+	t.Parallel()
+	t.Run("no error when immutable field not in mask", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site1",
+		}
+		updated := &examplefreightv1.Shipment{
+			ExternalReferenceId: "different-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site2",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"origin_site"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when immutable field unchanged", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site1",
+		}
+		updated := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site2",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"external_reference_id", "origin_site"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("error when immutable field changed", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site1",
+		}
+		updated := &examplefreightv1.Shipment{
+			ExternalReferenceId: "different-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site2",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"external_reference_id", "origin_site"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.ErrorContains(t, err, "immutable field cannot be changed")
+		assert.ErrorContains(t, err, "external_reference_id")
+	})
+	t.Run("error when wildcard used and immutable field changed", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site1",
+		}
+		updated := &examplefreightv1.Shipment{
+			ExternalReferenceId: "different-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site2",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"*"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.ErrorContains(t, err, "immutable field cannot be changed")
+	})
+	t.Run("no error when wildcard used but immutable field unchanged", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site1",
+		}
+		updated := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+			OriginSite:          "shippers/shipper1/sites/site2",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"*"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("error when different message types", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			ExternalReferenceId: "external-reference-id",
+		}
+		updated := &examplefreightv1.Site{
+			Name: "site1",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"*"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.ErrorContains(t, err, "different types")
+	})
+	t.Run("error when nested immutable field in repeated message changed", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1",
+				},
+			},
+		}
+		updated := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1 Updated",
+					ExternalReferenceId: "line-item-1-changed",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"line_items"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.ErrorContains(t, err, "immutable field cannot be changed")
+		assert.ErrorContains(t, err, "external_reference_id")
+	})
+	t.Run("no error when nested immutable field in repeated message unchanged", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1",
+				},
+			},
+		}
+		updated := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1 Updated",
+					ExternalReferenceId: "line-item-1",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"line_items"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("error when new element added with immutable field", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1",
+				},
+			},
+		}
+		updated := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1",
+				},
+				{
+					Title:               "Item 2",
+					ExternalReferenceId: "line-item-2",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"line_items"},
+		}
+		// This should succeed as we're adding new items, not changing existing ones
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("error when nested immutable field in map message changed", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1",
+					ImmutableField: "immutable-1",
+				},
+			},
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1-updated",
+					ImmutableField: "immutable-1-changed",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"map_optional_message"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.ErrorContains(t, err, "immutable field cannot be changed")
+		assert.ErrorContains(t, err, "immutable_field")
+	})
+	t.Run("no error when nested immutable field in map message unchanged", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1",
+					ImmutableField: "immutable-1",
+				},
+			},
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1-updated",
+					ImmutableField: "immutable-1",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"map_optional_message"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("error when new map key added with changed immutable field", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1",
+					ImmutableField: "immutable-1",
+				},
+			},
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1",
+					ImmutableField: "immutable-1",
+				},
+				"key2": {
+					Field:          "value2",
+					ImmutableField: "immutable-2",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"map_optional_message"},
+		}
+		// This should succeed as we're adding new entries, not changing existing ones
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when old list is empty and updated has elements with immutable fields", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{},
+		}
+		updated := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"line_items"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when updated list is empty and old had elements", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1",
+				},
+			},
+		}
+		updated := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"line_items"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when both lists are empty", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{},
+		}
+		updated := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"line_items"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when old map is empty and updated has entries with immutable fields", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{},
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1",
+					ImmutableField: "immutable-1",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"map_optional_message"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when updated map is empty and old had entries", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{
+				"key1": {
+					Field:          "value1",
+					ImmutableField: "immutable-1",
+				},
+			},
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"map_optional_message"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when both maps are empty", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{},
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			MapOptionalMessage: map[string]*syntaxv1.FieldBehaviorMessage{},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"map_optional_message"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when old singular message field not set and updated has immutable field", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			Field: "field",
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			Field: "field",
+			MessageWithoutFieldBehavior: &syntaxv1.FieldBehaviorMessage{
+				ImmutableField: "immutable-value",
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"message_without_field_behavior"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("no error when updated singular message field not set and old had immutable field", func(t *testing.T) {
+		t.Parallel()
+		old := &syntaxv1.FieldBehaviorMessage{
+			Field: "field",
+			MessageWithoutFieldBehavior: &syntaxv1.FieldBehaviorMessage{
+				ImmutableField: "immutable-value",
+			},
+		}
+		updated := &syntaxv1.FieldBehaviorMessage{
+			Field: "field",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"message_without_field_behavior"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.NilError(t, err)
+	})
+	t.Run("error when trying to unset top-level immutable field", func(t *testing.T) {
+		t.Parallel()
+		old := &examplefreightv1.Shipment{
+			ExternalReferenceId: "reference-123",
+		}
+		updated := &examplefreightv1.Shipment{
+			ExternalReferenceId: "",
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"external_reference_id"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.ErrorContains(t, err, "immutable field cannot be changed")
+	})
+	t.Run("error when nested field under immutable parent is in mask and changed", func(t *testing.T) {
+		t.Parallel()
+		// The line_items field itself is NOT immutable, but line_items[].external_reference_id IS immutable
+		// If mask contains "line_items.external_reference_id", we should still catch changes
+		old := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1",
+				},
+			},
+		}
+		updated := &examplefreightv1.Shipment{
+			LineItems: []*examplefreightv1.LineItem{
+				{
+					Title:               "Item 1",
+					ExternalReferenceId: "line-item-1-changed",
+				},
+			},
+		}
+		mask := &fieldmaskpb.FieldMask{
+			Paths: []string{"line_items.external_reference_id"},
+		}
+		err := ValidateImmutableFieldsNotChanged(old, updated, mask)
+		assert.ErrorContains(t, err, "immutable field cannot be changed")
+		assert.ErrorContains(t, err, "external_reference_id")
+	})
+}
