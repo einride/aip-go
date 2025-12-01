@@ -19,6 +19,15 @@ func ValidateRequiredFields(m proto.Message) error {
 	)
 }
 
+// ValidateRequiredFieldsWithMask returns a validation error if any field annotated as required
+// does not have a value, considering only fields specified in the update mask.
+//
+// Note: This function only validates fields that exactly match paths in the mask. It does not
+// support prefix matching. For example, if the mask contains "shipment", it will NOT validate
+// nested required fields like "shipment.origin_site" unless explicitly specified in the mask.
+// Callers should ensure the mask contains all nested field paths that need validation.
+//
+// See: https://aip.dev/203
 func ValidateRequiredFieldsWithMask(m proto.Message, mask *fieldmaskpb.FieldMask) error {
 	return validateRequiredFields(m.ProtoReflect(), mask, "")
 }
@@ -86,6 +95,25 @@ func hasPath(mask *fieldmaskpb.FieldMask, needle string) bool {
 	}
 	for _, straw := range mask.GetPaths() {
 		if straw == "*" || straw == needle {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPathWithPrefix checks if a field path is covered by the mask, supporting prefix matching.
+// This enables nested field validation when the mask contains a parent field.
+// For example, if mask contains "line_items", it matches "line_items.external_reference_id".
+func hasPathWithPrefix(mask *fieldmaskpb.FieldMask, needle string) bool {
+	if isEmpty(mask) {
+		return true
+	}
+	for _, straw := range mask.GetPaths() {
+		if straw == "*" || straw == needle {
+			return true
+		}
+		// Support prefix matching: if mask contains "line_items", it should match "line_items.external_reference_id"
+		if len(straw) < len(needle) && needle[:len(straw)] == straw && needle[len(straw)] == '.' {
 			return true
 		}
 	}
