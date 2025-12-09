@@ -7,7 +7,8 @@ type Macro func(*Cursor)
 
 // ApplyMacros applies the provided macros to the filter and type-checks the result against the provided declarations.
 func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Filter, error) {
-	applyMacros(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), macros...)
+	// We ignore the type map return as we expect to validate types against the given de returned by applyMacros because we don't need it for the filter.
+	_ = applyMacros(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), macros...)
 	var checker Checker
 	checker.Init(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), declarations)
 	checkedExpr, err := checker.Check()
@@ -18,7 +19,8 @@ func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Fi
 	return filter, nil
 }
 
-func applyMacros(exp *expr.Expr, sourceInfo *expr.SourceInfo, macros ...Macro) {
+func applyMacros(exp *expr.Expr, sourceInfo *expr.SourceInfo, macros ...Macro) map[int64]*expr.Type {
+	typeMap := make(map[int64]*expr.Type, len(sourceInfo.GetPositions()))
 	nextID := maxID(exp) + 1
 	Walk(func(currExpr, parentExpr *expr.Expr) bool {
 		cursor := &Cursor{
@@ -35,8 +37,12 @@ func applyMacros(exp *expr.Expr, sourceInfo *expr.SourceInfo, macros ...Macro) {
 				return false
 			}
 		}
+		for id, t := range typeMap {
+			cursor.typeMap[id] = t
+		}
 		return true
 	}, exp)
+	return typeMap
 }
 
 // A Cursor describes an expression encountered while applying a Macro.
@@ -48,6 +54,7 @@ type Cursor struct {
 	sourceInfo *expr.SourceInfo
 	replaced   bool
 	nextID     int64
+	typeMap    map[int64]*expr.Type
 }
 
 // Parent returns the parent of the current expression.
@@ -73,6 +80,29 @@ func (c *Cursor) Replace(newExpr *expr.Expr) {
 	c.sourceInfo.MacroCalls[newExpr.GetId()] = &expr.Expr{Id: c.currExpr.GetId(), ExprKind: c.currExpr.GetExprKind()}
 	c.currExpr.Id = newExpr.GetId()
 	c.currExpr.ExprKind = newExpr.GetExprKind()
+	c.replaced = true
+}
+
+// ReplaceWithType replaces the current expression with a new  expression and type.
+func (c *Cursor) ReplaceWithType(newExpr *expr.Expr, newTypes map[int64]*expr.Type) {
+	Walk(func(childExpr, _ *expr.Expr) bool {
+		childExpr.Id = c.nextID
+		c.nextID++
+		return true
+	}, newExpr)
+	if c.sourceInfo.MacroCalls == nil {
+		c.sourceInfo.MacroCalls = map[int64]*expr.Expr{}
+	}
+	if c.typeMap == nil {
+		// TODO: Find a better way to estimate the initial map size.
+		c.typeMap = make(map[int64]*expr.Type, 10)
+	}
+	c.sourceInfo.MacroCalls[newExpr.GetId()] = &expr.Expr{Id: c.currExpr.GetId(), ExprKind: c.currExpr.GetExprKind()}
+	c.currExpr.Id = newExpr.GetId()
+	c.currExpr.ExprKind = newExpr.GetExprKind()
+	for id, t := range newTypes {
+		c.typeMap[id] = t
+	}
 	c.replaced = true
 }
 

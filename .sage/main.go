@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"go.einride.tech/sage/sg"
 	"go.einride.tech/sage/sgtool"
@@ -29,6 +30,11 @@ func main() {
 	)
 }
 
+// setGoBuildTags sets the GOFLAGS environment variable to enable experiments that are not yet ready for production.
+func setGoBuildTags() {
+	os.Setenv("GOFLAGS", "-tags=aipexperiment.proto_filtering")
+}
+
 func All(ctx context.Context) error {
 	sg.Deps(ctx, ConvcoCheck, FormatMarkdown, FormatYAML, GoGenerate, Proto.All)
 	sg.Deps(ctx, GoLint, GoTest)
@@ -52,26 +58,31 @@ func FormatMarkdown(ctx context.Context) error {
 }
 
 func GoLint(ctx context.Context) error {
+	setGoBuildTags()
 	sg.Logger(ctx).Println("linting Go files...")
 	return sggolangcilint.Run(ctx)
 }
 
 func GoLintFix(ctx context.Context) error {
+	setGoBuildTags()
 	sg.Logger(ctx).Println("fixing Go files...")
 	return sggolangcilint.Fix(ctx)
 }
 
 func GoLines(ctx context.Context) error {
+	setGoBuildTags()
 	sg.Logger(ctx).Println("wrapping Go lines...")
 	return sggolines.Run(ctx)
 }
 
 func GoModTidy(ctx context.Context) error {
+	setGoBuildTags()
 	sg.Logger(ctx).Println("tidying Go module files...")
 	return sg.Command(ctx, "go", "mod", "tidy", "-v").Run()
 }
 
 func GoTest(ctx context.Context) error {
+	setGoBuildTags()
 	sg.Logger(ctx).Println("running Go tests...")
 	return sggo.TestCommand(ctx).Run()
 }
@@ -88,6 +99,7 @@ func Stringer(ctx context.Context) error {
 }
 
 func GoGenerate(ctx context.Context) error {
+	setGoBuildTags()
 	sg.Deps(ctx, Stringer)
 	sg.Logger(ctx).Println("generating Go code...")
 	return sg.Command(ctx, "go", "generate", "./...").Run()
