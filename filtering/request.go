@@ -23,6 +23,7 @@ func ParseFilter(request Request, declarations *Declarations) (Filter, error) {
 		return Filter{}, err
 	}
 	return Filter{
-		CheckedExpr: checkedExpr,
+		CheckedExpr:  checkedExpr,
+		declarations: declarations,
 	}, nil
 }
