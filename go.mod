@@ -5,6 +5,7 @@ go 1.23.0
 toolchain go1.24.4
 
 require (
+	github.com/google/cel-go v0.26.1
 	github.com/google/uuid v1.6.0
 	github.com/stoewer/go-strcase v1.3.1
 	google.golang.org/genproto v0.0.0-20240711142825-46eb208f015d
@@ -16,7 +17,10 @@ require (
 )
 
 require (
+	cel.dev/expr v0.24.0 // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
+	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
