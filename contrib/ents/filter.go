@@ -13,10 +13,10 @@ import (
 // Example: name="value" AND age>18
 // More detail in [AIP-160](https://google.aip.dev/160).
 func FilterBy(filter filtering.Filter) func(*sql.Selector) {
-	if filter.CheckedExpr == nil || filter.CheckedExpr.Expr == nil {
-		return nil
-	}
 	return func(s *sql.Selector) {
+		if filter.CheckedExpr == nil || filter.CheckedExpr.Expr == nil {
+			return
+		}
 		predicate, err := exprToPredicate(s, filter.CheckedExpr.Expr)
 		if err != nil || predicate == nil {
 			// Fall back to a no-op if the filter expression cannot be translated.
