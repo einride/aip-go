@@ -1,4 +1,4 @@
-package ent
+package ents
 
 import (
 	"entgo.io/ent/dialect/sql"
