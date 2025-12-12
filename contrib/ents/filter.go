@@ -9,10 +9,10 @@ import (
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
-// FilterBy builds a SQL selector from a filtering.Filter.
+// ApplyFilter builds a SQL selector from a filtering.Filter.
 // Example: name="value" AND age>18
 // More detail in [AIP-160](https://google.aip.dev/160).
-func FilterBy(filter filtering.Filter) func(*sql.Selector) {
+func ApplyFilter(filter filtering.Filter) func(*sql.Selector) {
 	return func(s *sql.Selector) {
 		if filter.CheckedExpr == nil || filter.CheckedExpr.Expr == nil {
 			return

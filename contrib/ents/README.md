@@ -10,7 +10,7 @@ go get go.einride.tech/aip/contrib/ents
 
 ## Quick Start
 
-The helpers expect parsed and type-checked values from the `filtering` and `ordering` packages. Once you have those, pass them to `FilterBy` and `OrderBy` before executing an ent query.
+The helpers expect parsed and type-checked values from the `filtering` and `ordering` packages. Once you have those, pass them to `ApplyFilter` and `ApplyOrderBy` before executing an ent query.
 
 ```go
 package foo
@@ -53,8 +53,8 @@ func ListFoos(ctx context.Context, client *ent.Client, req ListFoosRequest) ([]*
     }
 
     foos, err := client.Foo.Query()
-        .Where(ents.FilterBy(filter))
-        .Order(ents.OrderBy(orderBy))
+        .Where(ents.ApplyFilter(filter))
+        .Order(ents.ApplyOrderBy(orderBy))
         .All(ctx)
 
     return foos, err
@@ -69,16 +69,16 @@ In production code you would use your generated protobuf (or HTTP request) type 
 - Comparison operators (`=`, `!=`, `<`, `<=`, `>`, `>=`) work between columns and literal values or between two columns.
 - The `:` operator (`has`) becomes a `LIKE '%value%'` (`sql.Contains`) predicate.
 - Literal conversions cover booleans, strings, integers, doubles, durations (`duration("1h")`), and timestamps (`timestamp("2006-01-02T15:04:05Z")`).
-- If a filter expression cannot be translated, `FilterBy` safely returns a no-op so the query still executes.
+- If a filter expression cannot be translated, `ApplyFilter` safely returns a no-op so the query still executes.
 
 ## Ordering Support
 
-- `OrderBy` consumes a parsed `ordering.OrderBy` value (for example from `ordering.ParseOrderBy`).
+- `ApplyOrderBy` consumes a parsed `ordering.OrderBy` value (for example from `ordering.ParseOrderBy`).
 - Each field path becomes either `sql.Asc` or `sql.Desc` on the selector, preserving dotted paths for nested columns or joins.
 - Invalid or empty ordering strings are surfaced while parsing, before the selector is modified.
 
 ## Tips
 
 - Centralize your `filtering.Declarations` so the same validation is shared between your API layer and ent integration.
-- Combine `FilterBy` with other ent `Modify` calls to append additional predicates or joins as needed.
+- Combine `ApplyFilter` with other ent `Modify` calls to append additional predicates or joins as needed.
 - When you add new sortable or filterable fields, update the declarations and regenerate any service documentation accordingly.

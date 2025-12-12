@@ -5,9 +5,9 @@ import (
 	"go.einride.tech/aip/ordering"
 )
 
-// OrderBy builds a SQL order function from an orderBy string.
+// ApplyOrderBy builds a SQL order function from an orderBy string.
 // Example: foo,bar asc/desc
-func OrderBy(orderBy ordering.OrderBy) func(s *sql.Selector) {
+func ApplyOrderBy(orderBy ordering.OrderBy) func(s *sql.Selector) {
 	return func(s *sql.Selector) {
 		for _, field := range orderBy.Fields {
 			if field.Desc {
