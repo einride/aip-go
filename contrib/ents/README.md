@@ -10,7 +10,7 @@ go get go.einride.tech/aip/contrib/ents
 
 ## Quick Start
 
-The helpers expect parsed and type-checked values from the `filtering` and `ordering` packages. Once you have those, pass them to `QueryBy` and `OrderBy` before executing an ent query.
+The helpers expect parsed and type-checked values from the `filtering` and `ordering` packages. Once you have those, pass them to `FilterBy` and `OrderBy` before executing an ent query.
 
 ```go
 package foo
@@ -53,7 +53,7 @@ func ListFoos(ctx context.Context, client *ent.Client, req ListFoosRequest) ([]*
     }
 
     foos, err := client.Foo.Query()
-        .Where(ents.QueryBy(filter))
+        .Where(ents.FilterBy(filter))
         .Order(ents.OrderBy(orderBy))
         .All(ctx)
 
@@ -69,7 +69,7 @@ In production code you would use your generated protobuf (or HTTP request) type 
 - Comparison operators (`=`, `!=`, `<`, `<=`, `>`, `>=`) work between columns and literal values or between two columns.
 - The `:` operator (`has`) becomes a `LIKE '%value%'` (`sql.Contains`) predicate.
 - Literal conversions cover booleans, strings, integers, doubles, durations (`duration("1h")`), and timestamps (`timestamp("2006-01-02T15:04:05Z")`).
-- If a filter expression cannot be translated, `QueryBy` safely returns a no-op so the query still executes.
+- If a filter expression cannot be translated, `FilterBy` safely returns a no-op so the query still executes.
 
 ## Ordering Support
 
@@ -80,5 +80,5 @@ In production code you would use your generated protobuf (or HTTP request) type 
 ## Tips
 
 - Centralize your `filtering.Declarations` so the same validation is shared between your API layer and ent integration.
-- Combine `QueryBy` with other ent `Modify` calls to append additional predicates or joins as needed.
+- Combine `FilterBy` with other ent `Modify` calls to append additional predicates or joins as needed.
 - When you add new sortable or filterable fields, update the declarations and regenerate any service documentation accordingly.
