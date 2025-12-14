@@ -19,6 +19,13 @@ type Config struct {
 	IncludeResourceDefinitions bool
 }
 
+// resourceCallback is the callback type for rangeResourcesInFile.
+type resourceCallback func(
+	resource *annotations.ResourceDescriptor,
+	extension protoreflect.ExtensionType,
+	message *protogen.Message,
+) bool
+
 // Run the AIP Go protobuf compiler plugin.
 func Run(gen *protogen.Plugin, config Config) error {
 	var files protoregistry.Files
@@ -35,8 +42,12 @@ func Run(gen *protogen.Plugin, config Config) error {
 		g.Skip()
 		var rangeErr error
 		rangeResourcesInFile(
-			file.Desc,
-			func(resource *annotations.ResourceDescriptor, extension protoreflect.ExtensionType) bool {
+			file,
+			func(
+				resource *annotations.ResourceDescriptor,
+				extension protoreflect.ExtensionType,
+				message *protogen.Message,
+			) bool {
 				if !config.IncludeResourceDefinitions && extension == annotations.E_ResourceDefinition {
 					return true
 				}
@@ -48,6 +59,16 @@ func Run(gen *protogen.Plugin, config Config) error {
 				}).GenerateCode(g); err != nil {
 					rangeErr = err
 					return false
+				}
+				// Generate methods on the message type itself for message-level resources.
+				if message != nil {
+					if err := (resourceMessageCodeGenerator{
+						resource: resource,
+						message:  message,
+					}).GenerateCode(g); err != nil {
+						rangeErr = err
+						return false
+					}
 				}
 				return true
 			},
@@ -79,25 +100,22 @@ func getProtocVersion(gen *protogen.Plugin) string {
 	return "(unknown)"
 }
 
-func rangeResourcesInFile(
-	file protoreflect.FileDescriptor,
-	fn func(resource *annotations.ResourceDescriptor, extension protoreflect.ExtensionType) bool,
-) {
+func rangeResourcesInFile(file *protogen.File, fn resourceCallback) {
 	for _, resource := range proto.GetExtension(
-		file.Options(), annotations.E_ResourceDefinition,
+		file.Desc.Options(), annotations.E_ResourceDefinition,
 	).([]*annotations.ResourceDescriptor) {
-		if !fn(resource, annotations.E_ResourceDefinition) {
+		if !fn(resource, annotations.E_ResourceDefinition, nil) {
 			return
 		}
 	}
-	for i := 0; i < file.Messages().Len(); i++ {
+	for _, msg := range file.Messages {
 		resource := proto.GetExtension(
-			file.Messages().Get(i).Options(), annotations.E_Resource,
+			msg.Desc.Options(), annotations.E_Resource,
 		).(*annotations.ResourceDescriptor)
 		if resource == nil {
 			continue
 		}
-		if !fn(resource, annotations.E_Resource) {
+		if !fn(resource, annotations.E_Resource, msg) {
 			return
 		}
 	}

@@ -73,3 +73,24 @@ func (n *ShipperResourceName) UnmarshalText(text []byte) error {
 func (n ShipperResourceName) Type() string {
 	return "freight-example.einride.tech/Shipper"
 }
+
+// ResourcePattern returns the resource name pattern for Shipper.
+func (*Shipper) ResourcePattern() string {
+	return "shippers/{shipper}"
+}
+
+// ParentPattern returns the parent resource pattern for Shipper.
+// Returns empty string for top-level resources.
+func (*Shipper) ParentPattern() string {
+	return ""
+}
+
+// ResourceTypeName returns the short type name for Shipper.
+func (*Shipper) ResourceTypeName() string {
+	return "Shipper"
+}
+
+// SetName sets the name field on Shipper.
+func (x *Shipper) SetName(name string) {
+	x.Name = name
+}

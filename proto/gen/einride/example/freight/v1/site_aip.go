@@ -97,3 +97,24 @@ func (n SiteResourceName) ShipperResourceName() ShipperResourceName {
 		Shipper: n.Shipper,
 	}
 }
+
+// ResourcePattern returns the resource name pattern for Site.
+func (*Site) ResourcePattern() string {
+	return "shippers/{shipper}/sites/{site}"
+}
+
+// ParentPattern returns the parent resource pattern for Site.
+// Returns empty string for top-level resources.
+func (*Site) ParentPattern() string {
+	return "shippers/{shipper}"
+}
+
+// ResourceTypeName returns the short type name for Site.
+func (*Site) ResourceTypeName() string {
+	return "Site"
+}
+
+// SetName sets the name field on Site.
+func (x *Site) SetName(name string) {
+	x.Name = name
+}

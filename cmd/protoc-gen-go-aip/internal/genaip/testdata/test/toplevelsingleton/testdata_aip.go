@@ -62,3 +62,24 @@ func (n *ConfigResourceName) UnmarshalText(text []byte) error {
 func (n ConfigResourceName) Type() string {
 	return "test1.testdata/Config"
 }
+
+// ResourcePattern returns the resource name pattern for Config.
+func (*Config) ResourcePattern() string {
+	return "config"
+}
+
+// ParentPattern returns the parent resource pattern for Config.
+// Returns empty string for top-level resources.
+func (*Config) ParentPattern() string {
+	return ""
+}
+
+// ResourceTypeName returns the short type name for Config.
+func (*Config) ResourceTypeName() string {
+	return "Config"
+}
+
+// SetName sets the name field on Config.
+func (x *Config) SetName(name string) {
+	x.Name = name
+}

@@ -274,6 +274,27 @@ func (n PublishersBookResourceName) Type() string {
 	return "test1.testdata/Book"
 }
 
+// ResourcePattern returns the resource name pattern for Book.
+func (*Book) ResourcePattern() string {
+	return "shelves/{shelf}/books/{book}"
+}
+
+// ParentPattern returns the parent resource pattern for Book.
+// Returns empty string for top-level resources.
+func (*Book) ParentPattern() string {
+	return "shelves/{shelf}"
+}
+
+// ResourceTypeName returns the short type name for Book.
+func (*Book) ResourceTypeName() string {
+	return "Book"
+}
+
+// SetName sets the name field on Book.
+func (x *Book) SetName(name string) {
+	x.Name = name
+}
+
 type ShelfMultiPatternResourceName interface {
 	fmt.Stringer
 	encoding.TextMarshaler
@@ -496,4 +517,25 @@ func (n *RoomsShelfResourceName) UnmarshalText(text []byte) error {
 
 func (n RoomsShelfResourceName) Type() string {
 	return "test1.testdata/Shelf"
+}
+
+// ResourcePattern returns the resource name pattern for Shelf.
+func (*Shelf) ResourcePattern() string {
+	return "shelves/{shelf}"
+}
+
+// ParentPattern returns the parent resource pattern for Shelf.
+// Returns empty string for top-level resources.
+func (*Shelf) ParentPattern() string {
+	return ""
+}
+
+// ResourceTypeName returns the short type name for Shelf.
+func (*Shelf) ResourceTypeName() string {
+	return "Shelf"
+}
+
+// SetName sets the name field on Shelf.
+func (x *Shelf) SetName(name string) {
+	x.Name = name
 }
