@@ -13,7 +13,8 @@ type resourceMessageCodeGenerator struct {
 	message  *protogen.Message
 }
 
-// GenerateCode generates ResourcePattern, ParentPattern, ResourceTypeName, and SetName methods.
+// GenerateCode generates ResourcePattern, ParentPattern, ResourceTypeName, SetName,
+// and request extractor methods.
 func (r resourceMessageCodeGenerator) GenerateCode(g *protogen.GeneratedFile) error {
 	patterns := r.resource.GetPattern()
 	if len(patterns) == 0 {
@@ -26,6 +27,8 @@ func (r resourceMessageCodeGenerator) GenerateCode(g *protogen.GeneratedFile) er
 	r.generateParentPatternMethod(g, parentPattern)
 	r.generateResourceTypeNameMethod(g, typeName)
 	r.generateSetNameMethod(g)
+	r.generateExtractFromCreateRequestMethod(g)
+	r.generateExtractFromUpdateRequestMethod(g)
 	return nil
 }
 
@@ -63,6 +66,42 @@ func (r resourceMessageCodeGenerator) generateSetNameMethod(g *protogen.Generate
 	g.P("// SetName sets the name field on ", r.message.GoIdent.GoName, ".")
 	g.P("func (x *", r.message.GoIdent.GoName, ") SetName(name string) {")
 	g.P("\tx.Name = name")
+	g.P("}")
+}
+
+// generateExtractFromCreateRequestMethod generates the ExtractFromCreateRequest method.
+// This follows AIP-133 conventions where Create<Resource>Request has a <resource> field.
+func (r resourceMessageCodeGenerator) generateExtractFromCreateRequestMethod(g *protogen.GeneratedFile) {
+	resourceName := r.message.GoIdent.GoName
+	requestType := "Create" + resourceName + "Request"
+	getterName := "Get" + resourceName
+	protoMessage := g.QualifiedGoIdent(protogen.GoIdent{
+		GoName:       "Message",
+		GoImportPath: "google.golang.org/protobuf/proto",
+	})
+	g.P()
+	g.P("// ExtractFromCreateRequest extracts the ", resourceName, " from a Create", resourceName, "Request.")
+	g.P("// This follows AIP-133 conventions.")
+	g.P("func (*", resourceName, ") ExtractFromCreateRequest(req ", protoMessage, ") *", resourceName, " {")
+	g.P("\treturn req.(*", requestType, ").", getterName, "()")
+	g.P("}")
+}
+
+// generateExtractFromUpdateRequestMethod generates the ExtractFromUpdateRequest method.
+// This follows AIP-134 conventions where Update<Resource>Request has a <resource> field.
+func (r resourceMessageCodeGenerator) generateExtractFromUpdateRequestMethod(g *protogen.GeneratedFile) {
+	resourceName := r.message.GoIdent.GoName
+	requestType := "Update" + resourceName + "Request"
+	getterName := "Get" + resourceName
+	protoMessage := g.QualifiedGoIdent(protogen.GoIdent{
+		GoName:       "Message",
+		GoImportPath: "google.golang.org/protobuf/proto",
+	})
+	g.P()
+	g.P("// ExtractFromUpdateRequest extracts the ", resourceName, " from an Update", resourceName, "Request.")
+	g.P("// This follows AIP-134 conventions.")
+	g.P("func (*", resourceName, ") ExtractFromUpdateRequest(req ", protoMessage, ") *", resourceName, " {")
+	g.P("\treturn req.(*", requestType, ").", getterName, "()")
 	g.P("}")
 }
 
