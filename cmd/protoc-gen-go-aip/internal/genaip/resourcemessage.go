@@ -82,7 +82,7 @@ func (r resourceMessageCodeGenerator) generateExtractFromCreateRequestMethod(g *
 	g.P()
 	g.P("// ExtractFromCreateRequest extracts the ", resourceName, " from a Create", resourceName, "Request.")
 	g.P("// This follows AIP-133 conventions.")
-	g.P("func (*", resourceName, ") ExtractFromCreateRequest(req ", protoMessage, ") *", resourceName, " {")
+	g.P("func (*", resourceName, ") ExtractFromCreateRequest(req ", protoMessage, ") ", protoMessage, " {")
 	g.P("\treturn req.(*", requestType, ").", getterName, "()")
 	g.P("}")
 }
@@ -100,7 +100,7 @@ func (r resourceMessageCodeGenerator) generateExtractFromUpdateRequestMethod(g *
 	g.P()
 	g.P("// ExtractFromUpdateRequest extracts the ", resourceName, " from an Update", resourceName, "Request.")
 	g.P("// This follows AIP-134 conventions.")
-	g.P("func (*", resourceName, ") ExtractFromUpdateRequest(req ", protoMessage, ") *", resourceName, " {")
+	g.P("func (*", resourceName, ") ExtractFromUpdateRequest(req ", protoMessage, ") ", protoMessage, " {")
 	g.P("\treturn req.(*", requestType, ").", getterName, "()")
 	g.P("}")
 }
