@@ -11,10 +11,11 @@ import (
 type resourceMessageCodeGenerator struct {
 	resource *annotations.ResourceDescriptor
 	message  *protogen.Message
+	file     *protogen.File
 }
 
 // GenerateCode generates ResourcePattern, ParentPattern, ResourceTypeName, SetName,
-// and request extractor methods.
+// and optionally request extractor methods (if the corresponding request types exist).
 func (r resourceMessageCodeGenerator) GenerateCode(g *protogen.GeneratedFile) error {
 	patterns := r.resource.GetPattern()
 	if len(patterns) == 0 {
@@ -27,9 +28,27 @@ func (r resourceMessageCodeGenerator) GenerateCode(g *protogen.GeneratedFile) er
 	r.generateParentPatternMethod(g, parentPattern)
 	r.generateResourceTypeNameMethod(g, typeName)
 	r.generateSetNameMethod(g)
-	r.generateExtractFromCreateRequestMethod(g)
-	r.generateExtractFromUpdateRequestMethod(g)
+	// Only generate extractor methods if the corresponding request types exist.
+	// This allows the codegen to work with proto files that only define resources
+	// without the full AIP service definition.
+	resourceName := r.message.GoIdent.GoName
+	if r.hasMessageWithName("Create" + resourceName + "Request") {
+		r.generateExtractFromCreateRequestMethod(g)
+	}
+	if r.hasMessageWithName("Update" + resourceName + "Request") {
+		r.generateExtractFromUpdateRequestMethod(g)
+	}
 	return nil
+}
+
+// hasMessageWithName checks if a message with the given name exists in the file.
+func (r resourceMessageCodeGenerator) hasMessageWithName(name string) bool {
+	for _, msg := range r.file.Messages {
+		if msg.GoIdent.GoName == name {
+			return true
+		}
+	}
+	return false
 }
 
 // generateResourcePatternMethod generates the ResourcePattern method.
@@ -71,6 +90,9 @@ func (r resourceMessageCodeGenerator) generateSetNameMethod(g *protogen.Generate
 
 // generateExtractFromCreateRequestMethod generates the ExtractFromCreateRequest method.
 // This follows AIP-133 conventions where Create<Resource>Request has a <resource> field.
+//
+// This method is only generated when the corresponding Create<Resource>Request type
+// exists in the same file, ensuring the generated code compiles successfully.
 func (r resourceMessageCodeGenerator) generateExtractFromCreateRequestMethod(g *protogen.GeneratedFile) {
 	resourceName := r.message.GoIdent.GoName
 	requestType := "Create" + resourceName + "Request"
@@ -89,6 +111,9 @@ func (r resourceMessageCodeGenerator) generateExtractFromCreateRequestMethod(g *
 
 // generateExtractFromUpdateRequestMethod generates the ExtractFromUpdateRequest method.
 // This follows AIP-134 conventions where Update<Resource>Request has a <resource> field.
+//
+// This method is only generated when the corresponding Update<Resource>Request type
+// exists in the same file, ensuring the generated code compiles successfully.
 func (r resourceMessageCodeGenerator) generateExtractFromUpdateRequestMethod(g *protogen.GeneratedFile) {
 	resourceName := r.message.GoIdent.GoName
 	requestType := "Update" + resourceName + "Request"

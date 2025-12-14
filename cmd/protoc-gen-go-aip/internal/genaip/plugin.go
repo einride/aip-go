@@ -65,6 +65,7 @@ func Run(gen *protogen.Plugin, config Config) error {
 					if err := (resourceMessageCodeGenerator{
 						resource: resource,
 						message:  message,
+						file:     file,
 					}).GenerateCode(g); err != nil {
 						rangeErr = err
 						return false
