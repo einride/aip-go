@@ -225,9 +225,9 @@ func (d *Declarations) declare(decl *expr.Decl) error {
 // merge merges the given declarations into the current declarations.
 // Given declarations take precedence over current declarations in case
 // of conflicts (such as same identifier name but different type or same function name but different definition).
-func (d *Declarations) merge(decl *Declarations) error {
+func (d *Declarations) merge(decl *Declarations) {
 	if decl == nil {
-		return nil
+		return
 	}
 	for name, ident := range decl.idents {
 		d.idents[name] = ident
@@ -238,6 +238,4 @@ func (d *Declarations) merge(decl *Declarations) error {
 	for name, enum := range decl.enums {
 		d.enums[name] = enum
 	}
-
-	return nil
 }

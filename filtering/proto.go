@@ -17,7 +17,7 @@ type filterOptions struct {
 // WithFilterableFields marks the given fields as filterable.
 // To mark a simple field (native types) or a message field (with all its underlying fields, recursively)
 // as filterable, use the field name.
-// To mark a specific nested field as filterable, use the field name with a dot prefix.
+// To mark a specific nested field as filterable, use the full path of the field using the dot notation.
 // For example:
 //   - WithFilterableFields("string_field") marks the string_field as filterable.
 //   - WithFilterableFields("nested_message") marks the nested_message field and all its underlying fields as

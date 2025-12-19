@@ -13,15 +13,20 @@ type Filter struct {
 // ApplyMacros modifies the filter by applying the provided macros.
 // EXPERIMENTAL: This method is experimental and may be changed or removed in the future.
 func (f *Filter) ApplyMacros(macros ...Macro) error {
-	declarationOptions := applyMacros(f.CheckedExpr.GetExpr(), f.CheckedExpr.GetSourceInfo(), f.declarations, macros...)
+	declarationOptions, err := applyMacros(
+		f.CheckedExpr.GetExpr(),
+		f.CheckedExpr.GetSourceInfo(),
+		f.declarations,
+		macros...,
+	)
+	if err != nil {
+		return err
+	}
 	newDeclarations, err := NewDeclarations(declarationOptions...)
 	if err != nil {
 		return err
 	}
-	err = f.declarations.merge(newDeclarations)
-	if err != nil {
-		return err
-	}
+	f.declarations.merge(newDeclarations)
 	var checker Checker
 	checker.Init(f.CheckedExpr.GetExpr(), f.CheckedExpr.GetSourceInfo(), f.declarations)
 	checkedExpr, err := checker.Check()
