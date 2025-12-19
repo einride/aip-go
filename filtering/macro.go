@@ -1,6 +1,8 @@
 package filtering
 
 import (
+	"fmt"
+
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
@@ -10,7 +12,10 @@ type Macro func(*Cursor)
 // ApplyMacros applies the provided macros to the filter and type-checks the result against the provided declarations.
 func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Filter, error) {
 	// We ignore the return value as we validate against the given declarations instead.
-	_ = applyMacros(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), filter.declarations, macros...)
+	_, err := applyMacros(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), filter.declarations, macros...)
+	if err != nil {
+		return Filter{}, err
+	}
 	var checker Checker
 	checker.Init(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), declarations)
 	checkedExpr, err := checker.Check()
@@ -26,29 +31,37 @@ func applyMacros(
 	sourceInfo *expr.SourceInfo,
 	declarations *Declarations,
 	macros ...Macro,
-) []DeclarationOption {
+) ([]DeclarationOption, error) {
 	declarationOptions := make([]DeclarationOption, 0, len(macros))
 	nextID := maxID(exp) + 1
+	decl := declarations
+	if declarations == nil {
+		var err error
+		decl, err = NewDeclarations()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new declarations: %w", err)
+		}
+	}
 	Walk(func(currExpr, parentExpr *expr.Expr) bool {
 		cursor := &Cursor{
 			sourceInfo:       sourceInfo,
 			currExpr:         currExpr,
 			parentExpr:       parentExpr,
 			nextID:           nextID,
-			exprDeclarations: declarations,
+			exprDeclarations: decl,
 		}
 		for _, macro := range macros {
 			macro(cursor)
 			nextID = cursor.nextID
-			declarationOptions = append(declarationOptions, cursor.replaceDeclOptions...)
 			if cursor.replaced {
+				declarationOptions = append(declarationOptions, cursor.replaceDeclOptions...)
 				// Don't traverse children of replaced expr.
 				return false
 			}
 		}
 		return true
 	}, exp)
-	return declarationOptions
+	return declarationOptions, nil
 }
 
 // A Cursor describes an expression encountered while applying a Macro.
@@ -77,6 +90,9 @@ func (c *Cursor) Expr() *expr.Expr {
 // LookupIdentType looks up the type of an ident in the filter declarations.
 // EXPERIMENTAL: This method is experimental and may be changed or removed in the future.
 func (c *Cursor) LookupIdentType(name string) (*expr.Type, bool) {
+	if c.exprDeclarations == nil {
+		return nil, false
+	}
 	ident, ok := c.exprDeclarations.LookupIdent(name)
 	if !ok {
 		return nil, false
@@ -100,7 +116,7 @@ func (c *Cursor) Replace(newExpr *expr.Expr) {
 	c.replaced = true
 }
 
-// ReplaceWithType replaces the current expression with a new  expression and type.
+// ReplaceWithDeclarations replaces the current expression with a new  expression and type.
 // EXPERIMENTAL: This method is experimental and may be changed or removed in the future.
 func (c *Cursor) ReplaceWithDeclarations(newExpr *expr.Expr, opts []DeclarationOption) {
 	Walk(func(childExpr, _ *expr.Expr) bool {
