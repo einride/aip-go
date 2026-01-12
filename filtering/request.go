@@ -7,11 +7,16 @@ type Request interface {
 
 // ParseFilter parses and type-checks the filter in the provided Request.
 func ParseFilter(request Request, declarations *Declarations) (Filter, error) {
-	if request.GetFilter() == "" {
+	return ParseFilterString(request.GetFilter(), declarations)
+}
+
+// ParseFilter parses and type-checks the provided filter.
+func ParseFilterString(filter string, declarations *Declarations) (Filter, error) {
+	if filter == "" {
 		return Filter{}, nil
 	}
 	var parser Parser
-	parser.Init(request.GetFilter())
+	parser.Init(filter)
 	parsedExpr, err := parser.Parse()
 	if err != nil {
 		return Filter{}, err
