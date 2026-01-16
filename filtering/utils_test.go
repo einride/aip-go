@@ -175,6 +175,13 @@ func fullProtobufMessage(t *testing.T) *dynamicpb.Message {
 				TypeName: toPtr(".test.TestMessage.StringMapEntry"),
 				Label:    toPtr(descriptorpb.FieldDescriptorProto_LABEL_REPEATED),
 			},
+			// Duration field (well-known type)
+			{
+				Name:     toPtr("duration_field"),
+				Number:   toPtr(int32(21)),
+				Type:     toPtr(descriptorpb.FieldDescriptorProto_TYPE_MESSAGE),
+				TypeName: toPtr(".google.protobuf.Duration"),
+			},
 		},
 		EnumType:   []*descriptorpb.EnumDescriptorProto{enumDesc},
 		NestedType: []*descriptorpb.DescriptorProto{nestedDesc},
@@ -206,7 +213,7 @@ func fullProtobufMessage(t *testing.T) *dynamicpb.Message {
 		Name:        toPtr("test.proto"),
 		Package:     toPtr("test"),
 		MessageType: []*descriptorpb.DescriptorProto{msgDesc},
-		Dependency:  []string{"google/protobuf/timestamp.proto"},
+		Dependency:  []string{"google/protobuf/timestamp.proto", "google/protobuf/duration.proto"},
 	}
 
 	// Convert to protoreflect descriptor using global registry (includes well-known types)

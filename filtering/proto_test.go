@@ -2,6 +2,7 @@ package filtering
 
 import (
 	"testing"
+	"time"
 
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -144,6 +145,14 @@ func TestProtoDeclarations(t *testing.T) {
 			opts:         []FilterOption{WithFilterableFields("timestamp_field")},
 			filter:       `timestamp_field > "2023-01-01T00:00:00Z"`,
 			expectedExpr: GreaterThan(Text("timestamp_field"), String("2023-01-01T00:00:00Z")),
+			expectError:  false,
+		},
+		// Duration field (well-known type)
+		{
+			name:         "ok - duration field",
+			opts:         []FilterOption{WithFilterableFields("duration_field")},
+			filter:       `duration_field > duration("50s")`,
+			expectedExpr: GreaterThan(Text("duration_field"), Duration(50*time.Second)),
 			expectError:  false,
 		},
 		// Nested message field

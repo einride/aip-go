@@ -129,9 +129,12 @@ func messageOptions(
 			opts = append(opts, DeclareIdent(currPath, TypeString))
 		case protoreflect.MessageKind:
 			// Special handling for well-known types
-			if field.Message().FullName() == "google.protobuf.Timestamp" {
+			switch field.Message().FullName() {
+			case "google.protobuf.Timestamp":
 				opts = append(opts, DeclareIdent(currPath, TypeTimestamp))
-			} else {
+			case "google.protobuf.Duration":
+				opts = append(opts, DeclareIdent(currPath, TypeDuration))
+			default:
 				// For nested messages, recursively process their fields
 				// but pass the same filterable field options so nested fields are filtered correctly
 				fieldOpts := messageOptions(field.Message(), currPath, options)
