@@ -13,8 +13,6 @@ import (
 // with the first character a letter, the last a letter or a number, and a 63 character maximum.
 // Additionally, user-settable resource IDs should restrict letters to lower-case.
 //
-// User-settable IDs should not be permitted to be a UUID (or any value that syntactically appears to be a UUID).
-//
 // See also: https://google.aip.dev/133#user-specified-ids
 func ValidateUserSettable(id string) error {
 	if len(id) < 1 || 63 < len(id) {
