@@ -17,11 +17,13 @@ const (
 	FunctionHas           = ":"
 	FunctionDuration      = "duration"
 	FunctionTimestamp     = "timestamp"
+	FunctionFuzzySearch   = "fuzzySearch"
 )
 
 // StandardFunctionDeclarations returns declarations for all standard functions and their standard overloads.
 func StandardFunctionDeclarations() []*expr.Decl {
 	return []*expr.Decl{
+		StandardFunctionFuzzySearch(),
 		StandardFunctionTimestamp(),
 		StandardFunctionDuration(),
 		StandardFunctionHas(),
@@ -60,6 +62,20 @@ func StandardFunctionDuration() *expr.Decl {
 	return NewFunctionDeclaration(
 		FunctionDuration,
 		NewFunctionOverload(FunctionOverloadDurationString, TypeDuration, TypeString),
+	)
+}
+
+// FuzzySearch overloads.
+const (
+	FunctionOverloadFuzzySearchString = FunctionFuzzySearch + "_string"
+)
+
+// StandardFunctionFuzzySearch returns a declaration for the standard `fuzzySearch` function and all its standard
+// overloads.
+func StandardFunctionFuzzySearch() *expr.Decl {
+	return NewFunctionDeclaration(
+		FunctionFuzzySearch,
+		NewFunctionOverload(FunctionOverloadFuzzySearchString, TypeBool, TypeString, TypeString),
 	)
 }
 
