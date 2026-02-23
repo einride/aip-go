@@ -236,7 +236,7 @@ func TestProtoDeclarations(t *testing.T) {
 
 			// Given
 			// When
-			declarations, err := ProtoDeclarations(protoMsg, tt.opts...)
+			declarations, err := ProtoDeclarations(protoMsg, nil, tt.opts)
 
 			// Then
 			assert.NilError(t, err)
