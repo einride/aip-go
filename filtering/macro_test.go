@@ -413,6 +413,30 @@ func TestApplyMacros(t *testing.T) {
 			errorContains: "no matching overload",
 		},
 		{
+			name:   "macro using Replace and AddDeclarations together",
+			filter: `name = "test"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("name", TypeString),
+			},
+			macros: []Macro{
+				func(cursor *Cursor) {
+					identExpr := cursor.Expr().GetIdentExpr()
+					if identExpr == nil || identExpr.GetName() != "name" {
+						return
+					}
+					cursor.Replace(Text("renamed_name"))
+					cursor.AddDeclarations(DeclareIdent("renamed_name", TypeString))
+				},
+			},
+			macroDeclarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("renamed_name", TypeString),
+			},
+			expected: Equals(Text("renamed_name"), String("test")),
+		},
+
+		{
 			name:   "complex nested structure with multiple macro matches",
 			filter: `(a = 1 AND b = 2) OR (c = 3 AND d = 4)`,
 			declarations: []DeclarationOption{
