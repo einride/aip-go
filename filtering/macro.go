@@ -54,11 +54,12 @@ func applyMacros(
 			macro(cursor)
 			nextID = cursor.nextID
 			if cursor.replaced {
-				declarationOptions = append(declarationOptions, cursor.replaceDeclOptions...)
+				declarationOptions = append(declarationOptions, cursor.declOptions...)
 				// Don't traverse children of replaced expr.
 				return false
 			}
 		}
+		declarationOptions = append(declarationOptions, cursor.declOptions...)
 		return true
 	}, exp)
 	return declarationOptions, nil
@@ -68,13 +69,13 @@ func applyMacros(
 //
 // The method Replace can be used to rewrite the filter.
 type Cursor struct {
-	parentExpr         *expr.Expr
-	currExpr           *expr.Expr
-	sourceInfo         *expr.SourceInfo
-	exprDeclarations   *Declarations
-	replaced           bool
-	nextID             int64
-	replaceDeclOptions []DeclarationOption
+	parentExpr       *expr.Expr
+	currExpr         *expr.Expr
+	sourceInfo       *expr.SourceInfo
+	exprDeclarations *Declarations
+	replaced         bool
+	nextID           int64
+	declOptions      []DeclarationOption
 }
 
 // Parent returns the parent of the current expression.
@@ -116,6 +117,13 @@ func (c *Cursor) Replace(newExpr *expr.Expr) {
 	c.replaced = true
 }
 
+// AddDeclarations adds declaration options that will be merged into the filter's declarations.
+// This allows macros to inject declarations without requiring a replacement.
+// EXPERIMENTAL: This method is experimental and may be changed or removed in the future.
+func (c *Cursor) AddDeclarations(opts ...DeclarationOption) {
+	c.declOptions = append(c.declOptions, opts...)
+}
+
 // ReplaceWithDeclarations replaces the current expression with a new  expression and type.
 // EXPERIMENTAL: This method is experimental and may be changed or removed in the future.
 func (c *Cursor) ReplaceWithDeclarations(newExpr *expr.Expr, opts []DeclarationOption) {
@@ -130,7 +138,7 @@ func (c *Cursor) ReplaceWithDeclarations(newExpr *expr.Expr, opts []DeclarationO
 	c.sourceInfo.MacroCalls[newExpr.GetId()] = &expr.Expr{Id: c.currExpr.GetId(), ExprKind: c.currExpr.GetExprKind()}
 	c.currExpr.Id = newExpr.GetId()
 	c.currExpr.ExprKind = newExpr.GetExprKind()
-	c.replaceDeclOptions = append(c.replaceDeclOptions, opts...)
+	c.declOptions = append(c.declOptions, opts...)
 	c.replaced = true
 }
 

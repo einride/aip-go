@@ -191,6 +191,54 @@ func TestFilter_ApplyMacros(t *testing.T) {
 				Equals(Text("name_renamed"), String("test2")),
 			),
 		},
+		{
+			name:   "AddDeclarations without Replace",
+			filter: `name = "test"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("name", TypeString),
+			},
+			macros: []Macro{
+				func(cursor *Cursor) {
+					identExpr := cursor.Expr().GetIdentExpr()
+					if identExpr == nil || identExpr.GetName() != "name" {
+						return
+					}
+					// Add an extra declaration without replacing the expression.
+					cursor.AddDeclarations(DeclareIdent("extra", TypeString))
+				},
+			},
+			// Expression is unchanged.
+			expected: Equals(Text("name"), String("test")),
+		},
+
+		{
+			name:   "rename function call and inject declaration via AddDeclarations",
+			filter: `fuzzySearch("hello")`,
+			declarations: []DeclarationOption{
+				DeclareFunction(
+					"fuzzySearch",
+					NewFunctionOverload("fuzzySearch", TypeBool, TypeString),
+				),
+			},
+			macros: []Macro{
+				func(cursor *Cursor) {
+					callExpr := cursor.Expr().GetCallExpr()
+					if callExpr == nil || callExpr.GetFunction() != "fuzzySearch" {
+						return
+					}
+					// Rename to a storage-specific function and inject its declaration.
+					cursor.Replace(Function("spannerSearch", callExpr.GetArgs()...))
+					cursor.AddDeclarations(
+						DeclareFunction(
+							"spannerSearch",
+							NewFunctionOverload("spannerSearch", TypeBool, TypeString),
+						),
+					)
+				},
+			},
+			expected: Function("spannerSearch", String("hello")),
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
