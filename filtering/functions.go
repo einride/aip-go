@@ -68,6 +68,7 @@ const (
 	FunctionOverloadHasString          = FunctionHas + "_string"
 	FunctionOverloadHasMapStringString = FunctionHas + "_map_string_string"
 	FunctionOverloadHasListString      = FunctionHas + "_list_string"
+	FunctionOverloadHasTimestampString = FunctionHas + "_timestamp_string"
 )
 
 // StandardFunctionHas returns a declaration for the standard `:` function and all its standard overloads.
@@ -78,6 +79,7 @@ func StandardFunctionHas() *expr.Decl {
 		// TODO: Remove this after implementing support for type parameters.
 		NewFunctionOverload(FunctionOverloadHasMapStringString, TypeBool, TypeMap(TypeString, TypeString), TypeString),
 		NewFunctionOverload(FunctionOverloadHasListString, TypeBool, TypeList(TypeString), TypeString),
+		NewFunctionOverload(FunctionOverloadHasTimestampString, TypeBool, TypeTimestamp, TypeString),
 	)
 }
 

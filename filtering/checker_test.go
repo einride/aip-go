@@ -431,6 +431,31 @@ func TestChecker(t *testing.T) {
 			filter:        "invalid = foo\xa0\x01bar",
 			errorContains: "invalid UTF-8",
 		},
+
+		{
+			filter: `create_time:"2022-08-12T22:22:22+01:00"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
+			filter: `create_time:*`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+
+		{
+			filter: `create_time:"not-a-timestamp"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+			errorContains: "invalid timestamp. Should be in RFC3339 format or \"*\"",
+		},
 	} {
 		t.Run(tt.filter, func(t *testing.T) {
 			t.Parallel()
