@@ -433,14 +433,6 @@ func TestChecker(t *testing.T) {
 		},
 
 		{
-			filter: `create_time:"2022-08-12T22:22:22+01:00"`,
-			declarations: []DeclarationOption{
-				DeclareStandardFunctions(),
-				DeclareIdent("create_time", TypeTimestamp),
-			},
-		},
-
-		{
 			filter: `create_time:*`,
 			declarations: []DeclarationOption{
 				DeclareStandardFunctions(),
@@ -449,12 +441,12 @@ func TestChecker(t *testing.T) {
 		},
 
 		{
-			filter: `create_time:"not-a-timestamp"`,
+			filter: `create_time:"2022-08-12T22:22:22+01:00"`,
 			declarations: []DeclarationOption{
 				DeclareStandardFunctions(),
 				DeclareIdent("create_time", TypeTimestamp),
 			},
-			errorContains: "invalid timestamp. Should be in RFC3339 format or \"*\"",
+			errorContains: "the has operator on timestamp fields only supports the wildcard \"*\" for presence checks",
 		},
 	} {
 		t.Run(tt.filter, func(t *testing.T) {

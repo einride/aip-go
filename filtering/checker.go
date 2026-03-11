@@ -207,13 +207,13 @@ func (c *Checker) checkCallExprBuiltinFunctionOverloads(
 				return c.errorf(callExpr.GetArgs()[0], "invalid timestamp. Should be in RFC3339 format")
 			}
 		}
-	case FunctionOverloadHasTimestampString:
+	case FunctionOverloadHasTimestamp:
 		if constExpr := callExpr.GetArgs()[1].GetConstExpr(); constExpr != nil {
-			s := constExpr.GetStringValue()
-			if s != "*" {
-				if _, err := time.Parse(time.RFC3339, s); err != nil {
-					return c.errorf(callExpr.GetArgs()[1], "invalid timestamp. Should be in RFC3339 format or \"*\"")
-				}
+			if constExpr.GetStringValue() != "*" {
+				return c.errorf(
+					callExpr.GetArgs()[1],
+					"the has operator on timestamp fields only supports the wildcard \"*\" for presence checks",
+				)
 			}
 		}
 	}
