@@ -9,7 +9,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestProtoDeclarations(t *testing.T) {
+func TestDeclareProtoMessageIdents(t *testing.T) {
 	t.Parallel()
 
 	protoMsg := fullProtobufMessage(t)
@@ -236,7 +236,13 @@ func TestProtoDeclarations(t *testing.T) {
 
 			// Given
 			// When
-			declarations, err := ProtoDeclarations(protoMsg, tt.opts...)
+			declarationOptions := append(
+				[]DeclarationOption{DeclareStandardFunctions()},
+				DeclareProtoMessageIdents(protoMsg, tt.opts...)...,
+			)
+			declarations, err := NewDeclarations(
+				declarationOptions...,
+			)
 
 			// Then
 			assert.NilError(t, err)
