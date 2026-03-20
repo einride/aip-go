@@ -33,21 +33,15 @@ func WithFilterableFields(fields ...string) FilterOption {
 	}
 }
 
-// ProtoDeclarations returns declarations for all fields marked as filterable in the proto message.
+// DeclareProtoMessageIdents returns declaration options for all fields marked as filterable in the proto message.
 // By default, no fields are marked as filterable. To mark a field as filterable, use the WithFilterableFields option.
 // EXPERIMENTAL: This function is experimental and may be changed or removed in the future.
-func ProtoDeclarations(msg proto.Message, opts ...FilterOption) (*Declarations, error) {
+func DeclareProtoMessageIdents(msg proto.Message, opts ...FilterOption) []DeclarationOption {
 	options := filterOptions{}
 	for _, opt := range opts {
 		opt(&options)
 	}
-	declOpts := []DeclarationOption{
-		DeclareStandardFunctions(),
-	}
-	declOpts = append(declOpts, messageOptions(msg.ProtoReflect().Descriptor(), "", options)...)
-	return NewDeclarations(
-		declOpts...,
-	)
+	return messageOptions(msg.ProtoReflect().Descriptor(), "", options)
 }
 
 func messageOptions(
