@@ -21,6 +21,7 @@ func TestValidateUserSettable(t *testing.T) {
 		{id: "abc-", errorContains: "must end with a letter or number"},
 		{id: "123-abc", errorContains: "must begin with a letter"},
 		{id: "daf1cb3e-f33b-43f1-81cc-e65fda51efa5"},
+		{id: "49351204-7395-47f1-9681-d48044b48c71"},
 		{id: "abcd/efgh", errorContains: "must only contain lowercase, numbers and hyphens"},
 	} {
 		t.Run(tt.id, func(t *testing.T) {

@@ -3,6 +3,8 @@ package resourceid
 import (
 	"fmt"
 	"unicode"
+
+	"github.com/google/uuid"
 )
 
 // ValidateUserSettable validates a user-settable resource ID.
@@ -10,13 +12,16 @@ import (
 // From https://google.aip.dev/122#resource-id-segments:
 //
 // User-settable resource IDs should conform to RFC-1034; which restricts to letters, numbers, and hyphen,
-// with the first character a letter, the last a letter or a number, and a 63 character maximum.
+// with the first character a letter (unless uuid), the last a letter or a number, and a 63 character maximum.
 // Additionally, user-settable resource IDs should restrict letters to lower-case.
 //
 // See also: https://google.aip.dev/133#user-specified-ids
 func ValidateUserSettable(id string) error {
 	if len(id) < 1 || 63 < len(id) {
 		return fmt.Errorf("user-settable ID must be between 1 and 63 characters")
+	}
+	if _, err := uuid.Parse(id); err == nil {
+		return nil
 	}
 	if !unicode.IsLetter(rune(id[0])) {
 		return fmt.Errorf("user-settable ID must begin with a letter")
