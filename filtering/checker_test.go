@@ -158,6 +158,41 @@ func TestChecker(t *testing.T) {
 		},
 
 		{
+			filter: `foo = 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+		},
+		{
+			filter: `foo >= 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+		},
+		{
+			filter: `foo <= 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+		},
+		{
+			filter: `foo > 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+		},
+		{
+			filter: `foo < 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+		},
+		{
 			filter: `foo >= (-2.4)`,
 			declarations: []DeclarationOption{
 				DeclareStandardFunctions(),
