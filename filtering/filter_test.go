@@ -213,6 +213,16 @@ func TestFilter_ApplyMacros(t *testing.T) {
 		},
 
 		{
+			name:   "float field equals int literal",
+			filter: `foo = 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+			macros:   []Macro{},
+			expected: Equals(Text("foo"), Float(3.0)),
+		},
+		{
 			name:   "rename function call and inject declaration via AddDeclarations",
 			filter: `fuzzySearch("hello")`,
 			declarations: []DeclarationOption{
