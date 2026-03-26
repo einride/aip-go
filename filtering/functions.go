@@ -126,6 +126,7 @@ func StandardFunctionNot() *expr.Decl {
 const (
 	FunctionOverloadLessThanInt             = FunctionLessThan + "_int"
 	FunctionOverloadLessThanFloat           = FunctionLessThan + "_float"
+	FunctionOverloadLessThanFloatInt        = FunctionLessThan + "_float_int"
 	FunctionOverloadLessThanString          = FunctionLessThan + "_string"
 	FunctionOverloadLessThanTimestamp       = FunctionLessThan + "_timestamp"
 	FunctionOverloadLessThanTimestampString = FunctionLessThan + "_timestamp_string"
@@ -138,6 +139,7 @@ func StandardFunctionLessThan() *expr.Decl {
 		FunctionLessThan,
 		NewFunctionOverload(FunctionOverloadLessThanInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadLessThanFloat, TypeBool, TypeFloat, TypeFloat),
+		NewFunctionOverload(FunctionOverloadLessThanFloatInt, TypeBool, TypeFloat, TypeInt),
 		NewFunctionOverload(FunctionOverloadLessThanString, TypeBool, TypeString, TypeString),
 		NewFunctionOverload(FunctionOverloadLessThanTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadLessThanTimestampString, TypeBool, TypeTimestamp, TypeString),
@@ -149,6 +151,7 @@ func StandardFunctionLessThan() *expr.Decl {
 const (
 	FunctionOverloadGreaterThanInt             = FunctionGreaterThan + "_int"
 	FunctionOverloadGreaterThanFloat           = FunctionGreaterThan + "_float"
+	FunctionOverloadGreaterThanFloatInt        = FunctionGreaterThan + "_float_int"
 	FunctionOverloadGreaterThanString          = FunctionGreaterThan + "_string"
 	FunctionOverloadGreaterThanTimestamp       = FunctionGreaterThan + "_timestamp"
 	FunctionOverloadGreaterThanTimestampString = FunctionGreaterThan + "_timestamp_string"
@@ -161,6 +164,7 @@ func StandardFunctionGreaterThan() *expr.Decl {
 		FunctionGreaterThan,
 		NewFunctionOverload(FunctionOverloadGreaterThanInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadGreaterThanFloat, TypeBool, TypeFloat, TypeFloat),
+		NewFunctionOverload(FunctionOverloadGreaterThanFloatInt, TypeBool, TypeFloat, TypeInt),
 		NewFunctionOverload(FunctionOverloadGreaterThanString, TypeBool, TypeString, TypeString),
 		NewFunctionOverload(FunctionOverloadGreaterThanTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadGreaterThanTimestampString, TypeBool, TypeTimestamp, TypeString),
@@ -172,6 +176,7 @@ func StandardFunctionGreaterThan() *expr.Decl {
 const (
 	FunctionOverloadLessEqualsInt             = FunctionLessEquals + "_int"
 	FunctionOverloadLessEqualsFloat           = FunctionLessEquals + "_float"
+	FunctionOverloadLessEqualsFloatInt        = FunctionLessEquals + "_float_int"
 	FunctionOverloadLessEqualsString          = FunctionLessEquals + "_string"
 	FunctionOverloadLessEqualsTimestamp       = FunctionLessEquals + "_timestamp"
 	FunctionOverloadLessEqualsTimestampString = FunctionLessEquals + "_timestamp_string"
@@ -184,6 +189,7 @@ func StandardFunctionLessEquals() *expr.Decl {
 		FunctionLessEquals,
 		NewFunctionOverload(FunctionOverloadLessEqualsInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadLessEqualsFloat, TypeBool, TypeFloat, TypeFloat),
+		NewFunctionOverload(FunctionOverloadLessEqualsFloatInt, TypeBool, TypeFloat, TypeInt),
 		NewFunctionOverload(FunctionOverloadLessEqualsString, TypeBool, TypeString, TypeString),
 		NewFunctionOverload(FunctionOverloadLessEqualsTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadLessEqualsTimestampString, TypeBool, TypeTimestamp, TypeString),
@@ -195,6 +201,7 @@ func StandardFunctionLessEquals() *expr.Decl {
 const (
 	FunctionOverloadGreaterEqualsInt             = FunctionGreaterEquals + "_int"
 	FunctionOverloadGreaterEqualsFloat           = FunctionGreaterEquals + "_float"
+	FunctionOverloadGreaterEqualsFloatInt        = FunctionGreaterEquals + "_float_int"
 	FunctionOverloadGreaterEqualsString          = FunctionGreaterEquals + "_string"
 	FunctionOverloadGreaterEqualsTimestamp       = FunctionGreaterEquals + "_timestamp"
 	FunctionOverloadGreaterEqualsTimestampString = FunctionGreaterEquals + "_timestamp_string"
@@ -207,6 +214,7 @@ func StandardFunctionGreaterEquals() *expr.Decl {
 		FunctionGreaterEquals,
 		NewFunctionOverload(FunctionOverloadGreaterEqualsInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadGreaterEqualsFloat, TypeBool, TypeFloat, TypeFloat),
+		NewFunctionOverload(FunctionOverloadGreaterEqualsFloatInt, TypeBool, TypeFloat, TypeInt),
 		NewFunctionOverload(FunctionOverloadGreaterEqualsString, TypeBool, TypeString, TypeString),
 		NewFunctionOverload(FunctionOverloadGreaterEqualsTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadGreaterEqualsTimestampString, TypeBool, TypeTimestamp, TypeString),
@@ -219,6 +227,7 @@ const (
 	FunctionOverloadEqualsBool            = FunctionEquals + "_bool"
 	FunctionOverloadEqualsInt             = FunctionEquals + "_int"
 	FunctionOverloadEqualsFloat           = FunctionEquals + "_float"
+	FunctionOverloadEqualsFloatInt        = FunctionEquals + "_float_int"
 	FunctionOverloadEqualsString          = FunctionEquals + "_string"
 	FunctionOverloadEqualsTimestamp       = FunctionEquals + "_timestamp"
 	FunctionOverloadEqualsTimestampString = FunctionEquals + "_timestamp_string"
@@ -232,6 +241,7 @@ func StandardFunctionEquals() *expr.Decl {
 		NewFunctionOverload(FunctionOverloadEqualsBool, TypeBool, TypeBool, TypeBool),
 		NewFunctionOverload(FunctionOverloadEqualsInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadEqualsFloat, TypeBool, TypeFloat, TypeFloat),
+		NewFunctionOverload(FunctionOverloadEqualsFloatInt, TypeBool, TypeFloat, TypeInt),
 		NewFunctionOverload(FunctionOverloadEqualsString, TypeBool, TypeString, TypeString),
 		NewFunctionOverload(FunctionOverloadEqualsTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadEqualsTimestampString, TypeBool, TypeTimestamp, TypeString),
@@ -244,6 +254,7 @@ const (
 	FunctionOverloadNotEqualsBool            = FunctionNotEquals + "_bool"
 	FunctionOverloadNotEqualsInt             = FunctionNotEquals + "_int"
 	FunctionOverloadNotEqualsFloat           = FunctionNotEquals + "_float"
+	FunctionOverloadNotEqualsFloatInt        = FunctionNotEquals + "_float_int"
 	FunctionOverloadNotEqualsString          = FunctionNotEquals + "_string"
 	FunctionOverloadNotEqualsTimestamp       = FunctionNotEquals + "_timestamp"
 	FunctionOverloadNotEqualsTimestampString = FunctionNotEquals + "_timestamp_string"
@@ -257,6 +268,7 @@ func StandardFunctionNotEquals() *expr.Decl {
 		NewFunctionOverload(FunctionOverloadNotEqualsBool, TypeBool, TypeBool, TypeBool),
 		NewFunctionOverload(FunctionOverloadNotEqualsInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadNotEqualsFloat, TypeBool, TypeFloat, TypeFloat),
+		NewFunctionOverload(FunctionOverloadNotEqualsFloatInt, TypeBool, TypeFloat, TypeInt),
 		NewFunctionOverload(FunctionOverloadNotEqualsString, TypeBool, TypeString, TypeString),
 		NewFunctionOverload(FunctionOverloadNotEqualsTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadNotEqualsTimestampString, TypeBool, TypeTimestamp, TypeString),

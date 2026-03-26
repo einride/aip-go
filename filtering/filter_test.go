@@ -211,7 +211,56 @@ func TestFilter_ApplyMacros(t *testing.T) {
 			// Expression is unchanged.
 			expected: Equals(Text("name"), String("test")),
 		},
-
+		{
+			name:   "float field equals int literal",
+			filter: `foo = 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+			macros:   []Macro{},
+			expected: Equals(Text("foo"), Int(3)),
+		},
+		{
+			name:   "float field less than or equal to int literal",
+			filter: `foo <= 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+			macros:   []Macro{},
+			expected: LessEquals(Text("foo"), Int(3)),
+		},
+		{
+			name:   "float field greater than or equals to int literal",
+			filter: `foo >= 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+			macros:   []Macro{},
+			expected: GreaterEquals(Text("foo"), Int(3)),
+		},
+		{
+			name:   "float field less than int literal",
+			filter: `foo < 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+			macros:   []Macro{},
+			expected: LessThan(Text("foo"), Int(3)),
+		},
+		{
+			name:   "float field greater than int literal",
+			filter: `foo > 3`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("foo", TypeFloat),
+			},
+			macros:   []Macro{},
+			expected: GreaterThan(Text("foo"), Int(3)),
+		},
 		{
 			name:   "rename function call and inject declaration via AddDeclarations",
 			filter: `fuzzySearch("hello")`,
