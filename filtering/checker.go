@@ -167,50 +167,6 @@ func (c *Checker) resolveCallExprFunctionOverload(
 		}
 		// TODO: Add support for type parameters.
 	}
-	// Second pass: try matching with numeric widening (INT64 -> FLOAT).
-	for _, overload := range functionDeclaration.GetFunction().GetOverloads() {
-		if len(callExpr.GetArgs()) != len(overload.GetParams()) {
-			continue
-		}
-		if len(overload.GetTypeParams()) != 0 {
-			continue
-		}
-		allTypesMatch := true
-		widenedArgs := make([]int, 0, len(overload.GetParams()))
-		for i, param := range overload.GetParams() {
-			argType, ok := c.getType(callExpr.GetArgs()[i])
-			if !ok {
-				allTypesMatch = false
-				break
-			}
-			if proto.Equal(argType, param) {
-				continue
-			}
-			if proto.Equal(argType, TypeInt) && proto.Equal(param, TypeFloat) {
-				widenedArgs = append(widenedArgs, i)
-				continue
-			}
-			allTypesMatch = false
-			break
-		}
-		if allTypesMatch {
-			for _, i := range widenedArgs {
-				arg := callExpr.GetArgs()[i]
-				// Coerce INT64 constant to DOUBLE.
-				if intConst, ok := arg.GetConstExpr().GetConstantKind().(*expr.Constant_Int64Value); ok {
-					arg.ExprKind = &expr.Expr_ConstExpr{
-						ConstExpr: &expr.Constant{
-							ConstantKind: &expr.Constant_DoubleValue{
-								DoubleValue: float64(intConst.Int64Value),
-							},
-						},
-					}
-				}
-				c.typeMap[arg.GetId()] = TypeFloat
-			}
-			return overload, nil
-		}
-	}
 	var argTypes []string
 	for _, arg := range callExpr.GetArgs() {
 		t, ok := c.getType(arg)
