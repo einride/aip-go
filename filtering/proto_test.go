@@ -165,25 +165,34 @@ func TestDeclareProtoMessageIdents(t *testing.T) {
 		},
 		// Deeply nested field
 		{
-			name:         "ok - deeply nested field",
-			opts:         []FilterOption{WithFilterableFields("nested_message.deep_nested.deep_string")},
-			filter:       `nested_message.deep_nested.deep_string = "deep_value"`,
-			expectedExpr: Equals(Member(Member(Text("nested_message"), "deep_nested"), "deep_string"), String("deep_value")),
-			expectError:  false,
+			name:   "ok - deeply nested field",
+			opts:   []FilterOption{WithFilterableFields("nested_message.deep_nested.deep_string")},
+			filter: `nested_message.deep_nested.deep_string = "deep_value"`,
+			expectedExpr: Equals(
+				Member(Member(Text("nested_message"), "deep_nested"), "deep_string"),
+				String("deep_value"),
+			),
+			expectError: false,
 		},
 		{
-			name:         "ok - deeply nested field, filter by parent field",
-			opts:         []FilterOption{WithFilterableFields("nested_message.deep_nested")},
-			filter:       `nested_message.deep_nested.deep_string = "deep_value"`,
-			expectedExpr: Equals(Member(Member(Text("nested_message"), "deep_nested"), "deep_string"), String("deep_value")),
-			expectError:  false,
+			name:   "ok - deeply nested field, filter by parent field",
+			opts:   []FilterOption{WithFilterableFields("nested_message.deep_nested")},
+			filter: `nested_message.deep_nested.deep_string = "deep_value"`,
+			expectedExpr: Equals(
+				Member(Member(Text("nested_message"), "deep_nested"), "deep_string"),
+				String("deep_value"),
+			),
+			expectError: false,
 		},
 		{
-			name:         "ok - deeply nested field, filter by parent parent",
-			opts:         []FilterOption{WithFilterableFields("nested_message")},
-			filter:       `nested_message.deep_nested.deep_string = "deep_value"`,
-			expectedExpr: Equals(Member(Member(Text("nested_message"), "deep_nested"), "deep_string"), String("deep_value")),
-			expectError:  false,
+			name:   "ok - deeply nested field, filter by parent parent",
+			opts:   []FilterOption{WithFilterableFields("nested_message")},
+			filter: `nested_message.deep_nested.deep_string = "deep_value"`,
+			expectedExpr: Equals(
+				Member(Member(Text("nested_message"), "deep_nested"), "deep_string"),
+				String("deep_value"),
+			),
+			expectError: false,
 		},
 		// Complex expressions
 		{

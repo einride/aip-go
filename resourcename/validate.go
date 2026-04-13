@@ -74,7 +74,7 @@ func isSnakeCase(s string) bool {
 			if !unicode.IsLower(r) {
 				return false
 			}
-		} else if !(r == '_' || unicode.In(r, unicode.Lower, unicode.Digit)) {
+		} else if r != '_' && !unicode.In(r, unicode.Lower, unicode.Digit) {
 			return false
 		}
 	}

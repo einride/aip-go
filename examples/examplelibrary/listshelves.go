@@ -19,11 +19,11 @@ func (s *Server) ListShelves(
 		defaultPageSize = 100
 	)
 	switch {
-	case request.PageSize < 0:
+	case request.GetPageSize() < 0:
 		return nil, status.Errorf(codes.InvalidArgument, "page size is negative")
-	case request.PageSize == 0:
+	case request.GetPageSize() == 0:
 		request.PageSize = defaultPageSize
-	case request.PageSize > maxPageSize:
+	case request.GetPageSize() > maxPageSize:
 		request.PageSize = maxPageSize
 	}
 	// Use pagination.PageToken for offset-based page tokens.
