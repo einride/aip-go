@@ -250,7 +250,7 @@ func (p *Parser) ParseRestriction() (_ *expr.Expr, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if !(p.sniff(TokenType.IsComparator) || p.sniff(TokenTypeWhitespace.Test, TokenType.IsComparator)) {
+	if !p.sniff(TokenType.IsComparator) && !p.sniff(TokenTypeWhitespace.Test, TokenType.IsComparator) {
 		return comp, nil
 	}
 	_ = p.eatTokens(TokenTypeWhitespace)

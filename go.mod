@@ -1,8 +1,6 @@
 module go.einride.tech/aip
 
-go 1.23.0
-
-toolchain go1.24.4
+go 1.25.7
 
 require (
 	github.com/google/uuid v1.6.0

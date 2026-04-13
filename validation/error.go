@@ -61,7 +61,7 @@ func (e *Error) Error() string {
 			var result strings.Builder
 			_, _ = result.WriteString("field violation on multiple fields:\n")
 			for i, fieldViolation := range e.fieldViolations {
-				_, _ = result.WriteString(fmt.Sprintf(" | %s: %s", fieldViolation.GetField(), fieldViolation.GetDescription()))
+				_, _ = fmt.Fprintf(&result, " | %s: %s", fieldViolation.GetField(), fieldViolation.GetDescription())
 				if i < len(e.fieldViolations)-1 {
 					_ = result.WriteByte('\n')
 				}

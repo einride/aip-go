@@ -12,7 +12,11 @@ type Macro func(*Cursor)
 // ApplyMacros applies the provided macros to the filter and type-checks the result against the provided declarations.
 func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Filter, error) {
 	// We ignore the return value as we validate against the given declarations instead.
-	_, err := applyMacros(filter.CheckedExpr.GetExpr(), filter.CheckedExpr.GetSourceInfo(), filter.declarations, macros...)
+	_, err := applyMacros(
+		filter.CheckedExpr.GetExpr(),
+		filter.CheckedExpr.GetSourceInfo(),
+		filter.declarations,
+		macros...)
 	if err != nil {
 		return Filter{}, err
 	}

@@ -426,7 +426,8 @@ func (r *resourceNameCodeGenerator) SinglePatternStructName() string {
 }
 
 func (r *resourceNameCodeGenerator) StructName(pattern string) string {
-	if r.resource.GetHistory() == annotations.ResourceDescriptor_FUTURE_MULTI_PATTERN || len(r.resource.GetPattern()) > 1 {
+	if r.resource.GetHistory() == annotations.ResourceDescriptor_FUTURE_MULTI_PATTERN ||
+		len(r.resource.GetPattern()) > 1 {
 		return r.MultiPatternStructName(pattern)
 	}
 	if r.resource.GetPattern()[0] == pattern {

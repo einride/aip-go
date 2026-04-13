@@ -24,21 +24,21 @@ func ExampleServer_ListShelves() {
 	if err != nil {
 		panic(err) // TODO: Handle errors.
 	}
-	for _, shelf := range page1.Shelves {
-		fmt.Println(shelf.Name, shelf.Theme)
+	for _, shelf := range page1.GetShelves() {
+		fmt.Println(shelf.GetName(), shelf.GetTheme())
 	}
-	fmt.Println("page1.NextPageToken non-empty:", page1.NextPageToken != "")
+	fmt.Println("page1.NextPageToken non-empty:", page1.GetNextPageToken() != "")
 	page2, err := server.ListShelves(ctx, &library.ListShelvesRequest{
 		PageSize:  2,
-		PageToken: page1.NextPageToken,
+		PageToken: page1.GetNextPageToken(),
 	})
 	if err != nil {
 		panic(err) // TODO: Handle errors.
 	}
-	for _, shelf := range page2.Shelves {
-		fmt.Println(shelf.Name, shelf.Theme)
+	for _, shelf := range page2.GetShelves() {
+		fmt.Println(shelf.GetName(), shelf.GetTheme())
 	}
-	fmt.Println("page2.NextPageToken non-empty:", page2.NextPageToken != "")
+	fmt.Println("page2.NextPageToken non-empty:", page2.GetNextPageToken() != "")
 	// Output:
 	// shelves/0001 Sci-Fi
 	// shelves/0002 Horror
