@@ -8,6 +8,8 @@ import (
 type PageToken struct {
 	// Offset of the page.
 	Offset int64
+	// Cursor for key set pagination.
+	Cursor []any
 	// RequestChecksum is the checksum of the request that generated the page token.
 	RequestChecksum uint32
 }

@@ -121,6 +121,57 @@ func TestParseOffsetPageToken(t *testing.T) {
 			assert.Equal(t, int64(100), pageToken3.Offset)
 		})
 	})
+	t.Run("cursor", func(t *testing.T) {
+		t.Parallel()
+		t.Run("round-trip preserves cursor", func(t *testing.T) {
+			t.Parallel()
+			request1 := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken1, err := ParsePageToken(request1)
+			assert.NilError(t, err)
+			pageToken1.Cursor = []any{"abc", int64(42)}
+			request2 := &library.ListBooksRequest{
+				Parent:    "shelves/1",
+				PageSize:  10,
+				PageToken: pageToken1.String(),
+			}
+			pageToken2, err := ParsePageToken(request2)
+			assert.NilError(t, err)
+			assert.DeepEqual(t, []any{"abc", int64(42)}, pageToken2.Cursor)
+		})
+		t.Run("Next preserves cursor", func(t *testing.T) {
+			t.Parallel()
+			request := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken, err := ParsePageToken(request)
+			assert.NilError(t, err)
+			pageToken.Cursor = []any{"abc", int64(42)}
+			next := pageToken.Next(request)
+			assert.Equal(t, int64(10), next.Offset)
+			assert.DeepEqual(t, []any{"abc", int64(42)}, next.Cursor)
+		})
+		t.Run("empty cursor round-trips as nil", func(t *testing.T) {
+			t.Parallel()
+			request1 := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken1, err := ParsePageToken(request1)
+			assert.NilError(t, err)
+			request2 := &library.ListBooksRequest{
+				Parent:    "shelves/1",
+				PageSize:  10,
+				PageToken: pageToken1.String(),
+			}
+			pageToken2, err := ParsePageToken(request2)
+			assert.NilError(t, err)
+			assert.Assert(t, pageToken2.Cursor == nil)
+		})
+	})
 	t.Run("invalid format", func(t *testing.T) {
 		t.Parallel()
 		request := &library.ListBooksRequest{
@@ -130,7 +181,7 @@ func TestParseOffsetPageToken(t *testing.T) {
 		}
 		pageToken1, err := ParsePageToken(request)
 		assert.ErrorContains(t, err, "decode")
-		assert.Equal(t, PageToken{}, pageToken1)
+		assert.DeepEqual(t, PageToken{}, pageToken1)
 	})
 
 	t.Run("invalid checksum", func(t *testing.T) {
@@ -145,6 +196,6 @@ func TestParseOffsetPageToken(t *testing.T) {
 		}
 		pageToken1, err := ParsePageToken(request)
 		assert.ErrorContains(t, err, "checksum")
-		assert.Equal(t, PageToken{}, pageToken1)
+		assert.DeepEqual(t, PageToken{}, pageToken1)
 	})
 }
