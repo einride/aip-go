@@ -113,6 +113,11 @@ func (n BookResourceName) Type() string {
 	return "test1.testdata/Book"
 }
 
+// Pattern returns the resource name pattern for BookResourceName as a string.
+func (n BookResourceName) Pattern() string {
+	return "shelves/{shelf}/books/{book}"
+}
+
 func (n BookResourceName) ShelfResourceName() ShelfResourceName {
 	return ShelfResourceName{
 		Shelf: n.Shelf,
@@ -198,6 +203,11 @@ func (n ShelvesBookResourceName) Type() string {
 	return "test1.testdata/Book"
 }
 
+// Pattern returns the resource name pattern for ShelvesBookResourceName as a string.
+func (n ShelvesBookResourceName) Pattern() string {
+	return "shelves/{shelf}/books/{book}"
+}
+
 func (n ShelvesBookResourceName) ShelfResourceName() ShelfResourceName {
 	return ShelfResourceName{
 		Shelf: n.Shelf,
@@ -272,6 +282,11 @@ func (n *PublishersBookResourceName) UnmarshalText(text []byte) error {
 
 func (n PublishersBookResourceName) Type() string {
 	return "test1.testdata/Book"
+}
+
+// Pattern returns the resource name pattern for PublishersBookResourceName as a string.
+func (n PublishersBookResourceName) Pattern() string {
+	return "publishers/{publisher}/books/{book}"
 }
 
 type ShelfMultiPatternResourceName interface {
@@ -358,6 +373,11 @@ func (n ShelfResourceName) Type() string {
 	return "test1.testdata/Shelf"
 }
 
+// Pattern returns the resource name pattern for ShelfResourceName as a string.
+func (n ShelfResourceName) Pattern() string {
+	return "shelves/{shelf}"
+}
+
 type LibrariesShelfResourceName struct {
 	Library string
 	Shelf   string
@@ -428,6 +448,11 @@ func (n LibrariesShelfResourceName) Type() string {
 	return "test1.testdata/Shelf"
 }
 
+// Pattern returns the resource name pattern for LibrariesShelfResourceName as a string.
+func (n LibrariesShelfResourceName) Pattern() string {
+	return "libraries/{library}/shelves/{shelf}"
+}
+
 type RoomsShelfResourceName struct {
 	Room  string
 	Shelf string
@@ -496,4 +521,9 @@ func (n *RoomsShelfResourceName) UnmarshalText(text []byte) error {
 
 func (n RoomsShelfResourceName) Type() string {
 	return "test1.testdata/Shelf"
+}
+
+// Pattern returns the resource name pattern for RoomsShelfResourceName as a string.
+func (n RoomsShelfResourceName) Pattern() string {
+	return "rooms/{room}/shelves/{shelf}"
 }

@@ -62,3 +62,8 @@ func (n *ConfigResourceName) UnmarshalText(text []byte) error {
 func (n ConfigResourceName) Type() string {
 	return "test1.testdata/Config"
 }
+
+// Pattern returns the resource name pattern for ConfigResourceName as a string.
+func (n ConfigResourceName) Pattern() string {
+	return "config"
+}

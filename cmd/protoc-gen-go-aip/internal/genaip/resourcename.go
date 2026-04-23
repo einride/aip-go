@@ -129,6 +129,9 @@ func (r resourceNameCodeGenerator) generatePatternStruct(
 	if err := r.generateTypeMethod(g, typeName); err != nil {
 		return err
 	}
+	if err := r.generatePatternMethod(g, typeName, pattern); err != nil {
+		return err
+	}
 	var parentErr error
 	aipreflect.RangeParentResourcesInPackage(
 		r.files,
@@ -386,6 +389,19 @@ func (r resourceNameCodeGenerator) generateTypeMethod(
 	g.P()
 	g.P("func (n ", typeName, ") Type() string {")
 	g.P("return ", strconv.Quote(r.resource.GetType()))
+	g.P("}")
+	return nil
+}
+
+func (r resourceNameCodeGenerator) generatePatternMethod(
+	g *protogen.GeneratedFile,
+	typeName string,
+	pattern string,
+) error {
+	g.P()
+	g.P("// Pattern returns the resource name pattern for ", typeName, " as a string.")
+	g.P("func (n ", typeName, ") Pattern() string {")
+	g.P("return ", strconv.Quote(pattern))
 	g.P("}")
 	return nil
 }
