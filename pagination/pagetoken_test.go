@@ -171,6 +171,33 @@ func TestParseOffsetPageToken(t *testing.T) {
 			assert.NilError(t, err)
 			assert.Assert(t, pageToken2.Cursor == nil)
 		})
+		t.Run("token encoded before cursor field is added", func(t *testing.T) {
+			t.Parallel()
+			// Token shape from before the Cursor field was added.
+			type legacyPageToken struct {
+				Offset          int64
+				RequestChecksum uint32
+			}
+			request := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			checksum, err := CalculateRequestChecksum(request)
+			assert.NilError(t, err)
+			checksum ^= pageTokenChecksumMask
+			legacy := EncodePageTokenStruct(&legacyPageToken{
+				Offset:          42,
+				RequestChecksum: checksum,
+			})
+			parsed, err := ParsePageToken(&library.ListBooksRequest{
+				Parent:    "shelves/1",
+				PageSize:  10,
+				PageToken: legacy,
+			})
+			assert.NilError(t, err)
+			assert.Equal(t, int64(42), parsed.Offset)
+			assert.Assert(t, parsed.Cursor == nil)
+		})
 	})
 	t.Run("invalid format", func(t *testing.T) {
 		t.Parallel()
