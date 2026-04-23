@@ -74,6 +74,11 @@ func (n ShelfResourceName) Type() string {
 	return "test1.testdata/Shelf"
 }
 
+// Pattern returns the resource name pattern for ShelfResourceName as a string.
+func (n ShelfResourceName) Pattern() string {
+	return "shelves/{shelf}"
+}
+
 type BookResourceName struct {
 	Shelf string
 	Book  string
@@ -151,6 +156,11 @@ func (n *BookResourceName) UnmarshalText(text []byte) error {
 
 func (n BookResourceName) Type() string {
 	return "test1.testdata/Book"
+}
+
+// Pattern returns the resource name pattern for BookResourceName as a string.
+func (n BookResourceName) Pattern() string {
+	return "shelves/{shelf}/books/{book}"
 }
 
 func (n BookResourceName) ShelfResourceName() ShelfResourceName {

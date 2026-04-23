@@ -73,3 +73,8 @@ func (n *ShipperResourceName) UnmarshalText(text []byte) error {
 func (n ShipperResourceName) Type() string {
 	return "freight-example.einride.tech/Shipper"
 }
+
+// Pattern returns the resource name pattern for ShipperResourceName as a string.
+func (n ShipperResourceName) Pattern() string {
+	return "shippers/{shipper}"
+}

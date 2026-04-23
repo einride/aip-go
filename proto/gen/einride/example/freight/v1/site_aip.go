@@ -92,6 +92,11 @@ func (n SiteResourceName) Type() string {
 	return "freight-example.einride.tech/Site"
 }
 
+// Pattern returns the resource name pattern for SiteResourceName as a string.
+func (n SiteResourceName) Pattern() string {
+	return "shippers/{shipper}/sites/{site}"
+}
+
 func (n SiteResourceName) ShipperResourceName() ShipperResourceName {
 	return ShipperResourceName{
 		Shipper: n.Shipper,

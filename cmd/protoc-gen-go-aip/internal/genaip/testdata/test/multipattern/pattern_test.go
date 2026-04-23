@@ -33,6 +33,14 @@ func TestParseBookMultiPatternResourceName(t *testing.T) {
 			assert.Error(t, err, "no matching pattern")
 		})
 	}
+
+	t.Run("pattern method multipattern", func(t *testing.T) {
+		var shelvesRN ShelvesBookResourceName
+		assert.Equal(t, shelvesRN.Pattern(), "shelves/{shelf}/books/{book}")
+
+		var publisherRN PublishersBookResourceName
+		assert.Equal(t, publisherRN.Pattern(), "publishers/{publisher}/books/{book}")
+	})
 }
 
 func TestShelvesBookResourceName(t *testing.T) {

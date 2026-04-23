@@ -44,6 +44,11 @@ func TestBookResourceName(t *testing.T) {
 			"parse resource name 'others/other/books/book' with pattern 'shelves/{shelf}/books/{book}': segment shelves: got others",
 		)
 	})
+
+	t.Run("pattern method", func(t *testing.T) {
+		var name BookResourceName
+		assert.Equal(t, name.Pattern(), "shelves/{shelf}/books/{book}")
+	})
 }
 
 func TestShelfResourceName(t *testing.T) {
