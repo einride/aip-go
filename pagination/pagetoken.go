@@ -2,12 +2,17 @@ package pagination
 
 import (
 	"fmt"
+
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // PageToken is a page token that uses an offset to delineate which page to fetch.
 type PageToken struct {
 	// Offset of the page.
 	Offset int64
+	// Cursor for key set pagination.
+	Cursor []any
 	// RequestChecksum is the checksum of the request that generated the page token.
 	RequestChecksum uint32
 }
@@ -60,6 +65,33 @@ func ParsePageToken(request Request) (_ PageToken, err error) {
 func (p PageToken) Next(request Request) PageToken {
 	p.Offset += int64(request.GetPageSize())
 	return p
+}
+
+// NextCursor returns the next page token for key set pagination by reading the
+// named fields off msg (typically the last row of the current page) into Cursor.
+func (p PageToken) NextCursor(msg proto.Message, fields ...string) (PageToken, error) {
+	r := msg.ProtoReflect()
+	desc := r.Descriptor()
+	cursor := make([]any, 0, len(fields))
+	for _, name := range fields {
+		fd := desc.Fields().ByName(protoreflect.Name(name))
+		if fd == nil {
+			return PageToken{}, fmt.Errorf("next cursor: field %q not found on %s", name, desc.FullName())
+		}
+		if fd.IsList() || fd.IsMap() {
+			return PageToken{}, fmt.Errorf("next cursor: field %q is repeated/map (unsupported)", name)
+		}
+		switch fd.Kind() {
+		case protoreflect.MessageKind, protoreflect.GroupKind:
+			return PageToken{}, fmt.Errorf("next cursor: field %q is a message (unsupported)", name)
+		case protoreflect.EnumKind:
+			cursor = append(cursor, int32(r.Get(fd).Enum()))
+		default:
+			cursor = append(cursor, r.Get(fd).Interface())
+		}
+	}
+	p.Cursor = cursor
+	return p, nil
 }
 
 // String returns a string representation of the page token.

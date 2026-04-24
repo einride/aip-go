@@ -121,6 +121,125 @@ func TestParseOffsetPageToken(t *testing.T) {
 			assert.Equal(t, int64(100), pageToken3.Offset)
 		})
 	})
+	t.Run("cursor", func(t *testing.T) {
+		t.Parallel()
+		t.Run("round-trip preserves cursor", func(t *testing.T) {
+			t.Parallel()
+			request1 := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken1, err := ParsePageToken(request1)
+			assert.NilError(t, err)
+			pageToken1.Cursor = []any{"abc", int64(42)}
+			request2 := &library.ListBooksRequest{
+				Parent:    "shelves/1",
+				PageSize:  10,
+				PageToken: pageToken1.String(),
+			}
+			pageToken2, err := ParsePageToken(request2)
+			assert.NilError(t, err)
+			assert.DeepEqual(t, []any{"abc", int64(42)}, pageToken2.Cursor)
+		})
+		t.Run("Next preserves cursor", func(t *testing.T) {
+			t.Parallel()
+			request := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken, err := ParsePageToken(request)
+			assert.NilError(t, err)
+			pageToken.Cursor = []any{"abc", int64(42)}
+			next := pageToken.Next(request)
+			assert.Equal(t, int64(10), next.Offset)
+			assert.DeepEqual(t, []any{"abc", int64(42)}, next.Cursor)
+		})
+		t.Run("empty cursor round-trips as nil", func(t *testing.T) {
+			t.Parallel()
+			request1 := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken1, err := ParsePageToken(request1)
+			assert.NilError(t, err)
+			request2 := &library.ListBooksRequest{
+				Parent:    "shelves/1",
+				PageSize:  10,
+				PageToken: pageToken1.String(),
+			}
+			pageToken2, err := ParsePageToken(request2)
+			assert.NilError(t, err)
+			assert.Assert(t, pageToken2.Cursor == nil)
+		})
+		t.Run("token encoded before cursor field is added", func(t *testing.T) {
+			t.Parallel()
+			// Token shape from before the Cursor field was added.
+			type legacyPageToken struct {
+				Offset          int64
+				RequestChecksum uint32
+			}
+			request := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			checksum, err := CalculateRequestChecksum(request)
+			assert.NilError(t, err)
+			checksum ^= pageTokenChecksumMask
+			legacy := EncodePageTokenStruct(&legacyPageToken{
+				Offset:          42,
+				RequestChecksum: checksum,
+			})
+			parsed, err := ParsePageToken(&library.ListBooksRequest{
+				Parent:    "shelves/1",
+				PageSize:  10,
+				PageToken: legacy,
+			})
+			assert.NilError(t, err)
+			assert.Equal(t, int64(42), parsed.Offset)
+			assert.Assert(t, parsed.Cursor == nil)
+		})
+		t.Run("NextCursor populates cursor from message fields", func(t *testing.T) {
+			t.Parallel()
+			request := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken, err := ParsePageToken(request)
+			assert.NilError(t, err)
+			book := &library.Book{
+				Name:   "shelves/1/books/42",
+				Author: "Ada",
+				Read:   true,
+			}
+			next, err := pageToken.NextCursor(book, "name", "author", "read")
+			assert.NilError(t, err)
+			assert.DeepEqual(t, []any{"shelves/1/books/42", "Ada", true}, next.Cursor)
+		})
+		t.Run("NextCursor round-trips through page token", func(t *testing.T) {
+			t.Parallel()
+			request1 := &library.ListBooksRequest{
+				Parent:   "shelves/1",
+				PageSize: 10,
+			}
+			pageToken1, err := ParsePageToken(request1)
+			assert.NilError(t, err)
+			pageToken1, err = pageToken1.NextCursor(&library.Book{Name: "shelves/1/books/7"}, "name")
+			assert.NilError(t, err)
+			request2 := &library.ListBooksRequest{
+				Parent:    "shelves/1",
+				PageSize:  10,
+				PageToken: pageToken1.String(),
+			}
+			pageToken2, err := ParsePageToken(request2)
+			assert.NilError(t, err)
+			assert.DeepEqual(t, []any{"shelves/1/books/7"}, pageToken2.Cursor)
+		})
+		t.Run("NextCursor errors on unknown field", func(t *testing.T) {
+			t.Parallel()
+			_, err := PageToken{}.NextCursor(&library.Book{}, "nonexistent")
+			assert.ErrorContains(t, err, "not found")
+		})
+	})
 	t.Run("invalid format", func(t *testing.T) {
 		t.Parallel()
 		request := &library.ListBooksRequest{
@@ -130,7 +249,7 @@ func TestParseOffsetPageToken(t *testing.T) {
 		}
 		pageToken1, err := ParsePageToken(request)
 		assert.ErrorContains(t, err, "decode")
-		assert.Equal(t, PageToken{}, pageToken1)
+		assert.DeepEqual(t, PageToken{}, pageToken1)
 	})
 
 	t.Run("invalid checksum", func(t *testing.T) {
@@ -145,6 +264,6 @@ func TestParseOffsetPageToken(t *testing.T) {
 		}
 		pageToken1, err := ParsePageToken(request)
 		assert.ErrorContains(t, err, "checksum")
-		assert.Equal(t, PageToken{}, pageToken1)
+		assert.DeepEqual(t, PageToken{}, pageToken1)
 	})
 }
