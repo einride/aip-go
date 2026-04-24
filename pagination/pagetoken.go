@@ -5,6 +5,8 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // PageToken is a page token that uses an offset to delineate which page to fetch.
@@ -83,7 +85,14 @@ func (p PageToken) NextCursor(msg proto.Message, fields ...string) (PageToken, e
 		}
 		switch fd.Kind() {
 		case protoreflect.MessageKind, protoreflect.GroupKind:
-			return PageToken{}, fmt.Errorf("next cursor: field %q is a message (unsupported)", name)
+			switch m := r.Get(fd).Message().Interface().(type) {
+			case *timestamppb.Timestamp:
+				cursor = append(cursor, m.AsTime())
+			case *durationpb.Duration:
+				cursor = append(cursor, m.AsDuration())
+			default:
+				return PageToken{}, fmt.Errorf("next cursor: field %q is a message (unsupported)", name)
+			}
 		case protoreflect.EnumKind:
 			cursor = append(cursor, int32(r.Get(fd).Enum()))
 		default:

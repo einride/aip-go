@@ -2,9 +2,11 @@ package pagination
 
 import (
 	"testing"
+	"time"
 
 	freightv1 "go.einride.tech/aip/proto/gen/einride/example/freight/v1"
 	"google.golang.org/genproto/googleapis/example/library/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gotest.tools/v3/assert"
 )
 
@@ -238,6 +240,17 @@ func TestParseOffsetPageToken(t *testing.T) {
 			t.Parallel()
 			_, err := PageToken{}.NextCursor(&library.Book{}, "nonexistent")
 			assert.ErrorContains(t, err, "not found")
+		})
+		t.Run("NextCursor reads Timestamp as time.Time", func(t *testing.T) {
+			t.Parallel()
+			moment := time.Date(2026, 4, 24, 12, 0, 0, 0, time.UTC)
+			shipment := &freightv1.Shipment{
+				Name:       "shippers/1/shipments/42",
+				CreateTime: timestamppb.New(moment),
+			}
+			next, err := PageToken{}.NextCursor(shipment, "create_time")
+			assert.NilError(t, err)
+			assert.DeepEqual(t, []any{moment}, next.Cursor)
 		})
 	})
 	t.Run("invalid format", func(t *testing.T) {
