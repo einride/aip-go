@@ -11,6 +11,8 @@ type Filter struct {
 }
 
 // ApplyMacros modifies the filter by applying the provided macros.
+// It is safe to call ApplyMacros concurrently on filters that share the same
+// underlying *Declarations.
 // EXPERIMENTAL: This method is experimental and may be changed or removed in the future.
 func (f *Filter) ApplyMacros(macros ...Macro) error {
 	declarationOptions, err := applyMacros(
@@ -26,6 +28,8 @@ func (f *Filter) ApplyMacros(macros ...Macro) error {
 	if err != nil {
 		return err
 	}
+	// Clone the declarations to avoid mutating any other filters that share the same underlying *Declarations.
+	f.declarations = f.declarations.clone()
 	f.declarations.merge(newDeclarations)
 	var checker Checker
 	checker.Init(f.CheckedExpr.GetExpr(), f.CheckedExpr.GetSourceInfo(), f.declarations)
