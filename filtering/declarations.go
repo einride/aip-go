@@ -222,6 +222,25 @@ func (d *Declarations) declare(decl *expr.Decl) error {
 	}
 }
 
+// clone returns a shallow copy of the declarations.
+func (d *Declarations) clone() *Declarations {
+	cloned := &Declarations{
+		idents:    make(map[string]*expr.Decl, len(d.idents)),
+		functions: make(map[string]*expr.Decl, len(d.functions)),
+		enums:     make(map[string]protoreflect.EnumType, len(d.enums)),
+	}
+	for k, v := range d.idents {
+		cloned.idents[k] = v
+	}
+	for k, v := range d.functions {
+		cloned.functions[k] = v
+	}
+	for k, v := range d.enums {
+		cloned.enums[k] = v
+	}
+	return cloned
+}
+
 // merge merges the given declarations into the current declarations.
 // Given declarations take precedence over current declarations in case
 // of conflicts (such as same identifier name but different type or same function name but different definition).

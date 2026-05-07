@@ -1,6 +1,7 @@
 package filtering
 
 import (
+	"sync"
 	"testing"
 
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -319,4 +320,36 @@ func TestFilter_ApplyMacros(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestFilter_ApplyMacros_ConcurrentSharedDeclarations verifies that calling
+// ApplyMacros concurrently on filters that share the same *Declarations does
+// not cause a data race. Run with -race to detect violations.
+func TestFilter_ApplyMacros_ConcurrentSharedDeclarations(t *testing.T) {
+	t.Parallel()
+	decl, err := NewDeclarations(
+		DeclareStandardFunctions(),
+		DeclareIdent("name", TypeString),
+	)
+	assert.NilError(t, err)
+	macro := func(cursor *Cursor) {
+		identExpr := cursor.Expr().GetIdentExpr()
+		if identExpr == nil || identExpr.GetName() != "name" {
+			return
+		}
+		cursor.ReplaceWithDeclarations(
+			Text("renamed"),
+			[]DeclarationOption{DeclareIdent("renamed", TypeString)},
+		)
+	}
+	var wg sync.WaitGroup
+	for range 50 {
+		wg.Go(func() {
+			filter, ferr := ParseFilter(&mockRequest{filter: `name = "test"`}, decl)
+			assert.NilError(t, ferr)
+			merr := filter.ApplyMacros(macro)
+			assert.NilError(t, merr)
+		})
+	}
+	wg.Wait()
 }
