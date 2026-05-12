@@ -448,6 +448,49 @@ func TestChecker(t *testing.T) {
 		},
 
 		{
+			filter: `in(correlation_id, "a", "b", "c")`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("correlation_id", TypeString),
+			},
+		},
+
+		{
+			filter: `in(correlation_id, "a")`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("correlation_id", TypeString),
+			},
+		},
+
+		{
+			filter: `in(correlation_id)`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("correlation_id", TypeString),
+			},
+			errorContains: "'in' requires at least 2 arguments",
+		},
+
+		{
+			filter: `in(correlation_id, "a", 1)`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("correlation_id", TypeString),
+			},
+			errorContains: "no matching overload",
+		},
+
+		{
+			filter: `in(count, "a")`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("count", TypeInt),
+			},
+			errorContains: "no matching overload",
+		},
+
+		{
 			filter:        "<",
 			errorContains: "unexpected token <",
 		},

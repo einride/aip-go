@@ -76,6 +76,13 @@ func Has(lhs, rhs *expr.Expr) *expr.Expr {
 	return Function(FunctionHas, lhs, rhs)
 }
 
+func In(field *expr.Expr, values ...*expr.Expr) *expr.Expr {
+	args := make([]*expr.Expr, 0, len(values)+1)
+	args = append(args, field)
+	args = append(args, values...)
+	return Function(FunctionIn, args...)
+}
+
 func Or(args ...*expr.Expr) *expr.Expr {
 	if len(args) <= 2 {
 		return Function(FunctionOr, args...)

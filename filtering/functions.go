@@ -17,6 +17,7 @@ const (
 	FunctionHas           = ":"
 	FunctionDuration      = "duration"
 	FunctionTimestamp     = "timestamp"
+	FunctionIn            = "in"
 )
 
 // StandardFunctionDeclarations returns declarations for all standard functions and their standard overloads.
@@ -34,6 +35,7 @@ func StandardFunctionDeclarations() []*expr.Decl {
 		StandardFunctionGreaterEquals(),
 		StandardFunctionEquals(),
 		StandardFunctionNotEquals(),
+		StandardFunctionIn(),
 	}
 }
 
@@ -246,6 +248,23 @@ func StandardFunctionEquals() *expr.Decl {
 		NewFunctionOverload(FunctionOverloadEqualsTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadEqualsTimestampString, TypeBool, TypeTimestamp, TypeString),
 		NewFunctionOverload(FunctionOverloadEqualsDuration, TypeBool, TypeDuration, TypeDuration),
+	)
+}
+
+// In overloads.
+const (
+	FunctionOverloadInString = FunctionIn + "_string"
+)
+
+// StandardFunctionIn returns a declaration for the standard `in` function and all its standard overloads.
+//
+// The `in` function is variadic in its second argument: `in(field, v1, v2, ..., vN)` is true iff `field`
+// equals any of `v1..vN`. The declared overload uses two parameters (field, value); the checker
+// special-cases this function to accept N >= 1 additional values of the same type as the second parameter.
+func StandardFunctionIn() *expr.Decl {
+	return NewFunctionDeclaration(
+		FunctionIn,
+		NewFunctionOverload(FunctionOverloadInString, TypeBool, TypeString, TypeString),
 	)
 }
 

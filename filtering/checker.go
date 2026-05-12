@@ -144,6 +144,9 @@ func (c *Checker) resolveCallExprFunctionOverload(
 	functionDeclaration *expr.Decl,
 ) (*expr.Decl_FunctionDecl_Overload, error) {
 	callExpr := e.GetCallExpr()
+	if callExpr.GetFunction() == FunctionIn {
+		return c.resolveInOverload(e, functionDeclaration)
+	}
 	for _, overload := range functionDeclaration.GetFunction().GetOverloads() {
 		if len(callExpr.GetArgs()) != len(overload.GetParams()) {
 			continue
@@ -176,6 +179,58 @@ func (c *Checker) resolveCallExprFunctionOverload(
 		}
 	}
 	return nil, c.errorf(e, "no matching overload found for calling '%s' with %s", callExpr.GetFunction(), argTypes)
+}
+
+// resolveInOverload resolves the `in` function, which is variadic in its value arguments.
+// It accepts `in(field, v1, v2, ..., vN)` where N >= 1 and all values share the same type
+// as the second parameter of the matched overload.
+func (c *Checker) resolveInOverload(
+	e *expr.Expr,
+	functionDeclaration *expr.Decl,
+) (*expr.Decl_FunctionDecl_Overload, error) {
+	callExpr := e.GetCallExpr()
+	args := callExpr.GetArgs()
+	if len(args) < 2 {
+		return nil, c.errorf(e, "'in' requires at least 2 arguments, got %d", len(args))
+	}
+	fieldType, ok := c.getType(args[0])
+	if !ok {
+		return nil, c.errorf(args[0], "unknown type")
+	}
+	for _, overload := range functionDeclaration.GetFunction().GetOverloads() {
+		params := overload.GetParams()
+		if len(params) != 2 {
+			continue
+		}
+		if !proto.Equal(fieldType, params[0]) {
+			continue
+		}
+		valueType := params[1]
+		allMatch := true
+		for _, valueArg := range args[1:] {
+			argType, ok := c.getType(valueArg)
+			if !ok {
+				return nil, c.errorf(valueArg, "unknown type")
+			}
+			if !proto.Equal(argType, valueType) {
+				allMatch = false
+				break
+			}
+		}
+		if allMatch {
+			return overload, nil
+		}
+	}
+	var argTypes []string
+	for _, arg := range args {
+		t, ok := c.getType(arg)
+		if !ok {
+			argTypes = append(argTypes, "UNKNOWN")
+		} else {
+			argTypes = append(argTypes, t.String())
+		}
+	}
+	return nil, c.errorf(e, "no matching overload found for calling 'in' with %s", argTypes)
 }
 
 func (c *Checker) checkCallExprBuiltinFunctionOverloads(

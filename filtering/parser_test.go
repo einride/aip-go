@@ -265,6 +265,16 @@ func TestParser(t *testing.T) {
 		},
 
 		{
+			filter:   `in(correlation_id, "a", "b", "c")`,
+			expected: In(Text("correlation_id"), String("a"), String("b"), String("c")),
+		},
+
+		{
+			filter:   `in(correlation_id, "a")`,
+			expected: In(Text("correlation_id"), String("a")),
+		},
+
+		{
 			filter:        "<",
 			errorContains: "unexpected token <",
 		},
