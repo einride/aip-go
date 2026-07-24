@@ -6,10 +6,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/stoewer/go-strcase v1.3.1
 	google.golang.org/genproto v0.0.0-20240711142825-46eb208f015d
-	google.golang.org/genproto/googleapis/api v0.0.0-20250528174236-200df99c418a
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250528174236-200df99c418a
-	google.golang.org/grpc v1.74.2
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478
+	google.golang.org/grpc v1.82.1
+	google.golang.org/protobuf v1.36.11
 	gotest.tools/v3 v3.5.2
 )
 
