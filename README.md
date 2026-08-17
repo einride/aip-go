@@ -48,20 +48,6 @@ var orders, err = flop.NewPaginator(
 )
 ```
 
-`Sortable` and `Key` columns may both appear in client `order_by`. Keys are also
-appended in declaration order when absent, making every resolved order unique.
-A key already named by the client keeps its position and direction.
-Comparison follows the natural ordering of each declared SQL column type; an
-endpoint using different semantics must document them. Fields are consulted left
-to right, so a later field only decides rows that tie on every earlier one: a
-leading column without duplicates makes the rest of the order inert.
-
-Declarations are validated once and the resulting paginator is immutable and
-safe for concurrent package-level reuse. Column names are trusted declarations
-and reach SQL verbatim; request strings can only select declared names.
-Endpoints that do not expose filtering pass `filter.Disabled()` instead of a
-schema; such endpoints accept only an empty filter.
-
 ## Filtering
 
 The parser accepts the [AIP-160 grammar](https://google.aip.dev/assets/misc/ebnf-filtering.txt)
@@ -109,14 +95,9 @@ rows, total, err := repo.ListPage(ctx, params)
 page, err := flop.NewPage(rows, params, total)
 ```
 
-Page numbers are a library extension, not an AIP-158 request shape. They enable
-jump-to-page and totals but pay for `OFFSET` and a matching count query.
-`Page.TotalItems` maps to AIP `total_size` and may be an estimate if the service
-documents it as such; filtered totals should describe the filtered collection.
-
 ## Credits
 
-[Einride AIP Go implementation](https://github.com/einride/aip-go)
+- [Einride AIP Go implementation](https://github.com/einride/aip-go)
 - [Google AIP-132: Ordering](https://google.aip.dev/132)
 - [Google AIP-158: Pagination](https://google.aip.dev/158)
 - [Google AIP-160: Filtering](https://google.aip.dev/160)
