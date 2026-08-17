@@ -35,27 +35,27 @@ func ParseFilter(input string) (Filter, error) {
 		return Filter{}, nil
 	}
 	if len(input) > maxFilterBytes {
-		return Filter{}, newError(FilterPosition{Line: 1, Column: 1}, nil, "filter is too large")
+		return Filter{}, newFilterError(FilterPosition{Line: 1, Column: 1}, nil, "filter is too large")
 	}
-	p := newParser(trimmed)
+	p := newFilterParser(trimmed)
 	return p.parse()
 }
 
-// parser is a recursive-descent parser for the AIP-160 grammar.
+// filterParser is a recursive-descent filterParser for the AIP-160 grammar.
 //
-// Backtracking copies the parser by value, so every field must remain safely
+// Backtracking copies the filterParser by value, so every field must remain safely
 // copyable; the lexer holds only its input string and cursor positions.
-type parser struct {
+type filterParser struct {
 	lexer lexer
 	depth int
 }
 
-// newParser expects input that ParseFilter has already trimmed.
-func newParser(filter string) parser {
-	return parser{lexer: newLexer(filter)}
+// newFilterParser expects input that ParseFilter has already trimmed.
+func newFilterParser(filter string) filterParser {
+	return filterParser{lexer: newLexer(filter)}
 }
 
-func (p *parser) parse() (Filter, error) {
+func (p *filterParser) parse() (Filter, error) {
 	e, err := p.parseExpression()
 	if err != nil {
 		return Filter{}, err
@@ -105,7 +105,7 @@ func (o operand) argument() expr.Value {
 //	expression
 //	  : sequence {WS AND WS sequence}
 //	  ;
-func (p *parser) parseExpression() (expr.Expr, error) {
+func (p *filterParser) parseExpression() (expr.Expr, error) {
 	sequences := make([]expr.Expr, 0, 1)
 	for {
 		_ = p.eatTokens(tokenWhitespace)
@@ -130,7 +130,7 @@ func (p *parser) parseExpression() (expr.Expr, error) {
 //	sequence
 //	  : factor {WS factor}
 //	  ;
-func (p *parser) parseSequence() (expr.Expr, error) {
+func (p *filterParser) parseSequence() (expr.Expr, error) {
 	factors := make([]expr.Expr, 0, 2)
 	for {
 		factor, err := p.parseFactor()
@@ -157,7 +157,7 @@ func (p *parser) parseSequence() (expr.Expr, error) {
 //	factor
 //	  : term {WS OR WS term}
 //	  ;
-func (p *parser) parseFactor() (expr.Expr, error) {
+func (p *filterParser) parseFactor() (expr.Expr, error) {
 	terms := make([]expr.Expr, 0, 2)
 	for {
 		term, err := p.parseTerm()
@@ -181,7 +181,7 @@ func (p *parser) parseFactor() (expr.Expr, error) {
 //	term
 //	  : [(NOT WS | MINUS)] simple
 //	  ;
-func (p *parser) parseTerm() (expr.Expr, error) {
+func (p *filterParser) parseTerm() (expr.Expr, error) {
 	var negated bool
 	if err := p.eatTokens(tokenNot, tokenWhitespace); err == nil {
 		negated = true
@@ -204,7 +204,7 @@ func (p *parser) parseTerm() (expr.Expr, error) {
 //	  : restriction
 //	  | composite
 //	  ;
-func (p *parser) parseSimple() (expr.Expr, error) {
+func (p *filterParser) parseSimple() (expr.Expr, error) {
 	if p.sniffTokens(tokenLeftParen) {
 		return p.parseComposite()
 	}
@@ -216,7 +216,7 @@ func (p *parser) parseSimple() (expr.Expr, error) {
 //	composite
 //	  : LPAREN expression RPAREN
 //	  ;
-func (p *parser) parseComposite() (expr.Expr, error) {
+func (p *filterParser) parseComposite() (expr.Expr, error) {
 	start := p.lexer.position()
 	if p.depth >= maxFilterDepth {
 		return nil, p.errorf(start, "nesting is too deep")
@@ -244,7 +244,7 @@ func (p *parser) parseComposite() (expr.Expr, error) {
 //	restriction
 //	  : comparable [comparator arg]
 //	  ;
-func (p *parser) parseRestriction() (expr.Expr, error) {
+func (p *filterParser) parseRestriction() (expr.Expr, error) {
 	comparable, err := p.parseComparable()
 	if err != nil {
 		return nil, err
@@ -283,7 +283,7 @@ func (p *parser) parseRestriction() (expr.Expr, error) {
 //	  | number
 //	  | literal
 //	  ;
-func (p *parser) parseComparable() (operand, error) {
+func (p *filterParser) parseComparable() (operand, error) {
 	pos := p.lexer.position()
 	tok, err := p.parseToken(tokenType.isValue)
 	if err != nil {
@@ -318,7 +318,7 @@ func (p *parser) parseComparable() (operand, error) {
 //	member
 //	  : value {DOT field}
 //	  ;
-func (p *parser) parseMember(first token, pos FilterPosition) (operand, error) {
+func (p *filterParser) parseMember(first token, pos FilterPosition) (operand, error) {
 	parts := []string{first.Value}
 	for {
 		if err := p.eatTokens(tokenDot); err != nil {
@@ -333,7 +333,7 @@ func (p *parser) parseMember(first token, pos FilterPosition) (operand, error) {
 	return operand{path: strings.Join(parts, "."), isPath: true, pos: pos}, nil
 }
 
-func (p *parser) parseToken(fns ...func(tokenType) bool) (token, error) {
+func (p *filterParser) parseToken(fns ...func(tokenType) bool) (token, error) {
 	pos := p.lexer.position()
 	tok, err := p.lexer.lex()
 	if err != nil {
@@ -353,7 +353,7 @@ func (p *parser) parseToken(fns ...func(tokenType) bool) (token, error) {
 	return token{}, p.errorf(tok.Position, "unexpected token %s", tok.Type)
 }
 
-func (p *parser) sniff(fns ...func(tokenType) bool) bool {
+func (p *filterParser) sniff(fns ...func(tokenType) bool) bool {
 	start := *p
 	defer func() { *p = start }()
 	for _, fn := range fns {
@@ -365,7 +365,7 @@ func (p *parser) sniff(fns ...func(tokenType) bool) bool {
 	return true
 }
 
-func (p *parser) sniffTokens(want ...tokenType) bool {
+func (p *filterParser) sniffTokens(want ...tokenType) bool {
 	start := *p
 	defer func() { *p = start }()
 	for _, wantType := range want {
@@ -376,7 +376,7 @@ func (p *parser) sniffTokens(want ...tokenType) bool {
 	return true
 }
 
-func (p *parser) eatTokens(want ...tokenType) error {
+func (p *filterParser) eatTokens(want ...tokenType) error {
 	start := *p
 	for _, wantType := range want {
 		tok, err := p.lexer.lex()
@@ -388,12 +388,12 @@ func (p *parser) eatTokens(want ...tokenType) error {
 	return nil
 }
 
-func (p *parser) errorf(pos FilterPosition, format string, args ...any) error {
-	return newError(pos, nil, format, args...)
+func (p *filterParser) errorf(pos FilterPosition, format string, args ...any) error {
+	return newFilterError(pos, nil, format, args...)
 }
 
-func (p *parser) wrapf(err error, pos FilterPosition, format string, args ...any) error {
-	return newError(pos, err, format, args...)
+func (p *filterParser) wrapf(err error, pos FilterPosition, format string, args ...any) error {
+	return newFilterError(pos, err, format, args...)
 }
 
 func comparisonOp(t tokenType) (expr.ComparisonOp, bool) {

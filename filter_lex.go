@@ -285,7 +285,7 @@ func (l *lexer) sniffRune(want rune) bool {
 }
 
 func (l *lexer) errorf(format string, args ...any) error {
-	return newError(l.tokenStart, nil, format, args...)
+	return newFilterError(l.tokenStart, nil, format, args...)
 }
 
 func isText(r rune) bool { return ident.IsContinue(r) || r == '*' }

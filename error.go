@@ -13,7 +13,7 @@ type FilterError struct {
 	err error
 }
 
-func newError(pos FilterPosition, wrapped error, format string, args ...any) *FilterError {
+func newFilterError(pos FilterPosition, wrapped error, format string, args ...any) *FilterError {
 	return &FilterError{Pos: pos, Msg: fmt.Sprintf(format, args...), err: wrapped}
 }
 
