@@ -16,10 +16,10 @@ func TestParseOrderBy(t *testing.T) {
 		name    string
 		args    args
 		want    flop.OrderBy
-		wantErr bool
+		wantErr assert.ErrorFunc
 	}{
-		{name: "empty", args: args{input: ""}, want: flop.OrderBy{}},
-		{name: "whitespace only", args: args{input: " \n\t"}, want: flop.OrderBy{}},
+		{name: "empty", args: args{input: ""}, want: flop.OrderBy{}, wantErr: assert.NoError},
+		{name: "whitespace only", args: args{input: " \n\t"}, want: flop.OrderBy{}, wantErr: assert.NoError},
 		{
 			name: "fields",
 			args: args{input: "create_time desc, user.name asc, id"},
@@ -28,6 +28,7 @@ func TestParseOrderBy(t *testing.T) {
 				{Path: "user.name"},
 				{Path: "id"},
 			}},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "explicit ascending and whitespace",
@@ -36,15 +37,16 @@ func TestParseOrderBy(t *testing.T) {
 				{Path: "create_time"},
 				{Path: "user_id", Desc: true},
 			}},
+			wantErr: assert.NoError,
 		},
-		{name: "duplicate", args: args{input: "id, id desc"}, wantErr: true},
-		{name: "empty field", args: args{input: "id,,name"}, wantErr: true},
-		{name: "trailing comma", args: args{input: "id,"}, wantErr: true},
-		{name: "invalid path", args: args{input: "user..name"}, wantErr: true},
-		{name: "path starts with number", args: args{input: "1st_name"}, wantErr: true},
-		{name: "non-ascii path", args: args{input: "имя"}, wantErr: true},
-		{name: "invalid direction", args: args{input: "id DESC"}, wantErr: true},
-		{name: "too many words", args: args{input: "id asc desc"}, wantErr: true},
+		{name: "duplicate", args: args{input: "id, id desc"}, wantErr: assert.Error},
+		{name: "empty field", args: args{input: "id,,name"}, wantErr: assert.Error},
+		{name: "trailing comma", args: args{input: "id,"}, wantErr: assert.Error},
+		{name: "invalid path", args: args{input: "user..name"}, wantErr: assert.Error},
+		{name: "path starts with number", args: args{input: "1st_name"}, wantErr: assert.Error},
+		{name: "non-ascii path", args: args{input: "имя"}, wantErr: assert.Error},
+		{name: "invalid direction", args: args{input: "id DESC"}, wantErr: assert.Error},
+		{name: "too many words", args: args{input: "id asc desc"}, wantErr: assert.Error},
 	}
 
 	for _, test := range tests {
@@ -52,11 +54,7 @@ func TestParseOrderBy(t *testing.T) {
 			t.Parallel()
 			got, err := flop.ParseOrderBy(test.args.input)
 			assert.Equal(t, test.want, got)
-			if test.wantErr {
-				assert.Error(t, err)
-				return
-			}
-			assert.NoError(t, err)
+			test.wantErr(t, err)
 		})
 	}
 }

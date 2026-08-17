@@ -22,113 +22,139 @@ func testFilterSchema(t *testing.T) *filter.Schema {
 
 func TestFilterCompiler_Where(t *testing.T) {
 	t.Parallel()
+
 	compiler, err := NewFilterCompiler(testFilterSchema(t), map[string]string{
-		"state": "o.state", "total": "o.total", "name": "o.name", "deleted": "o.deleted",
-		"tags": "o.tags",
+		"state":   "o.state",
+		"total":   "o.total",
+		"name":    "o.name",
+		"deleted": "o.deleted",
+		"tags":    "o.tags",
 	})
 	assert.NoError(t, err)
+
 	tests := []struct {
 		name     string
 		filter   string
 		wantSQL  string
 		wantArgs []any
-		wantErr  bool
+		wantErr  assert.ErrorAssertionFunc
 	}{
-		{name: "empty", wantSQL: "SELECT id FROM orders o"},
+		{name: "empty", wantSQL: "SELECT id FROM orders o", wantErr: assert.NoError},
 		{
 			name: "has", filter: `tags:"blue"`,
 			wantSQL:  "SELECT id FROM orders o WHERE $1 = ANY(o.tags)",
 			wantArgs: []any{"blue"},
+			wantErr:  assert.NoError,
 		},
 		{
 			name: "negated has", filter: `NOT tags:"blue"`,
 			wantSQL:  "SELECT id FROM orders o WHERE NOT ($1 = ANY(o.tags))",
 			wantArgs: []any{"blue"},
+			wantErr:  assert.NoError,
 		},
 		{
 			name: "has inside a disjunction", filter: `tags:"blue" OR tags:"red"`,
 			wantSQL:  "SELECT id FROM orders o WHERE ($1 = ANY(o.tags) OR $2 = ANY(o.tags))",
 			wantArgs: []any{"blue", "red"},
+			wantErr:  assert.NoError,
 		},
 		{
 			name: "negation distributes over has", filter: `NOT (tags:"blue" OR total < 10)`,
 			wantSQL:  "SELECT id FROM orders o WHERE (NOT ($1 = ANY(o.tags)) AND o.total >= $2)",
 			wantArgs: []any{"blue", int64(10)},
+			wantErr:  assert.NoError,
 		},
 		{
 			name: "comparisons", filter: "state = paid AND total >= 10",
 			wantSQL:  "SELECT id FROM orders o WHERE (o.state = $1 AND o.total >= $2)",
 			wantArgs: []any{"paid", int64(10)},
+			wantErr:  assert.NoError,
 		},
 		{
 			name:     "not equal",
 			filter:   "total != 10",
 			wantSQL:  "SELECT id FROM orders o WHERE o.total <> $1",
 			wantArgs: []any{int64(10)},
+			wantErr:  assert.NoError,
 		},
 		{
 			name:     "less",
 			filter:   "total < 10",
 			wantSQL:  "SELECT id FROM orders o WHERE o.total < $1",
 			wantArgs: []any{int64(10)},
+			wantErr:  assert.NoError,
 		},
 		{
 			name:     "less or equal",
 			filter:   "total <= 10",
 			wantSQL:  "SELECT id FROM orders o WHERE o.total <= $1",
 			wantArgs: []any{int64(10)},
+			wantErr:  assert.NoError,
 		},
 		{
 			name:     "greater",
 			filter:   "total > 10",
 			wantSQL:  "SELECT id FROM orders o WHERE o.total > $1",
 			wantArgs: []any{int64(10)},
+			wantErr:  assert.NoError,
 		},
-		{name: "null", filter: "name != null", wantSQL: "SELECT id FROM orders o WHERE o.name IS NOT NULL"},
+		{
+			name: "null", filter: "name != null",
+			wantSQL: "SELECT id FROM orders o WHERE o.name IS NOT NULL",
+			wantErr: assert.NoError,
+		},
 		{
 			name: "boundary wildcard", filter: `name = "book*"`,
 			wantSQL: "SELECT id FROM orders o WHERE o.name LIKE $1", wantArgs: []any{"book%"},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "negative boundary wildcard", filter: `name != "*book"`,
 			wantSQL: "SELECT id FROM orders o WHERE o.name NOT LIKE $1", wantArgs: []any{"%book"},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "text sequence", filter: `"blue" "chair"`,
 			wantSQL:  "SELECT id FROM orders o WHERE ((o.name LIKE $1) AND (o.name LIKE $2))",
 			wantArgs: []any{"%blue%", "%chair%"},
+			wantErr:  assert.NoError,
 		},
 		{
 			name: "logical or", filter: `"blue" OR "chair"`,
 			wantSQL:  "SELECT id FROM orders o WHERE ((o.name LIKE $1) OR (o.name LIKE $2))",
 			wantArgs: []any{"%blue%", "%chair%"},
+			wantErr:  assert.NoError,
 		},
 		{
 			name: "negation", filter: "NOT (state = paid OR total < 10)",
 			wantSQL:  "SELECT id FROM orders o WHERE (o.state <> $1 AND o.total >= $2)",
 			wantArgs: []any{"paid", int64(10)},
+			wantErr:  assert.NoError,
 		},
 		{
 			name: "negated text", filter: `NOT "blue"`,
 			wantSQL: "SELECT id FROM orders o WHERE (o.name NOT LIKE $1)", wantArgs: []any{"%blue%"},
+			wantErr: assert.NoError,
 		},
-		{name: "invalid filter", filter: "missing = 1", wantErr: true},
-		{name: "unsupported pattern", filter: `name = "*a_b*"`, wantErr: true},
-		{name: "unsupported text pattern", filter: `"a%b"`, wantErr: true},
-		{name: "unsupported left expression", filter: `"a%b" AND "ok"`, wantErr: true},
-		{name: "unsupported right expression", filter: `"ok" AND "a%b"`, wantErr: true},
+		{name: "invalid filter", filter: "missing = 1", wantErr: assert.Error},
+		{name: "unsupported pattern", filter: `name = "*a_b*"`, wantErr: assert.Error},
+		{name: "unsupported text pattern", filter: `"a%b"`, wantErr: assert.Error},
+		{name: "unsupported left expression", filter: `"a%b" AND "ok"`, wantErr: assert.Error},
+		{name: "unsupported right expression", filter: `"ok" AND "a%b"`, wantErr: assert.Error},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
+
 			filter, err := filter.Parse(test.filter)
 			assert.NoError(t, err)
+
 			gotSQL, gotArgs, gotErr := compiler.Where(psql.Select("id").From("orders o"), filter).ToSql()
-			if test.wantErr {
-				assert.Error(t, gotErr)
+			test.wantErr(t, gotErr)
+			if gotErr != nil {
 				return
 			}
-			assert.NoError(t, gotErr)
+
 			assert.Equal(t, test.wantSQL, gotSQL)
 			assert.Equal(t, test.wantArgs, gotArgs)
 		})
@@ -191,7 +217,7 @@ func TestNewFilterCompiler(t *testing.T) {
 		name    string
 		schema  *filter.Schema
 		fields  map[string]string
-		wantErr bool
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name:   "full mapping",
@@ -203,28 +229,25 @@ func TestNewFilterCompiler(t *testing.T) {
 				"deleted": "deleted",
 				"tags":    "tags",
 			},
+			wantErr: assert.NoError,
 		},
-		{name: "partial mapping", schema: schema, fields: map[string]string{"state": "o.state"}},
-		{name: "nil mapping", schema: schema},
-		{name: "empty mapping", schema: schema, fields: map[string]string{}},
-		{name: "uninitialized schema", fields: map[string]string{}, wantErr: true},
-		{name: "uninitialized schema with nil mapping", wantErr: true},
-		{name: "unknown mapping", schema: schema, fields: map[string]string{"other": "other"}, wantErr: true},
-		{name: "invalid identifier", schema: schema, fields: map[string]string{"state": "state;drop"}, wantErr: true},
-		{name: "empty identifier", schema: schema, fields: map[string]string{"state": ""}, wantErr: true},
-		{name: "leading dot", schema: schema, fields: map[string]string{"state": ".state"}, wantErr: true},
-		{name: "trailing dot", schema: schema, fields: map[string]string{"state": "state."}, wantErr: true},
-		{name: "numeric start", schema: schema, fields: map[string]string{"state": "1state"}, wantErr: true},
+		{name: "partial mapping", schema: schema, fields: map[string]string{"state": "o.state"}, wantErr: assert.NoError},
+		{name: "nil mapping", schema: schema, wantErr: assert.NoError},
+		{name: "empty mapping", schema: schema, fields: map[string]string{}, wantErr: assert.NoError},
+		{name: "uninitialized schema", fields: map[string]string{}, wantErr: assert.Error},
+		{name: "uninitialized schema with nil mapping", wantErr: assert.Error},
+		{name: "unknown mapping", schema: schema, fields: map[string]string{"other": "other"}, wantErr: assert.Error},
+		{name: "invalid identifier", schema: schema, fields: map[string]string{"state": "state;drop"}, wantErr: assert.Error},
+		{name: "empty identifier", schema: schema, fields: map[string]string{"state": ""}, wantErr: assert.Error},
+		{name: "leading dot", schema: schema, fields: map[string]string{"state": ".state"}, wantErr: assert.Error},
+		{name: "trailing dot", schema: schema, fields: map[string]string{"state": "state."}, wantErr: assert.Error},
+		{name: "numeric start", schema: schema, fields: map[string]string{"state": "1state"}, wantErr: assert.Error},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			_, err := NewFilterCompiler(test.schema, test.fields)
-			if test.wantErr {
-				assert.Error(t, err)
-				return
-			}
-			assert.NoError(t, err)
+			test.wantErr(t, err)
 		})
 	}
 }

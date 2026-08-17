@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+type ErrorFunc = func(t *testing.T, err error)
+
 func Equal[T any](t *testing.T, want, got T) {
 	t.Helper()
 	if !reflect.DeepEqual(want, got) {

@@ -197,42 +197,45 @@ func TestPaginator_CursorParams(t *testing.T) {
 		wantLimit  int32
 		wantOrder  flop.OrderBy
 		wantFilter string
-		wantErr    bool
+		wantErr    assert.ErrorFunc
 	}{
 		{
 			name: "defaults and canonical filter", filter: `age = '42' active = true`,
 			wantLimit:  3,
 			wantOrder:  flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}},
 			wantFilter: `(age = 42 AND active = true)`,
+			wantErr:    assert.NoError,
 		},
 		{
 			name: "custom order retains key direction", size: 5, order: "id desc",
 			wantLimit: 6, wantOrder: flop.OrderBy{Fields: []flop.Field{flop.Desc("id")}},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "page size clamps", size: 99,
 			wantLimit: 6,
 			wantOrder: flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}},
+			wantErr:   assert.NoError,
 		},
-		{name: "negative page size", size: -1, wantErr: true},
-		{name: "malformed cursor", cursor: "bad", size: 1, wantErr: true},
-		{name: "short cursor position", cursor: shortPosition, size: 1, wantErr: true},
-		{name: "mismatched cursor path", cursor: wrongPath, size: 1, wantErr: true},
-		{name: "null cursor value", cursor: nullPosition, size: 1, wantErr: true},
-		{name: "unknown order", size: 1, order: "unknown", wantErr: true},
+		{name: "negative page size", size: -1, wantErr: assert.Error},
+		{name: "malformed cursor", cursor: "bad", size: 1, wantErr: assert.Error},
+		{name: "short cursor position", cursor: shortPosition, size: 1, wantErr: assert.Error},
+		{name: "mismatched cursor path", cursor: wrongPath, size: 1, wantErr: assert.Error},
+		{name: "null cursor value", cursor: nullPosition, size: 1, wantErr: assert.Error},
+		{name: "unknown order", size: 1, order: "unknown", wantErr: assert.Error},
 		{
 			name:    "invalid order path",
 			size:    1,
 			orderBy: flop.OrderBy{Fields: []flop.Field{{Path: "bad-name"}}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "duplicate order",
 			size:    1,
 			orderBy: flop.OrderBy{Fields: []flop.Field{flop.Asc("id"), flop.Desc("id")}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "unknown filter", size: 1, filter: "unknown = 1", wantErr: true},
+		{name: "unknown filter", size: 1, filter: "unknown = 1", wantErr: assert.Error},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -245,11 +248,10 @@ func TestPaginator_CursorParams(t *testing.T) {
 			filter, err := filter.Parse(test.filter)
 			assert.NoError(t, err)
 			got, err := paginator.CursorParams(test.cursor, test.size, orderBy, filter)
-			if test.wantErr {
-				assert.Error(t, err)
+			test.wantErr(t, err)
+			if err != nil {
 				return
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, test.wantLimit, got.Limit())
 			assert.Equal(t, test.wantOrder, got.OrderBy())
 			assert.Equal(t, test.wantFilter, got.Filter().String())
@@ -269,11 +271,17 @@ func TestPaginator_OffsetParams(t *testing.T) {
 		wantPage   int32
 		wantLimit  int32
 		wantOffset int64
-		wantErr    bool
+		wantErr    assert.ErrorFunc
 	}{
-		{name: "defaults", wantPage: 1, wantLimit: 2},
-		{name: "page and size", page: 3, size: 2, wantPage: 3, wantLimit: 2, wantOffset: 4},
-		{name: "size clamps", page: 2, size: 99, wantPage: 2, wantLimit: 5, wantOffset: 5},
+		{name: "defaults", wantPage: 1, wantLimit: 2, wantErr: assert.NoError},
+		{
+			name: "page and size", page: 3, size: 2,
+			wantPage: 3, wantLimit: 2, wantOffset: 4, wantErr: assert.NoError,
+		},
+		{
+			name: "size clamps", page: 2, size: 99,
+			wantPage: 2, wantLimit: 5, wantOffset: 5, wantErr: assert.NoError,
+		},
 		{
 			name:      "custom order and filter",
 			page:      1,
@@ -282,11 +290,12 @@ func TestPaginator_OffsetParams(t *testing.T) {
 			filter:    "age = 42",
 			wantPage:  1,
 			wantLimit: 1,
+			wantErr:   assert.NoError,
 		},
-		{name: "negative page", page: -1, wantErr: true},
-		{name: "negative size", size: -1, wantErr: true},
-		{name: "unknown order", order: "missing", wantErr: true},
-		{name: "unknown filter", filter: "missing = 1", wantErr: true},
+		{name: "negative page", page: -1, wantErr: assert.Error},
+		{name: "negative size", size: -1, wantErr: assert.Error},
+		{name: "unknown order", order: "missing", wantErr: assert.Error},
+		{name: "unknown filter", filter: "missing = 1", wantErr: assert.Error},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -296,11 +305,10 @@ func TestPaginator_OffsetParams(t *testing.T) {
 			filter, err := filter.Parse(test.filter)
 			assert.NoError(t, err)
 			got, err := paginator.OffsetParams(test.page, test.size, order, filter)
-			if test.wantErr {
-				assert.Error(t, err)
+			test.wantErr(t, err)
+			if err != nil {
 				return
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, test.wantPage, got.Page())
 			assert.Equal(t, test.wantLimit, got.Limit())
 			assert.Equal(t, test.wantOffset, got.Offset())
@@ -330,9 +338,12 @@ func TestPaginator_CursorPage(t *testing.T) {
 		wantItems int
 		wantAfter flop.CursorPosition
 		params    *flop.CursorParams
-		wantErr   bool
+		wantErr   assert.ErrorFunc
 	}{
-		{name: "last page", rows: []paginatorRow{{ID: 1, CreatedAt: now}}, wantItems: 1},
+		{
+			name: "last page", rows: []paginatorRow{{ID: 1, CreatedAt: now}},
+			wantItems: 1, wantErr: assert.NoError,
+		},
 		{
 			name: "next page",
 			rows: []paginatorRow{
@@ -345,16 +356,17 @@ func TestPaginator_CursorPage(t *testing.T) {
 				{Path: "created_at", Value: expr.TimeValue(now.Add(-time.Second))},
 				{Path: "id", Value: expr.Int64Value(2)},
 			},
+			wantErr: assert.NoError,
 		},
 		{
 			name:    "null cursor column",
 			rows:    []paginatorRow{{ID: 1, CreatedAt: now}, {ID: 2, NullTime: true}, {ID: 3, CreatedAt: now}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "missing order", params: &emptyParams, wantErr: true},
+		{name: "missing order", params: &emptyParams, wantErr: assert.Error},
 		{
 			name: "undeclared cursor column", params: &unknownParams,
-			rows: []paginatorRow{{ID: 1}, {ID: 2}, {ID: 3}}, wantErr: true,
+			rows: []paginatorRow{{ID: 1}, {ID: 2}, {ID: 3}}, wantErr: assert.Error,
 		},
 	}
 	for _, test := range tests {
@@ -365,11 +377,10 @@ func TestPaginator_CursorPage(t *testing.T) {
 				caseParams = *test.params
 			}
 			page, err := paginator.CursorPage(test.rows, caseParams)
-			if test.wantErr {
-				assert.Error(t, err)
+			test.wantErr(t, err)
+			if err != nil {
 				return
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, test.wantItems, len(page.Items))
 			if len(test.wantAfter) == 0 {
 				assert.Equal(t, "", page.NextCursor)

@@ -14,34 +14,35 @@ func TestNewFilterField(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		got    filter.Field
-		want   filter.Field
-		schema bool
+		name    string
+		got     filter.Field
+		want    filter.Field
+		wantErr assert.ErrorFunc
 	}{
 		{
-			name:   "plain",
-			got:    filter.NewField("age", filter.TypeInt, false),
-			want:   filter.Field{Name: "age", Type: filter.TypeInt},
-			schema: true,
+			name:    "plain",
+			got:     filter.NewField("age", filter.TypeInt, false),
+			want:    filter.Field{Name: "age", Type: filter.TypeInt},
+			wantErr: assert.NoError,
 		},
 		{
-			name:   "searchable",
-			got:    filter.NewField("name", filter.TypeString, true),
-			want:   filter.Field{Name: "name", Type: filter.TypeString, Search: true},
-			schema: true,
+			name:    "searchable",
+			got:     filter.NewField("name", filter.TypeString, true),
+			want:    filter.Field{Name: "name", Type: filter.TypeString, Search: true},
+			wantErr: assert.NoError,
 		},
 		{
-			name:   "enum keeps its values",
-			got:    filter.NewField("state", filter.Enum("open", "closed"), false),
-			want:   filter.Field{Name: "state", Type: filter.Enum("open", "closed")},
-			schema: true,
+			name:    "enum keeps its values",
+			got:     filter.NewField("state", filter.Enum("open", "closed"), false),
+			want:    filter.Field{Name: "state", Type: filter.Enum("open", "closed")},
+			wantErr: assert.NoError,
 		},
 		{
 			// NewField declares, NewSchema validates.
-			name: "invalid declaration is not rejected",
-			got:  filter.NewField("bad-name", filter.Type{}, true),
-			want: filter.Field{Name: "bad-name", Search: true},
+			name:    "invalid declaration is not rejected",
+			got:     filter.NewField("bad-name", filter.Type{}, true),
+			want:    filter.Field{Name: "bad-name", Search: true},
+			wantErr: assert.Error,
 		},
 	}
 
@@ -50,11 +51,7 @@ func TestNewFilterField(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, test.want, test.got)
 			_, err := filter.NewSchema([]filter.Field{test.got}, filter.Limits{})
-			if test.schema {
-				assert.NoError(t, err)
-				return
-			}
-			assert.Error(t, err)
+			test.wantErr(t, err)
 		})
 	}
 }
@@ -84,7 +81,10 @@ func TestNewFilterSchema(t *testing.T) {
 		{name: "invalid field type", fields: []filter.Field{filter.NewField("id", filter.Type{}, false)}},
 		{name: "empty enum", fields: []filter.Field{filter.NewField("state", filter.Enum(), false)}},
 		{name: "empty enum value", fields: []filter.Field{filter.NewField("state", filter.Enum(""), false)}},
-		{name: "duplicate enum value", fields: []filter.Field{filter.NewField("state", filter.Enum("open", "open"), false)}},
+		{
+			name:   "duplicate enum value",
+			fields: []filter.Field{filter.NewField("state", filter.Enum("open", "open"), false)},
+		},
 		{name: "non-string search field", fields: []filter.Field{filter.NewField("id", filter.TypeInt, true)}},
 	}
 
@@ -130,153 +130,169 @@ func TestFilterSchema_Validate(t *testing.T) {
 		filter  filter.Filter
 		schema  *filter.Schema
 		want    string
-		wantErr bool
+		wantErr assert.ErrorFunc
 	}{
-		{name: "empty"},
-		{name: "has on a list", input: `tags:"blue"`, want: `tags : "blue"`},
-		{name: "has with a bare identifier", input: "tags:blue", want: `tags : "blue"`},
-		{name: "has rejects a non-string", input: "tags:1", wantErr: true},
-		{name: "has rejects null", input: "tags:null", wantErr: true},
-		{name: "has is rejected on a string", input: `name:"x"`, wantErr: true},
-		{name: "has is rejected on an int", input: "age:1", wantErr: true},
-		{name: "has is rejected on an enum", input: "state:open", wantErr: true},
-		{name: "list rejects equality", input: `tags = "blue"`, wantErr: true},
-		{name: "list rejects ordering", input: `tags > "blue"`, wantErr: true},
-		{name: "typed integer", input: `age = "42"`, want: "age = 42"},
-		{name: "typed unsigned integer", input: `count = "42"`, want: "count = 42"},
-		{name: "typed float", input: `score = "1.5"`, want: "score = 1.5"},
+		{name: "empty", wantErr: assert.NoError},
+		{name: "has on a list", input: `tags:"blue"`, want: `tags : "blue"`, wantErr: assert.NoError},
+		{name: "has with a bare identifier", input: "tags:blue", want: `tags : "blue"`, wantErr: assert.NoError},
+		{name: "has rejects a non-string", input: "tags:1", wantErr: assert.Error},
+		{name: "has rejects null", input: "tags:null", wantErr: assert.Error},
+		{name: "has is rejected on a string", input: `name:"x"`, wantErr: assert.Error},
+		{name: "has is rejected on an int", input: "age:1", wantErr: assert.Error},
+		{name: "has is rejected on an enum", input: "state:open", wantErr: assert.Error},
+		{name: "list rejects equality", input: `tags = "blue"`, wantErr: assert.Error},
+		{name: "list rejects ordering", input: `tags > "blue"`, wantErr: assert.Error},
+		{name: "typed integer", input: `age = "42"`, want: "age = 42", wantErr: assert.NoError},
+		{name: "typed unsigned integer", input: `count = "42"`, want: "count = 42", wantErr: assert.NoError},
+		{name: "typed float", input: `score = "1.5"`, want: "score = 1.5", wantErr: assert.NoError},
 		{
-			name:  "typed timestamp",
-			input: `created_at >= "2026-08-16T10:00:00+07:00"`,
-			want:  "created_at >= 2026-08-16T03:00:00Z",
+			name:    "typed timestamp",
+			input:   `created_at >= "2026-08-16T10:00:00+07:00"`,
+			want:    "created_at >= 2026-08-16T03:00:00Z",
+			wantErr: assert.NoError,
 		},
-		{name: "typed duration", input: `wait < "1.5s"`, want: "wait < 1.5s"},
+		{name: "typed duration", input: `wait < "1.5s"`, want: "wait < 1.5s", wantErr: assert.NoError},
 		{
 			name: "native boolean",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "active", Op: expr.Equal, Value: expr.BoolValue(true)},
 			},
-			want: "active = true",
+			want:    "active = true",
+			wantErr: assert.NoError,
 		},
 		{
-			name:   "native integer",
-			filter: filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)}},
-			want:   "age = 42",
+			name:    "native integer",
+			filter:  filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)}},
+			want:    "age = 42",
+			wantErr: assert.NoError,
 		},
 		{
-			name:   "unsigned converted to integer",
-			filter: filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Uint64Value(42)}},
-			want:   "age = 42",
+			name: "unsigned converted to integer",
+			filter: filter.Filter{
+				Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Uint64Value(42)},
+			},
+			want:    "age = 42",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "native unsigned integer",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "count", Op: expr.Equal, Value: expr.Uint64Value(42)},
 			},
-			want: "count = 42",
+			want:    "count = 42",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "integer converted to unsigned",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "count", Op: expr.Equal, Value: expr.Int64Value(42)},
 			},
-			want: "count = 42",
+			want:    "count = 42",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "native float",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Float64Value(1.5)},
 			},
-			want: "score = 1.5",
+			want:    "score = 1.5",
+			wantErr: assert.NoError,
 		},
 		{
-			name:   "integer converted to float",
-			filter: filter.Filter{Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Int64Value(1)}},
-			want:   "score = 1",
+			name: "integer converted to float",
+			filter: filter.Filter{
+				Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Int64Value(1)},
+			},
+			want:    "score = 1",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "unsigned converted to float",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Uint64Value(1)},
 			},
-			want: "score = 1",
+			want:    "score = 1",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "native timestamp",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "created_at", Op: expr.Equal, Value: expr.TimeValue(time.Unix(1, 0))},
 			},
-			want: "created_at = 1970-01-01T00:00:01Z",
+			want:    "created_at = 1970-01-01T00:00:01Z",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "native duration",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "wait", Op: expr.Equal, Value: expr.DurationValue(time.Second)},
 			},
-			want: "wait = 1s",
+			want:    "wait = 1s",
+			wantErr: assert.NoError,
 		},
 		{
-			name:   "null equality",
-			filter: filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.NullValue()}},
-			want:   "age = null",
+			name:    "null equality",
+			filter:  filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.NullValue()}},
+			want:    "age = null",
+			wantErr: assert.NoError,
 		},
-		{name: "text search", input: "42", want: `"42"`},
-		{name: "negation", input: `NOT name = "x"`, want: `NOT (name = "x")`},
-		{name: "enum", input: "state = open", want: `state = "open"`},
+		{name: "text search", input: "42", want: `"42"`, wantErr: assert.NoError},
+		{name: "negation", input: `NOT name = "x"`, want: `NOT (name = "x")`, wantErr: assert.NoError},
+		{name: "enum", input: "state = open", want: `state = "open"`, wantErr: assert.NoError},
 		{
 			name:    "zero-value schema",
 			schema:  new(filter.Schema),
 			filter:  filter.Filter{Expr: expr.TextExpr{V: expr.StringValue("x")}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "disabled schema",
 			schema:  disabled,
 			filter:  filter.Filter{Expr: expr.TextExpr{V: expr.StringValue("x")}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "unknown field", input: "missing = 1", wantErr: true},
-		{name: "invalid enum", input: "state = missing", wantErr: true},
-		{name: "invalid enum operator", input: "state > open", wantErr: true},
-		{name: "invalid boolean operator", input: "active > true", wantErr: true},
-		{name: "invalid unsigned integer", input: `count = "-1"`, wantErr: true},
-		{name: "invalid float", input: `score = "NaN"`, wantErr: true},
-		{name: "invalid timestamp", input: `created_at = "tomorrow"`, wantErr: true},
-		{name: "invalid duration", input: `wait = "soon"`, wantErr: true},
+		{name: "unknown field", input: "missing = 1", wantErr: assert.Error},
+		{name: "invalid enum", input: "state = missing", wantErr: assert.Error},
+		{name: "invalid enum operator", input: "state > open", wantErr: assert.Error},
+		{name: "invalid boolean operator", input: "active > true", wantErr: assert.Error},
+		{name: "invalid unsigned integer", input: `count = "-1"`, wantErr: assert.Error},
+		{name: "invalid float", input: `score = "NaN"`, wantErr: assert.Error},
+		{name: "invalid timestamp", input: `created_at = "tomorrow"`, wantErr: assert.Error},
+		{name: "invalid duration", input: `wait = "soon"`, wantErr: assert.Error},
 		{
 			name: "invalid native float",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Float64Value(math.NaN())},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid native timestamp",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "created_at", Op: expr.Equal, Value: expr.TimeValue(time.Time{})},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid comparison operator",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "age", Op: expr.ComparisonOp(99), Value: expr.Int64Value(1)},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "invalid null operator",
 			filter:  filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Greater, Value: expr.NullValue()}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "too large",
 			input:   `name = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"`,
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "too deep", input: `NOT (NOT (name = "x"))`, wantErr: true},
-		{name: "too many expressions", schema: nodeLimited, input: `name = "a" AND name = "b"`, wantErr: true},
-		{name: "text search disabled", schema: withoutSearch, input: `"x"`, wantErr: true},
+		{name: "too deep", input: `NOT (NOT (name = "x"))`, wantErr: assert.Error},
+		{name: "too many expressions", schema: nodeLimited, input: `name = "a" AND name = "b"`, wantErr: assert.Error},
+		{name: "text search disabled", schema: withoutSearch, input: `"x"`, wantErr: assert.Error},
 		{
 			name: "invalid logical operator",
 			filter: filter.Filter{Expr: expr.LogicalExpr{
@@ -284,27 +300,27 @@ func TestFilterSchema_Validate(t *testing.T) {
 					V: expr.StringValue("a"),
 				}, Op: expr.LogicalOp(99), Right: expr.TextExpr{V: expr.StringValue("b")},
 			}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid left expression",
 			filter: filter.Filter{Expr: expr.LogicalExpr{
 				Left: nil, Op: expr.And, Right: expr.TextExpr{V: expr.StringValue("b")},
 			}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid right expression",
 			filter: filter.Filter{Expr: expr.LogicalExpr{
 				Left: expr.TextExpr{V: expr.StringValue("a")}, Op: expr.And, Right: nil,
 			}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "invalid negated expression", filter: filter.Filter{Expr: expr.NotExpr{}}, wantErr: true},
+		{name: "invalid negated expression", filter: filter.Filter{Expr: expr.NotExpr{}}, wantErr: assert.Error},
 		{
 			name:    "invalid text value",
 			filter:  filter.Filter{Expr: expr.TextExpr{V: expr.NullValue()}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 	}
 
@@ -322,11 +338,10 @@ func TestFilterSchema_Validate(t *testing.T) {
 				validator = test.schema
 			}
 			got, err := validator.Validate(f)
-			if test.wantErr {
-				assert.Error(t, err)
+			test.wantErr(t, err)
+			if err != nil {
 				return
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, test.want, got.String())
 		})
 	}

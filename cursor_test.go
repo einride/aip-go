@@ -80,17 +80,19 @@ func TestNewCursorParams(t *testing.T) {
 		name    string
 		args    args
 		want    want
-		wantErr bool
+		wantErr assert.ErrorFunc
 	}{
 		{
-			name: "page size",
-			args: args{size: 2},
-			want: want{limit: 3},
+			name:    "page size",
+			args:    args{size: 2},
+			want:    want{limit: 3},
+			wantErr: assert.NoError,
 		},
 		{
-			name: "maximum int32 page size",
-			args: args{size: math.MaxInt32},
-			want: want{limit: math.MaxInt32},
+			name:    "maximum int32 page size",
+			args:    args{size: math.MaxInt32},
+			want:    want{limit: math.MaxInt32},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "cursor",
@@ -98,7 +100,8 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: page.NextCursor, size: 2,
 				orderBy: orderBy, filter: activeFilter,
 			},
-			want: want{limit: 3, after: position},
+			want:    want{limit: 3, after: position},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "all cursor value kinds",
@@ -106,7 +109,8 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: allValuesPage.NextCursor, size: 1,
 				orderBy: orderBy, filter: activeFilter,
 			},
-			want: want{limit: 2, after: allValues},
+			want:    want{limit: 2, after: allValues},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "page size can change between requests",
@@ -114,7 +118,8 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: page.NextCursor, size: 3,
 				orderBy: orderBy, filter: activeFilter,
 			},
-			want: want{limit: 4, after: position},
+			want:    want{limit: 4, after: position},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "changed order",
@@ -122,7 +127,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: page.NextCursor, size: 2,
 				orderBy: otherOrderBy, filter: activeFilter,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "changed filter",
@@ -130,42 +135,50 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: page.NextCursor, size: 2,
 				orderBy: orderBy, filter: otherFilter,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "cursor too large",
 			args:    args{cursor: strings.Repeat("A", base64.RawURLEncoding.EncodedLen(64<<10)+1), size: 1},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "invalid base64 cursor", args: args{cursor: "*", size: 1}, wantErr: true},
+		{name: "invalid base64 cursor", args: args{cursor: "*", size: 1}, wantErr: assert.Error},
 		{
 			name:    "empty cursor payload",
 			args:    args{cursor: base64.RawURLEncoding.EncodeToString([]byte{0}), size: 1},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "unsupported cursor version", args: args{cursor: encode([]byte{2}), size: 1}, wantErr: true},
-		{name: "short cursor binding", args: args{cursor: encode([]byte{1}), size: 1}, wantErr: true},
-		{name: "invalid cursor position count", args: args{cursor: encode(invalidCount), size: 1}, wantErr: true},
+		{name: "unsupported cursor version", args: args{cursor: encode([]byte{2}), size: 1}, wantErr: assert.Error},
+		{name: "short cursor binding", args: args{cursor: encode([]byte{1}), size: 1}, wantErr: assert.Error},
+		{
+			name:    "invalid cursor position count",
+			args:    args{cursor: encode(invalidCount), size: 1},
+			wantErr: assert.Error,
+		},
 		{
 			name:    "cursor position count exceeds payload",
 			args:    args{cursor: encode(cursorPlaintext(1)), size: 1},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "invalid cursor position path length", args: args{cursor: encode(shortPath), size: 1}, wantErr: true},
+		{
+			name:    "invalid cursor position path length",
+			args:    args{cursor: encode(shortPath), size: 1},
+			wantErr: assert.Error,
+		},
 		{
 			name:    "missing cursor position value",
 			args:    args{cursor: encode(cursorPlaintext(1, cursorField("id", nil))), size: 1},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "trailing cursor data", args: args{cursor: encode(trailing), size: 1}, wantErr: true},
-		{name: "empty cursor position", args: args{cursor: encode(cursorPlaintext(0)), size: 1}, wantErr: true},
+		{name: "trailing cursor data", args: args{cursor: encode(trailing), size: 1}, wantErr: assert.Error},
+		{name: "empty cursor position", args: args{cursor: encode(cursorPlaintext(0)), size: 1}, wantErr: assert.Error},
 		{
 			name: "invalid path",
 			args: args{
 				cursor: encode(cursorPlaintext(1, cursorField("invalid-path", []byte{byte(expr.NullKind)}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "duplicate path",
@@ -173,7 +186,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursorField("id", []byte{byte(expr.NullKind)}),
 				cursorField("id", []byte{byte(expr.NullKind)}),
 			)), size: 1},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid bool",
@@ -181,7 +194,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.BoolKind), 2}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "short int64",
@@ -189,7 +202,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.Int64Kind), 0}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "short uint64",
@@ -197,7 +210,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.Uint64Kind), 0}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "short float64",
@@ -205,7 +218,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.Float64Kind), 0}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "non-finite float64",
@@ -218,7 +231,7 @@ func TestNewCursorParams(t *testing.T) {
 				),
 				size: 1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid string length",
@@ -226,7 +239,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.StringKind), 2, 'a'}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid bytes length",
@@ -234,7 +247,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.BytesKind), 2, 'a'}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid time length",
@@ -242,7 +255,7 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.TimeKind), 2, 'a'}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid time",
@@ -252,7 +265,7 @@ func TestNewCursorParams(t *testing.T) {
 				),
 				size: 1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "short duration",
@@ -260,18 +273,18 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: encode(cursorPlaintext(1, cursorField("v", []byte{byte(expr.DurationKind), 0}))),
 				size:   1,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "unknown value kind",
 			args:    args{cursor: encode(cursorPlaintext(1, cursorField("v", []byte{math.MaxUint8}))), size: 1},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "zero page size", wantErr: true},
+		{name: "zero page size", wantErr: assert.Error},
 		{
 			name:    "negative page size",
 			args:    args{size: -1},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 	}
 
@@ -284,11 +297,10 @@ func TestNewCursorParams(t *testing.T) {
 				test.args.orderBy,
 				test.args.filter,
 			)
-			if test.wantErr {
-				assert.Error(t, gotErr)
+			test.wantErr(t, gotErr)
+			if gotErr != nil {
 				return
 			}
-			assert.NoError(t, gotErr)
 			assert.Equal(t, test.want.limit, got.Limit())
 			assert.Equal(t, test.want.after, got.After())
 		})
@@ -313,22 +325,24 @@ func TestNewCursorPage(t *testing.T) {
 		name    string
 		args    args
 		want    want
-		wantErr bool
+		wantErr assert.ErrorFunc
 	}{
 		{
 			name:    "zero parameters",
 			args:    args{rows: []int32{}},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
-			name: "last page",
-			args: args{rows: []int32{1, 2}, params: params},
-			want: want{items: []int32{1, 2}},
+			name:    "last page",
+			args:    args{rows: []int32{1, 2}, params: params},
+			want:    want{items: []int32{1, 2}},
+			wantErr: assert.NoError,
 		},
 		{
-			name: "empty page",
-			args: args{rows: []int32{}, params: params},
-			want: want{items: []int32{}},
+			name:    "empty page",
+			args:    args{rows: []int32{}, params: params},
+			want:    want{items: []int32{}},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "next page",
@@ -338,14 +352,15 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{{Path: "id", Value: expr.Int64Value(int64(row))}}, nil
 				},
 			},
-			want: want{items: []int32{1, 2}, hasCursor: true},
+			want:    want{items: []int32{1, 2}, hasCursor: true},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "nil cursor position function",
 			args: args{
 				rows: []int32{1, 2, 3}, params: params,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "cursor position function error",
@@ -355,14 +370,14 @@ func TestNewCursorPage(t *testing.T) {
 					return nil, positionErr
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "too many rows",
 			args: args{
 				rows: []int32{1, 2, 3, 4}, params: params,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid cursor position",
@@ -372,7 +387,7 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{}, nil
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "null cursor position value",
@@ -382,7 +397,7 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{{Path: "id", Value: expr.NullValue()}}, nil
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "duplicate cursor position path",
@@ -395,7 +410,7 @@ func TestNewCursorPage(t *testing.T) {
 					}, nil
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "non-finite cursor position value",
@@ -405,7 +420,7 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{{Path: "score", Value: expr.Float64Value(math.NaN())}}, nil
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "zero cursor position time",
@@ -415,7 +430,7 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{{Path: "created_at", Value: expr.TimeValue(time.Time{})}}, nil
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "invalid cursor position path",
@@ -425,7 +440,7 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{{Path: "invalid-path", Value: expr.Int64Value(1)}}, nil
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "empty cursor position path",
@@ -435,7 +450,7 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{{Path: "", Value: expr.Int64Value(1)}}, nil
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 	}
 
@@ -444,11 +459,7 @@ func TestNewCursorPage(t *testing.T) {
 			got, gotErr := flop.NewCursorPage(test.args.rows, test.args.params, test.args.position)
 			assert.Equal(t, test.want.items, got.Items)
 			assert.Equal(t, test.want.hasCursor, got.NextCursor != "")
-			if test.wantErr {
-				assert.Error(t, gotErr)
-				return
-			}
-			assert.NoError(t, gotErr)
+			test.wantErr(t, gotErr)
 		})
 	}
 }

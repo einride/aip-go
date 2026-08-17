@@ -65,37 +65,39 @@ func TestCursorQuery(t *testing.T) {
 		params   flop.CursorParams
 		wantSQL  string
 		wantArgs []any
-		wantErr  bool
+		wantErr  assert.ErrorAssertionFunc
 	}{
 		{
 			name: "first page", base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}), params: first,
 			wantSQL: "SELECT id FROM orders WHERE tenant_id = $1 ORDER BY created_at DESC, id ASC LIMIT 3", wantArgs: []any{7},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "seek with mixed directions", base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}), params: next,
 			wantSQL:  "SELECT id FROM orders WHERE tenant_id = $1 AND (created_at < $2 OR (created_at = $3 AND id > $4)) ORDER BY created_at DESC, id ASC LIMIT 3",
 			wantArgs: []any{7, now.Add(-time.Second), now.Add(-time.Second), int64(2)},
+			wantErr:  assert.NoError,
 		},
-		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: first, wantErr: true},
-		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: true},
-		{name: "invalid order column", base: psql.Select("id").From("orders"), params: invalidOrder, wantErr: true},
+		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: first, wantErr: assert.Error},
+		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: assert.Error},
+		{name: "invalid order column", base: psql.Select("id").From("orders"), params: invalidOrder, wantErr: assert.Error},
 		{
 			name:     "single order field",
 			base:     psql.Select("id").From("orders"),
 			params:   singleOrder,
 			wantSQL:  "SELECT id FROM orders WHERE id > $1 ORDER BY id ASC LIMIT 2",
 			wantArgs: []any{int64(1)},
+			wantErr:  assert.NoError,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			gotSQL, gotArgs, err := CursorQuery(test.base, test.params).ToSql()
-			if test.wantErr {
-				assert.Error(t, err)
+			test.wantErr(t, err)
+			if err != nil {
 				return
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, test.wantSQL, gotSQL)
 			assert.Equal(t, test.wantArgs, gotArgs)
 		})
@@ -181,38 +183,39 @@ func TestOffsetQuery(t *testing.T) {
 		base    sq.SelectBuilder
 		params  flop.OffsetParams
 		wantSQL string
-		wantErr bool
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name:    "offset page",
 			base:    psql.Select("id").From("orders"),
 			params:  params,
 			wantSQL: "SELECT id FROM orders ORDER BY created_at DESC, id ASC LIMIT 20 OFFSET 40",
+			wantErr: assert.NoError,
 		},
 		{
 			name:    "first page",
 			base:    psql.Select("id").From("orders"),
 			params:  firstPage,
 			wantSQL: "SELECT id FROM orders ORDER BY created_at DESC, id ASC LIMIT 20",
+			wantErr: assert.NoError,
 		},
-		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: params, wantErr: true},
+		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: params, wantErr: assert.Error},
 		{
 			name:    "invalid parameters",
 			base:    psql.Select("id").From("orders"),
 			params:  flop.OffsetParams{},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
-		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: true},
+		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: assert.Error},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			gotSQL, _, err := OffsetQuery(test.base, test.params).ToSql()
-			if test.wantErr {
-				assert.Error(t, err)
+			test.wantErr(t, err)
+			if err != nil {
 				return
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, test.wantSQL, gotSQL)
 		})
 	}
@@ -225,23 +228,23 @@ func TestCountQuery(t *testing.T) {
 		base     sq.SelectBuilder
 		wantSQL  string
 		wantArgs []any
-		wantErr  bool
+		wantErr  assert.ErrorAssertionFunc
 	}{
 		{
 			name: "count", base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}).Limit(20).Offset(40),
 			wantSQL: "SELECT count(*) FROM orders WHERE tenant_id = $1", wantArgs: []any{7},
+			wantErr: assert.NoError,
 		},
-		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), wantErr: true},
+		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), wantErr: assert.Error},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			gotSQL, gotArgs, err := CountQuery(test.base).ToSql()
-			if test.wantErr {
-				assert.Error(t, err)
+			test.wantErr(t, err)
+			if err != nil {
 				return
 			}
-			assert.NoError(t, err)
 			assert.Equal(t, test.wantSQL, gotSQL)
 			assert.Equal(t, test.wantArgs, gotArgs)
 		})
