@@ -160,8 +160,6 @@ func main() {
 
 	slog.Info("server start", "address", server.Addr)
 
-	// signal.NotifyContext takes SIGINT away from the default kill behavior, so
-	// the server has to close on cancellation or Ctrl+C would do nothing.
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- server.ListenAndServe() }()
 
@@ -283,9 +281,9 @@ func baseQuery() sq.SelectBuilder {
 }
 
 func listCursorPayments(ctx context.Context, params flop.CursorParams) ([]payment, error) {
-	base := filterCompiler.Apply(baseQuery(), params.Filter())
+	base := filterCompiler.Where(baseQuery(), params.Filter())
 
-	sql, args, err := sqflop.Cursor(base, params).ToSql()
+	sql, args, err := sqflop.CursorQuery(base, params).ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("cursor: %w", err)
 	}
@@ -302,9 +300,9 @@ func listCursorPayments(ctx context.Context, params flop.CursorParams) ([]paymen
 
 func listOffsetPayments(ctx context.Context, params flop.OffsetParams) ([]payment, int64, error) {
 	// Filter once before Page and Count so rows and totals share predicates.
-	base := filterCompiler.Apply(baseQuery(), params.Filter())
+	base := filterCompiler.Where(baseQuery(), params.Filter())
 
-	sql, args, err := sqflop.Page(base, params).ToSql()
+	sql, args, err := sqflop.OffsetQuery(base, params).ToSql()
 	if err != nil {
 		return nil, 0, fmt.Errorf("offset: %w", err)
 	}
@@ -321,7 +319,7 @@ func listOffsetPayments(ctx context.Context, params flop.OffsetParams) ([]paymen
 		return nil, 0, err
 	}
 
-	sql, args, err = sqflop.Count(base).ToSql()
+	sql, args, err = sqflop.CountQuery(base).ToSql()
 	if err != nil {
 		return nil, 0, fmt.Errorf("offset count: %w", err)
 	}

@@ -31,13 +31,16 @@ func NewFilterCompiler(schema *filter.Schema, fields map[string]string) (*Filter
 
 	for _, fld := range declared {
 		known[fld.Name] = struct{}{}
+
 		col, ok := fields[fld.Name]
 		if !ok {
 			col = fld.Name
 		}
+
 		if !ident.ValidPath(col) {
 			return nil, fmt.Errorf("sqflop: invalid SQL column %q", col)
 		}
+
 		comp.fields[fld.Name] = col
 	}
 
@@ -50,8 +53,8 @@ func NewFilterCompiler(schema *filter.Schema, fields map[string]string) (*Filter
 	return comp, nil
 }
 
-// Apply adds filter to base. Compilation errors surface when ToSql is called.
-func (c *FilterCompiler) Apply(base sq.SelectBuilder, f filter.Filter) sq.SelectBuilder {
+// Where adds filter to base. Compilation errors surface when ToSql is called.
+func (c *FilterCompiler) Where(base sq.SelectBuilder, f filter.Filter) sq.SelectBuilder {
 	validated, err := c.schema.Validate(f)
 	if err != nil {
 		return wrapErr(base, "filter: %w", err)
@@ -59,10 +62,12 @@ func (c *FilterCompiler) Apply(base sq.SelectBuilder, f filter.Filter) sq.Select
 	if validated.Expr == nil {
 		return base
 	}
+
 	predicate, err := c.compile(validated.Expr, false)
 	if err != nil {
 		return wrapErr(base, "filter: %w", err)
 	}
+
 	return base.Where(predicate)
 }
 

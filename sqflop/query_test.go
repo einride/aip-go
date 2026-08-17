@@ -34,7 +34,7 @@ func queryPaginator(t *testing.T) *flop.Paginator[queryRow] {
 	return paginator
 }
 
-func TestCursor(t *testing.T) {
+func TestCursorQuery(t *testing.T) {
 	t.Parallel()
 	paginator := queryPaginator(t)
 	first, err := paginator.CursorParams("", 2, flop.OrderBy{}, filter.Filter{})
@@ -90,7 +90,7 @@ func TestCursor(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			gotSQL, gotArgs, err := Cursor(test.base, test.params).ToSql()
+			gotSQL, gotArgs, err := CursorQuery(test.base, test.params).ToSql()
 			if test.wantErr {
 				assert.Error(t, err)
 				return
@@ -166,7 +166,7 @@ func TestCursorPredicate(t *testing.T) {
 	}
 }
 
-func TestPage(t *testing.T) {
+func TestOffsetQuery(t *testing.T) {
 	t.Parallel()
 	paginator := queryPaginator(t)
 	params, err := paginator.OffsetParams(3, 20, flop.OrderBy{}, filter.Filter{})
@@ -196,13 +196,18 @@ func TestPage(t *testing.T) {
 			wantSQL: "SELECT id FROM orders ORDER BY created_at DESC, id ASC LIMIT 20",
 		},
 		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: params, wantErr: true},
-		{name: "invalid parameters", base: psql.Select("id").From("orders"), params: flop.OffsetParams{}, wantErr: true},
+		{
+			name:    "invalid parameters",
+			base:    psql.Select("id").From("orders"),
+			params:  flop.OffsetParams{},
+			wantErr: true,
+		},
 		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			gotSQL, _, err := Page(test.base, test.params).ToSql()
+			gotSQL, _, err := OffsetQuery(test.base, test.params).ToSql()
 			if test.wantErr {
 				assert.Error(t, err)
 				return
@@ -213,7 +218,7 @@ func TestPage(t *testing.T) {
 	}
 }
 
-func TestCount(t *testing.T) {
+func TestCountQuery(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name     string
@@ -231,7 +236,7 @@ func TestCount(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			gotSQL, gotArgs, err := Count(test.base).ToSql()
+			gotSQL, gotArgs, err := CountQuery(test.base).ToSql()
 			if test.wantErr {
 				assert.Error(t, err)
 				return

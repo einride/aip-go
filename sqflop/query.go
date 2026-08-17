@@ -10,9 +10,9 @@ import (
 	"github.com/ysomad/flop/internal/ident"
 )
 
-// Cursor applies the resolved order, optional seek predicate, and over-fetch
+// CursorQuery applies the resolved order, optional seek predicate, and over-fetch
 // limit to base. Existing base ordering is rejected at ToSql time.
-func Cursor(base sq.SelectBuilder, params flop.CursorParams) sq.SelectBuilder {
+func CursorQuery(base sq.SelectBuilder, params flop.CursorParams) sq.SelectBuilder {
 	if hasOrderBy(base) {
 		return wrapErr(base, "%w", ErrBaseOrderBy)
 	}
@@ -35,8 +35,8 @@ func Cursor(base sq.SelectBuilder, params flop.CursorParams) sq.SelectBuilder {
 	return ordered.Limit(uint64(params.Limit()))
 }
 
-// Page applies resolved ordering, LIMIT, and OFFSET to base.
-func Page(base sq.SelectBuilder, params flop.OffsetParams) sq.SelectBuilder {
+// OffsetQuery applies resolved ordering, LIMIT, and OFFSET to base.
+func OffsetQuery(base sq.SelectBuilder, params flop.OffsetParams) sq.SelectBuilder {
 	if hasOrderBy(base) {
 		return wrapErr(base, "%w", ErrBaseOrderBy)
 	}
@@ -58,8 +58,8 @@ func Page(base sq.SelectBuilder, params flop.OffsetParams) sq.SelectBuilder {
 	return ordered
 }
 
-// Count replaces selected columns with count(*) while preserving base filters.
-func Count(base sq.SelectBuilder) sq.SelectBuilder {
+// CountQuery replaces selected columns with count(*) while preserving base filters.
+func CountQuery(base sq.SelectBuilder) sq.SelectBuilder {
 	count := base.RemoveColumns().Column("count(*)").RemoveLimit().RemoveOffset()
 	if hasOrderBy(base) {
 		return wrapErr(count, "%w", ErrBaseOrderBy)
@@ -78,22 +78,27 @@ func applyOrder(base sq.SelectBuilder, orderBy flop.OrderBy) (sq.SelectBuilder, 
 	return ordered, nil
 }
 
-func cursorPredicate(orderBy flop.OrderBy, position flop.CursorPosition) (sq.Sqlizer, error) {
-	if len(position) != len(orderBy.Fields) {
+func cursorPredicate(orderBy flop.OrderBy, cursorPos flop.CursorPosition) (sq.Sqlizer, error) {
+	if len(cursorPos) != len(orderBy.Fields) {
 		return nil, ErrCursorPosition
 	}
-	disjunction := make(sq.Or, 0, len(position))
-	equalities := make(sq.And, 0, len(position))
-	for i, cursorField := range position {
-		orderField := orderBy.Fields[i]
-		if cursorField.Path != orderField.Path || cursorField.Value.Kind() == expr.NullKind {
+
+	disjunction := make(sq.Or, 0, len(cursorPos))
+	equalities := make(sq.And, 0, len(cursorPos))
+
+	for i, cursorFld := range cursorPos {
+		orderFld := orderBy.Fields[i]
+		if cursorFld.Path != orderFld.Path || cursorFld.Value.Kind() == expr.NullKind {
 			return nil, ErrCursorPosition
 		}
-		value := cursorField.Value.Any()
-		var comparison sq.Sqlizer = sq.Gt{cursorField.Path: value}
-		if orderField.Desc {
-			comparison = sq.Lt{cursorField.Path: value}
+
+		val := cursorFld.Value.Any()
+
+		var comparison sq.Sqlizer = sq.Gt{cursorFld.Path: val}
+		if orderFld.Desc {
+			comparison = sq.Lt{cursorFld.Path: val}
 		}
+
 		if len(equalities) == 0 {
 			disjunction = append(disjunction, comparison)
 		} else {
@@ -102,11 +107,14 @@ func cursorPredicate(orderBy flop.OrderBy, position flop.CursorPosition) (sq.Sql
 			conjunction = append(conjunction, comparison)
 			disjunction = append(disjunction, conjunction)
 		}
-		equalities = append(equalities, sq.Eq{cursorField.Path: value})
+
+		equalities = append(equalities, sq.Eq{cursorFld.Path: val})
 	}
+
 	if len(disjunction) == 1 {
 		return disjunction[0], nil
 	}
+
 	return disjunction, nil
 }
 

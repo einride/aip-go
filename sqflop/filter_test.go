@@ -20,7 +20,7 @@ func testFilterSchema(t *testing.T) *filter.Schema {
 	return schema
 }
 
-func TestFilterCompiler_Apply(t *testing.T) {
+func TestFilterCompiler_Where(t *testing.T) {
 	t.Parallel()
 	compiler, err := NewFilterCompiler(testFilterSchema(t), map[string]string{
 		"state": "o.state", "total": "o.total", "name": "o.name", "deleted": "o.deleted",
@@ -123,7 +123,7 @@ func TestFilterCompiler_Apply(t *testing.T) {
 			t.Parallel()
 			filter, err := filter.Parse(test.filter)
 			assert.NoError(t, err)
-			gotSQL, gotArgs, gotErr := compiler.Apply(psql.Select("id").From("orders o"), filter).ToSql()
+			gotSQL, gotArgs, gotErr := compiler.Where(psql.Select("id").From("orders o"), filter).ToSql()
 			if test.wantErr {
 				assert.Error(t, gotErr)
 				return
@@ -176,7 +176,7 @@ func TestFilterCompiler_ApplyDefaultColumns(t *testing.T) {
 			t.Parallel()
 			f, err := filter.Parse(test.filter)
 			assert.NoError(t, err)
-			gotSQL, gotArgs, gotErr := test.compiler.Apply(psql.Select("id").From("orders o"), f).ToSql()
+			gotSQL, gotArgs, gotErr := test.compiler.Where(psql.Select("id").From("orders o"), f).ToSql()
 			assert.NoError(t, gotErr)
 			assert.Equal(t, test.wantSQL, gotSQL)
 			assert.Equal(t, test.wantArgs, gotArgs)
