@@ -6,68 +6,77 @@ import (
 	"github.com/ysomad/flop/filter"
 )
 
-// Params contains parameters for offset pagination.
-type Params struct {
-	Page   int32
-	Offset int64
-	Limit  int32
+// OffsetParams contains parameters for offset pagination.
+type OffsetParams struct {
+	page   int32
+	offset int64
+	limit  int32
 
 	orderBy OrderBy
 	filter  filter.Filter
 }
 
+// Page returns the one-based page number.
+func (p OffsetParams) Page() int32 { return p.page }
+
+// Offset returns the number of rows a storage implementation must skip.
+func (p OffsetParams) Offset() int64 { return p.offset }
+
+// Limit returns the page size.
+func (p OffsetParams) Limit() int32 { return p.limit }
+
 // OrderBy returns the resolved ordering associated with these parameters.
-func (p Params) OrderBy() OrderBy { return p.orderBy.clone() }
+func (p OffsetParams) OrderBy() OrderBy { return p.orderBy.clone() }
 
 // Filter returns the validated filter associated with these parameters.
-func (p Params) Filter() filter.Filter { return p.filter }
+func (p OffsetParams) Filter() filter.Filter { return p.filter }
 
-// NewParams parses a one-based page number and page size into storage
+// NewOffsetParams parses a one-based page number and page size into storage
 // parameters. pageSize must already be normalized by the caller.
 //
 // A zero page number selects the first page.
-func NewParams(page, limit int32) (Params, error) {
+func NewOffsetParams(page, pageSize int32) (OffsetParams, error) {
 	if page < 0 {
-		return Params{}, fmt.Errorf("flop: page number must not be negative")
+		return OffsetParams{}, fmt.Errorf("flop: page number must not be negative")
 	}
-	if limit <= 0 {
-		return Params{}, fmt.Errorf("flop: page size must be positive")
+	if pageSize <= 0 {
+		return OffsetParams{}, fmt.Errorf("flop: page size must be positive")
 	}
 	if page == 0 {
 		page = 1
 	}
-	offset := int64(page-1) * int64(limit)
-	return Params{
-		Page:   page,
-		Offset: offset,
-		Limit:  limit,
+	offset := int64(page-1) * int64(pageSize)
+	return OffsetParams{
+		page:   page,
+		offset: offset,
+		limit:  pageSize,
 	}, nil
 }
 
-// Page is a page returned by offset pagination.
-type Page[T any] struct {
+// OffsetPage is a page returned by offset pagination.
+type OffsetPage[T any] struct {
 	Items      []T
-	Num        int32
+	Number     int32
 	TotalPages int64
 	TotalItems int64
 }
 
-// NewPage creates a page from rows and the total number of matching
+// NewOffsetPage creates a page from rows and the total number of matching
 // items.
-func NewPage[T any](rows []T, p Params, totalItems int64) (Page[T], error) {
-	if p.Limit <= 0 || p.Page <= 0 || p.Offset < 0 || totalItems < 0 {
-		return Page[T]{}, fmt.Errorf("flop: invalid offset parameters")
+func NewOffsetPage[T any](rows []T, p OffsetParams, totalItems int64) (OffsetPage[T], error) {
+	if p.limit <= 0 || p.page <= 0 || p.offset < 0 || totalItems < 0 {
+		return OffsetPage[T]{}, fmt.Errorf("flop: invalid offset parameters")
 	}
-	if int64(len(rows)) > int64(p.Limit) {
-		return Page[T]{}, fmt.Errorf("flop: storage returned too many rows")
+	if int64(len(rows)) > int64(p.limit) {
+		return OffsetPage[T]{}, fmt.Errorf("flop: storage returned too many rows")
 	}
-	totalPages := totalItems / int64(p.Limit)
-	if totalItems%int64(p.Limit) != 0 {
+	totalPages := totalItems / int64(p.limit)
+	if totalItems%int64(p.limit) != 0 {
 		totalPages++
 	}
-	return Page[T]{
+	return OffsetPage[T]{
 		Items:      rows,
-		Num:        p.Page,
+		Number:     p.page,
 		TotalPages: totalPages,
 		TotalItems: totalItems,
 	}, nil

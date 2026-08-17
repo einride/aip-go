@@ -98,50 +98,50 @@ func NewPaginator[T any](
 	return pag, nil
 }
 
-// Cursor creates validated cursor parameters for a request.
-func (p *Paginator[T]) Cursor(cursor string, pageSize int32, ord OrderBy, fil filter.Filter) (CursorParams, error) {
+// CursorParams creates validated cursor parameters for a request.
+func (p *Paginator[T]) CursorParams(cursor string, pageSize int32, orderBy OrderBy, f filter.Filter) (CursorParams, error) {
 	pageSize, err := p.normalizePageSize(pageSize)
 	if err != nil {
 		return CursorParams{}, err
 	}
-	ord, err = p.resolveOrder(ord)
+	orderBy, err = p.resolveOrder(orderBy)
 	if err != nil {
 		return CursorParams{}, err
 	}
-	fil, err = p.filterSchema.Validate(fil)
+	f, err = p.filterSchema.Validate(f)
 	if err != nil {
 		return CursorParams{}, err
 	}
-	params, err := NewCursorParams(cursor, pageSize, ord, fil)
+	params, err := NewCursorParams(cursor, pageSize, orderBy, f)
 	if err != nil {
 		return CursorParams{}, err
 	}
-	if err := validateCursorPos(params.After, ord, false); err != nil {
+	if err := validateCursorPosition(params.after, orderBy); err != nil {
 		return CursorParams{}, err
 	}
 	return params, nil
 }
 
-// Offset creates validated page-number parameters for a request.
-func (p *Paginator[T]) Offset(page, pageSize int32, ord OrderBy, fil filter.Filter) (Params, error) {
+// OffsetParams creates validated page-number parameters for a request.
+func (p *Paginator[T]) OffsetParams(page, pageSize int32, orderBy OrderBy, f filter.Filter) (OffsetParams, error) {
 	pageSize, err := p.normalizePageSize(pageSize)
 	if err != nil {
-		return Params{}, err
+		return OffsetParams{}, err
 	}
-	ord, err = p.resolveOrder(ord)
+	orderBy, err = p.resolveOrder(orderBy)
 	if err != nil {
-		return Params{}, err
+		return OffsetParams{}, err
 	}
-	fil, err = p.filterSchema.Validate(fil)
+	f, err = p.filterSchema.Validate(f)
 	if err != nil {
-		return Params{}, err
+		return OffsetParams{}, err
 	}
-	params, err := NewParams(page, pageSize)
+	params, err := NewOffsetParams(page, pageSize)
 	if err != nil {
-		return Params{}, err
+		return OffsetParams{}, err
 	}
-	params.orderBy = ord.clone()
-	params.filter = fil
+	params.orderBy = orderBy.clone()
+	params.filter = f
 	return params, nil
 }
 
@@ -155,16 +155,16 @@ func (p *Paginator[T]) CursorPage(rows []T, params CursorParams) (CursorPage[T],
 	return NewCursorPage(rows, params, func(row T) (CursorPosition, error) {
 		pos := make(CursorPosition, len(orderBy.Fields))
 
-		for i, fld := range orderBy.Fields {
-			col, ok := p.cols[fld.Path]
+		for i, field := range orderBy.Fields {
+			col, ok := p.cols[field.Path]
 			if !ok {
-				return nil, fmt.Errorf("flop: cursor column %q is not declared", fld.Path)
+				return nil, fmt.Errorf("flop: cursor column %q is not declared", field.Path)
 			}
 			value := col.value(row)
 			if value.Kind() == expr.NullKind {
-				return nil, fmt.Errorf("flop: cursor column %q is null", fld.Path)
+				return nil, fmt.Errorf("flop: cursor column %q is null", field.Path)
 			}
-			pos[i] = CursorField{Path: fld.Path, Value: value}
+			pos[i] = CursorField{Path: field.Path, Value: value}
 		}
 		return pos, nil
 	})
@@ -212,15 +212,15 @@ func (p *Paginator[T]) resolveOrder(orderBy OrderBy) (OrderBy, error) {
 	return OrderBy{Fields: resolved}, nil
 }
 
-func validateCursorPos(pos CursorPosition, ord OrderBy, require bool) error {
-	if len(pos) == 0 && !require {
+func validateCursorPosition(pos CursorPosition, orderBy OrderBy) error {
+	if len(pos) == 0 {
 		return nil
 	}
-	if len(pos) != len(ord.Fields) {
+	if len(pos) != len(orderBy.Fields) {
 		return fmt.Errorf("flop: cursor position does not match the resolved order")
 	}
 	for i, field := range pos {
-		if field.Path != ord.Fields[i].Path {
+		if field.Path != orderBy.Fields[i].Path {
 			return fmt.Errorf("flop: cursor position does not match the resolved order")
 		}
 		if field.Value.Kind() == expr.NullKind {

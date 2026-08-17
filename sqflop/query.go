@@ -24,8 +24,9 @@ func Cursor(base sq.SelectBuilder, params flop.CursorParams) sq.SelectBuilder {
 	if err != nil {
 		return wrapErr(base, "%w", err)
 	}
-	if len(params.After) != 0 {
-		predicate, err := cursorPredicate(orderBy, params.After)
+	after := params.After()
+	if len(after) != 0 {
+		predicate, err := cursorPredicate(orderBy, after)
 		if err != nil {
 			return wrapErr(ordered, "%w", err)
 		}
@@ -35,26 +36,26 @@ func Cursor(base sq.SelectBuilder, params flop.CursorParams) sq.SelectBuilder {
 }
 
 // Page applies resolved ordering, LIMIT, and OFFSET to base.
-func Page(base sq.SelectBuilder, params flop.Params) sq.SelectBuilder {
+func Page(base sq.SelectBuilder, params flop.OffsetParams) sq.SelectBuilder {
 	if hasOrderBy(base) {
 		return wrapErr(base, "%w", ErrBaseOrderBy)
 	}
-	if params.Limit <= 0 || params.Offset < 0 {
+	if params.Limit() <= 0 || params.Offset() < 0 {
 		return wrapErr(base, "invalid offset parameters")
 	}
 	orderBy := params.OrderBy()
 	if len(orderBy.Fields) == 0 {
 		return wrapErr(base, "%w", ErrNoOrder)
 	}
-	page, err := applyOrder(base, orderBy)
+	ordered, err := applyOrder(base, orderBy)
 	if err != nil {
 		return wrapErr(base, "%w", err)
 	}
-	page = page.Limit(uint64(params.Limit))
-	if params.Offset > 0 {
-		page = page.Offset(uint64(params.Offset))
+	ordered = ordered.Limit(uint64(params.Limit()))
+	if params.Offset() > 0 {
+		ordered = ordered.Offset(uint64(params.Offset()))
 	}
-	return page
+	return ordered
 }
 
 // Count replaces selected columns with count(*) while preserving base filters.

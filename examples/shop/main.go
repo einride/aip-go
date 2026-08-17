@@ -49,7 +49,7 @@ type offsetRequest struct {
 // OrderBy in both responses is the order the paginator resolved, including the
 // key columns it appends, not the order the client asked for.
 type cursorResponse struct {
-	Payments   []payment `json:"items"`
+	Items      []payment `json:"items"`
 	OrderBy    string    `json:"order_by"`
 	NextCursor string    `json:"next_cursor,omitempty"`
 }
@@ -204,7 +204,7 @@ func handleCursorPayments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params, err := paginator.Cursor(req.Cursor, req.PageSize, orderBy, filter)
+	params, err := paginator.CursorParams(req.Cursor, req.PageSize, orderBy, filter)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -223,7 +223,7 @@ func handleCursorPayments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, cursorResponse{
-		Payments:   page.Items,
+		Items:      page.Items,
 		OrderBy:    params.OrderBy().String(),
 		NextCursor: page.NextCursor,
 	})
@@ -249,7 +249,7 @@ func handleOffsetPayments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params, err := paginator.Offset(req.Page, req.PageSize, orderBy, filter)
+	params, err := paginator.OffsetParams(req.Page, req.PageSize, orderBy, filter)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -261,7 +261,7 @@ func handleOffsetPayments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page, err := flop.NewPage(items, params, total)
+	page, err := flop.NewOffsetPage(items, params, total)
 	if err != nil {
 		writeInternalError(w, err)
 		return
@@ -270,7 +270,7 @@ func handleOffsetPayments(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, offsetResponse{
 		Items:      page.Items,
 		OrderBy:    params.OrderBy().String(),
-		Page:       page.Num,
+		Page:       page.Number,
 		TotalPages: page.TotalPages,
 		TotalItems: page.TotalItems,
 	})
@@ -290,7 +290,7 @@ func listCursorPayments(ctx context.Context, params flop.CursorParams) ([]paymen
 		return nil, fmt.Errorf("cursor: %w", err)
 	}
 
-	slog.Info(sql, "args", args)
+	slog.Info("[cursor]", "sql", sql, "args", args)
 
 	rows, err := db.Query(ctx, sql, args...)
 	if err != nil {
@@ -300,7 +300,7 @@ func listCursorPayments(ctx context.Context, params flop.CursorParams) ([]paymen
 	return scanPayments(rows)
 }
 
-func listOffsetPayments(ctx context.Context, params flop.Params) ([]payment, int64, error) {
+func listOffsetPayments(ctx context.Context, params flop.OffsetParams) ([]payment, int64, error) {
 	// Filter once before Page and Count so rows and totals share predicates.
 	base := filterCompiler.Apply(baseQuery(), params.Filter())
 

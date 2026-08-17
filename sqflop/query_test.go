@@ -37,7 +37,7 @@ func queryPaginator(t *testing.T) *flop.Paginator[queryRow] {
 func TestCursor(t *testing.T) {
 	t.Parallel()
 	paginator := queryPaginator(t)
-	first, err := paginator.Cursor("", 2, flop.OrderBy{}, filter.Filter{})
+	first, err := paginator.CursorParams("", 2, flop.OrderBy{}, filter.Filter{})
 	assert.NoError(t, err)
 	now := time.Date(2026, time.August, 16, 10, 0, 0, 0, time.UTC)
 	page, err := paginator.CursorPage([]queryRow{
@@ -46,24 +46,9 @@ func TestCursor(t *testing.T) {
 		{ID: 3, CreatedAt: now.Add(-2 * time.Second)},
 	}, first)
 	assert.NoError(t, err)
-	next, err := paginator.Cursor(page.NextCursor, 2, flop.OrderBy{}, filter.Filter{})
+	next, err := paginator.CursorParams(page.NextCursor, 2, flop.OrderBy{}, filter.Filter{})
 	assert.NoError(t, err)
-	badPosition := next
-	badPosition.After = append(flop.CursorPosition(nil), next.After...)
-	badPosition.After[0].Path = "id"
-	shortPosition := next
-	shortPosition.After = append(flop.CursorPosition(nil), next.After[:1]...)
-	nullPosition := next
-	nullPosition.After = append(flop.CursorPosition(nil), next.After...)
-	nullPosition.After[0].Value = expr.NullValue()
-	singleOrder, err := flop.NewCursorParams(
-		"",
-		1,
-		flop.OrderBy{Fields: []flop.Field{flop.Asc("id")}},
-		filter.Filter{},
-	)
-	assert.NoError(t, err)
-	singleOrder.After = flop.CursorPosition{{Path: "id", Value: expr.Int64Value(1)}}
+	singleOrder := singleOrderParams(t)
 	withoutOrder, err := flop.NewCursorParams("", 1, flop.OrderBy{}, filter.Filter{})
 	assert.NoError(t, err)
 	invalidOrder, err := flop.NewCursorParams(
@@ -94,14 +79,6 @@ func TestCursor(t *testing.T) {
 		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: first, wantErr: true},
 		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: true},
 		{name: "invalid order column", base: psql.Select("id").From("orders"), params: invalidOrder, wantErr: true},
-		{name: "position mismatch", base: psql.Select("id").From("orders"), params: badPosition, wantErr: true},
-		{
-			name:    "position length mismatch",
-			base:    psql.Select("id").From("orders"),
-			params:  shortPosition,
-			wantErr: true,
-		},
-		{name: "null position", base: psql.Select("id").From("orders"), params: nullPosition, wantErr: true},
 		{
 			name:     "single order field",
 			base:     psql.Select("id").From("orders"),
@@ -125,20 +102,84 @@ func TestCursor(t *testing.T) {
 	}
 }
 
+// singleOrderParams round-trips a cursor through a paginator ordered by a
+// single key column, so params carry a one-field position.
+func singleOrderParams(t *testing.T) flop.CursorParams {
+	t.Helper()
+	paginator, err := flop.NewPaginator(
+		[]flop.Col[queryRow]{
+			flop.Key("id", func(row queryRow) expr.Value { return expr.Int64Value(row.ID) }),
+		},
+		filter.Disabled(),
+		[]flop.Field{flop.Asc("id")},
+		1,
+		100,
+	)
+	assert.NoError(t, err)
+	first, err := paginator.CursorParams("", 1, flop.OrderBy{}, filter.Filter{})
+	assert.NoError(t, err)
+	page, err := paginator.CursorPage([]queryRow{{ID: 1}, {ID: 2}}, first)
+	assert.NoError(t, err)
+	params, err := paginator.CursorParams(page.NextCursor, 1, flop.OrderBy{}, filter.Filter{})
+	assert.NoError(t, err)
+	return params
+}
+
+// Paginator never produces a position inconsistent with its order, so these
+// defenses are exercised against cursorPredicate directly.
+func TestCursorPredicate(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, time.August, 16, 10, 0, 0, 0, time.UTC)
+	orderBy := flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}}
+
+	tests := []struct {
+		name     string
+		position flop.CursorPosition
+	}{
+		{
+			name: "position mismatch",
+			position: flop.CursorPosition{
+				{Path: "id", Value: expr.TimeValue(now)},
+				{Path: "id", Value: expr.Int64Value(2)},
+			},
+		},
+		{
+			name: "position length mismatch",
+			position: flop.CursorPosition{
+				{Path: "created_at", Value: expr.TimeValue(now)},
+			},
+		},
+		{
+			name: "null position",
+			position: flop.CursorPosition{
+				{Path: "created_at", Value: expr.NullValue()},
+				{Path: "id", Value: expr.Int64Value(2)},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := cursorPredicate(orderBy, test.position)
+			assert.Error(t, err)
+		})
+	}
+}
+
 func TestPage(t *testing.T) {
 	t.Parallel()
 	paginator := queryPaginator(t)
-	params, err := paginator.Offset(3, 20, flop.OrderBy{}, filter.Filter{})
+	params, err := paginator.OffsetParams(3, 20, flop.OrderBy{}, filter.Filter{})
 	assert.NoError(t, err)
-	firstPage, err := paginator.Offset(1, 20, flop.OrderBy{}, filter.Filter{})
+	firstPage, err := paginator.OffsetParams(1, 20, flop.OrderBy{}, filter.Filter{})
 	assert.NoError(t, err)
-	withoutOrder, err := flop.NewParams(1, 10)
+	withoutOrder, err := flop.NewOffsetParams(1, 10)
 	assert.NoError(t, err)
 
 	tests := []struct {
 		name    string
 		base    sq.SelectBuilder
-		params  flop.Params
+		params  flop.OffsetParams
 		wantSQL string
 		wantErr bool
 	}{
@@ -155,7 +196,7 @@ func TestPage(t *testing.T) {
 			wantSQL: "SELECT id FROM orders ORDER BY created_at DESC, id ASC LIMIT 20",
 		},
 		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: params, wantErr: true},
-		{name: "invalid parameters", base: psql.Select("id").From("orders"), params: flop.Params{}, wantErr: true},
+		{name: "invalid parameters", base: psql.Select("id").From("orders"), params: flop.OffsetParams{}, wantErr: true},
 		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: true},
 	}
 	for _, test := range tests {

@@ -33,16 +33,19 @@ type CursorPosition []CursorField
 
 // CursorParams contains the cursor parameters a storage implementation needs.
 //
-// Limit includes one surplus row so NewCursorPage can determine whether a next
-// page exists. After is empty for the first page.
+// Limit reports one surplus row so NewCursorPage can determine whether a next
+// page exists. After reports the position the page starts after.
 type CursorParams struct {
-	After CursorPosition
-
+	after    CursorPosition
 	pageSize int32
 	binding  [sha256.Size]byte
 	orderBy  OrderBy
 	filter   filter.Filter
 }
+
+// After returns the position the next page starts after. It is empty for the
+// first page.
+func (p CursorParams) After() CursorPosition { return p.after.clone() }
 
 // Limit is the page size plus one surplus row, saturated at math.MaxInt32.
 func (p CursorParams) Limit() int32 {
@@ -74,14 +77,14 @@ func NewCursorParams(
 	if cursor == "" {
 		return params, nil
 	}
-	after, cursorBinding, err := decodeCursor(cursor)
+	after, gotBinding, err := decodeCursor(cursor)
 	if err != nil {
 		return CursorParams{}, err
 	}
-	if binding != cursorBinding {
+	if binding != gotBinding {
 		return CursorParams{}, fmt.Errorf("flop: cursor does not match the request")
 	}
-	params.After = after.clone()
+	params.after = after.clone()
 	return params, nil
 }
 
@@ -133,34 +136,34 @@ func NewCursorPage[T any](
 	return page, nil
 }
 
-func (k CursorPosition) validate() error {
-	if len(k) == 0 {
+func (p CursorPosition) validate() error {
+	if len(p) == 0 {
 		return fmt.Errorf("flop: cursor position must not be empty")
 	}
-	seen := make(map[string]struct{}, len(k))
-	for _, fld := range k {
-		if !ident.ValidPath(fld.Path) {
+	seen := make(map[string]struct{}, len(p))
+	for _, field := range p {
+		if !ident.ValidPath(field.Path) {
 			return fmt.Errorf("flop: invalid cursor position path")
 		}
-		if _, ok := seen[fld.Path]; ok {
+		if _, ok := seen[field.Path]; ok {
 			return fmt.Errorf("flop: duplicate cursor position path")
 		}
-		if !fld.Value.Valid() {
+		if !field.Value.Valid() {
 			return fmt.Errorf("flop: invalid cursor position value")
 		}
 		// A null is representable, so Valid accepts it, but no backend can
 		// build a seek predicate from one.
-		if fld.Value.Kind() == expr.NullKind {
+		if field.Value.Kind() == expr.NullKind {
 			return fmt.Errorf("flop: cursor position value must not be null")
 		}
-		seen[fld.Path] = struct{}{}
+		seen[field.Path] = struct{}{}
 	}
 	return nil
 }
 
 // clone copies the position. Values are immutable, so a shallow copy is enough.
-func (k CursorPosition) clone() CursorPosition {
-	return slices.Clone(k)
+func (p CursorPosition) clone() CursorPosition {
+	return slices.Clone(p)
 }
 
 func cursorBinding(o OrderBy, f filter.Filter) [sha256.Size]byte {

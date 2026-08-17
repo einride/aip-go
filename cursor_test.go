@@ -290,7 +290,7 @@ func TestNewCursorParams(t *testing.T) {
 			}
 			assert.NoError(t, gotErr)
 			assert.Equal(t, test.want.limit, got.Limit())
-			assert.Equal(t, test.want.after, got.After)
+			assert.Equal(t, test.want.after, got.After())
 		})
 	}
 }

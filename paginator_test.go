@@ -162,10 +162,10 @@ func TestNewPaginator(t *testing.T) {
 	}
 }
 
-func TestPaginator_Cursor(t *testing.T) {
+func TestPaginator_CursorParams(t *testing.T) {
 	t.Parallel()
 	paginator := testPaginator(t)
-	seed, err := paginator.Cursor("", 1, flop.OrderBy{}, filter.Filter{})
+	seed, err := paginator.CursorParams("", 1, flop.OrderBy{}, filter.Filter{})
 	assert.NoError(t, err)
 	seedTime := time.Unix(1, 0)
 	seedPage, err := paginator.CursorPage(
@@ -244,7 +244,7 @@ func TestPaginator_Cursor(t *testing.T) {
 			}
 			filter, err := filter.Parse(test.filter)
 			assert.NoError(t, err)
-			got, err := paginator.Cursor(test.cursor, test.size, orderBy, filter)
+			got, err := paginator.CursorParams(test.cursor, test.size, orderBy, filter)
 			if test.wantErr {
 				assert.Error(t, err)
 				return
@@ -257,7 +257,7 @@ func TestPaginator_Cursor(t *testing.T) {
 	}
 }
 
-func TestPaginator_Offset(t *testing.T) {
+func TestPaginator_OffsetParams(t *testing.T) {
 	t.Parallel()
 	paginator := testPaginator(t)
 	tests := []struct {
@@ -295,25 +295,25 @@ func TestPaginator_Offset(t *testing.T) {
 			assert.NoError(t, err)
 			filter, err := filter.Parse(test.filter)
 			assert.NoError(t, err)
-			got, err := paginator.Offset(test.page, test.size, order, filter)
+			got, err := paginator.OffsetParams(test.page, test.size, order, filter)
 			if test.wantErr {
 				assert.Error(t, err)
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, test.wantPage, got.Page)
-			assert.Equal(t, test.wantLimit, got.Limit)
-			assert.Equal(t, test.wantOffset, got.Offset)
+			assert.Equal(t, test.wantPage, got.Page())
+			assert.Equal(t, test.wantLimit, got.Limit())
+			assert.Equal(t, test.wantOffset, got.Offset())
 			assert.True(t, len(got.OrderBy().Fields) > 0)
 			assert.Equal(t, test.filter, got.Filter().String())
 		})
 	}
 }
 
-func TestPaginator_NewCursorPage(t *testing.T) {
+func TestPaginator_CursorPage(t *testing.T) {
 	t.Parallel()
 	paginator := testPaginator(t)
-	params, err := paginator.Cursor("", 2, flop.OrderBy{}, filter.Filter{})
+	params, err := paginator.CursorParams("", 2, flop.OrderBy{}, filter.Filter{})
 	assert.NoError(t, err)
 	unknownParams, err := flop.NewCursorParams(
 		"",
@@ -375,9 +375,9 @@ func TestPaginator_NewCursorPage(t *testing.T) {
 				assert.Equal(t, "", page.NextCursor)
 				return
 			}
-			next, err := paginator.Cursor(page.NextCursor, 1, flop.OrderBy{}, filter.Filter{})
+			next, err := paginator.CursorParams(page.NextCursor, 1, flop.OrderBy{}, filter.Filter{})
 			assert.NoError(t, err)
-			assert.Equal(t, test.wantAfter, next.After)
+			assert.Equal(t, test.wantAfter, next.After())
 		})
 	}
 }

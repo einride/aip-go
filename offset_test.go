@@ -8,7 +8,7 @@ import (
 	"github.com/ysomad/flop/internal/assert"
 )
 
-func TestNewParams(t *testing.T) {
+func TestNewOffsetParams(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		pageNumber int32
@@ -65,10 +65,10 @@ func TestNewParams(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			got, gotErr := flop.NewParams(test.args.pageNumber, test.args.pageSize)
-			assert.Equal(t, test.want.pageNumber, got.Page)
-			assert.Equal(t, test.want.offset, got.Offset)
-			assert.Equal(t, test.want.limit, got.Limit)
+			got, gotErr := flop.NewOffsetParams(test.args.pageNumber, test.args.pageSize)
+			assert.Equal(t, test.want.pageNumber, got.Page())
+			assert.Equal(t, test.want.offset, got.Offset())
+			assert.Equal(t, test.want.limit, got.Limit())
 			if test.wantErr {
 				assert.Error(t, gotErr)
 				return
@@ -78,44 +78,44 @@ func TestNewParams(t *testing.T) {
 	}
 }
 
-func TestNewPage(t *testing.T) {
+func TestNewOffsetPage(t *testing.T) {
 	t.Parallel()
-	secondPageParams, err := flop.NewParams(2, 2)
+	secondPageParams, err := flop.NewOffsetParams(2, 2)
 	assert.NoError(t, err)
-	thirdPageParams, err := flop.NewParams(3, 2)
+	thirdPageParams, err := flop.NewOffsetParams(3, 2)
 	assert.NoError(t, err)
 	type args struct {
 		rows       []int32
-		params     flop.Params
+		params     flop.OffsetParams
 		totalItems int64
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    flop.Page[int32]
+		want    flop.OffsetPage[int32]
 		wantErr bool
 	}{
 		{
 			name: "middle page",
 			args: args{rows: []int32{3, 4}, params: secondPageParams, totalItems: 5},
-			want: flop.Page[int32]{
-				Items: []int32{3, 4}, Num: 2,
+			want: flop.OffsetPage[int32]{
+				Items: []int32{3, 4}, Number: 2,
 				TotalPages: 3, TotalItems: 5,
 			},
 		},
 		{
 			name: "last page",
 			args: args{rows: []int32{5}, params: thirdPageParams, totalItems: 5},
-			want: flop.Page[int32]{
-				Items: []int32{5}, Num: 3,
+			want: flop.OffsetPage[int32]{
+				Items: []int32{5}, Number: 3,
 				TotalPages: 3, TotalItems: 5,
 			},
 		},
 		{
 			name: "page beyond end",
 			args: args{rows: []int32{}, params: thirdPageParams, totalItems: 0},
-			want: flop.Page[int32]{
-				Items: []int32{}, Num: 3,
+			want: flop.OffsetPage[int32]{
+				Items: []int32{}, Number: 3,
 				TotalPages: 0, TotalItems: 0,
 			},
 		},
@@ -131,7 +131,7 @@ func TestNewPage(t *testing.T) {
 		},
 		{
 			name:    "zero parameters",
-			args:    args{params: flop.Params{}},
+			args:    args{params: flop.OffsetParams{}},
 			wantErr: true,
 		},
 	}
@@ -139,7 +139,7 @@ func TestNewPage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			got, gotErr := flop.NewPage(
+			got, gotErr := flop.NewOffsetPage(
 				test.args.rows,
 				test.args.params,
 				test.args.totalItems,

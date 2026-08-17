@@ -5,13 +5,14 @@
 
 Declarative cursor and page-number pagination for Go 1.22+
 
-Three packages:
+Four packages:
 
 | Package | Contents |
 | --- | --- |
 | `flop` | ordering, cursors, page numbers, `Paginator` |
 | [`flop/expr`](./expr) | expression nodes, typed values, `Canonical` rendering |
 | [`flop/filter`](./filter) | `Filter`, the AIP-160 parser, per-endpoint `Schema` |
+| [`flop/sqflop`](./sqflop) | Squirrel query builders and filter compiler |
 
 ## Declare an endpoint
 
@@ -57,7 +58,7 @@ The parser accepts the [AIP-160 grammar](https://google.aip.dev/assets/misc/ebnf
 ```go
 orderBy, err := flop.ParseOrderBy(req.OrderBy)
 f, err := filter.Parse(req.Filter)
-params, err := orders.Cursor(req.Cursor, req.PageSize, orderBy, f)
+params, err := orders.CursorParams(req.Cursor, req.PageSize, orderBy, f)
 if err != nil {
 	// Invalid order, filter, cursor, or non-positive page size: HTTP 400
 }
@@ -90,9 +91,9 @@ sql, args, err := query.ToSql()
 Page-number queries use the same declaration:
 
 ```go
-params, err := orders.Offset(req.Page, req.PageSize, orderBy, f)
+params, err := orders.OffsetParams(req.Page, req.PageSize, orderBy, f)
 rows, total, err := repo.ListPage(ctx, params)
-page, err := flop.NewPage(rows, params, total)
+page, err := flop.NewOffsetPage(rows, params, total)
 ```
 
 ## Credits
