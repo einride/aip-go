@@ -1,0 +1,91 @@
+package flop
+
+import (
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/ysomad/flop/internal/ident"
+)
+
+// Field is one field in an AIP-132 order_by expression.
+type Field struct {
+	Path string
+	Desc bool
+}
+
+// SQL returns the field as an explicit SQL ORDER BY expression.
+// Path is safe only after it has been checked against a trusted declaration.
+func (f Field) SQL() string {
+	if f.Desc {
+		return f.Path + " DESC"
+	}
+	return f.Path + " ASC"
+}
+
+// OrderBy is an ordered list of fields.
+//
+// The zero value represents no client-provided ordering.
+type OrderBy struct {
+	Fields []Field
+}
+
+func (o OrderBy) clone() OrderBy {
+	return OrderBy{Fields: slices.Clone(o.Fields)}
+}
+
+// ParseOrderBy parses and validates an AIP-132 order_by string.
+func ParseOrderBy(input string) (OrderBy, error) {
+	if strings.TrimSpace(input) == "" {
+		return OrderBy{}, nil
+	}
+
+	parts := strings.Split(input, ",")
+	fields := make([]Field, 0, len(parts))
+	seen := make(map[string]struct{}, len(parts))
+	for _, part := range parts {
+		words := strings.Fields(part)
+		if len(words) == 0 || len(words) > 2 {
+			return OrderBy{}, fmt.Errorf("flop: invalid order_by field")
+		}
+		if !ident.ValidPath(words[0]) {
+			return OrderBy{}, fmt.Errorf("flop: invalid order_by path")
+		}
+		if _, ok := seen[words[0]]; ok {
+			return OrderBy{}, fmt.Errorf("flop: duplicate order_by path")
+		}
+
+		field := Field{Path: words[0]}
+		if len(words) == 2 {
+			switch words[1] {
+			case "asc":
+			case "desc":
+				field.Desc = true
+			default:
+				return OrderBy{}, fmt.Errorf("flop: invalid order_by direction")
+			}
+		}
+		seen[field.Path] = struct{}{}
+		fields = append(fields, field)
+	}
+
+	return OrderBy{Fields: fields}, nil
+}
+
+// String returns the canonical AIP-132 representation of o.
+func (o OrderBy) String() string {
+	if len(o.Fields) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i, field := range o.Fields {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(field.Path)
+		if field.Desc {
+			b.WriteString(" desc")
+		}
+	}
+	return b.String()
+}

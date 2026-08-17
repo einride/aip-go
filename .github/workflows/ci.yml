@@ -1,0 +1,65 @@
+name: ci
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  test:
+    name: ${{ matrix.module }} on go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.22.x', 'stable']
+        module: ['.', 'sqflop']
+    defaults:
+      run:
+        working-directory: ${{ matrix.module }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: ${{ matrix.module }}/go.mod
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test -race ./...
+  lint:
+    name: lint ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ['.', 'sqflop']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: ${{ matrix.module }}/go.mod
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: ${{ matrix.module }}
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: go.mod
+      - name: cover the core module
+        run: go test -covermode=atomic -coverprofile=coverage.out ./...
+      - name: cover sqflop
+        run: go test -covermode=atomic -coverprofile=coverage.out ./...
+        working-directory: sqflop
+      - uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.out,./sqflop/coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

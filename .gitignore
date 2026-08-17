@@ -1,7 +1,5 @@
-.idea
-.vscode
-
-# Go workspace files
+.DS_Store
+coverage.out
 go.work
 go.work.sum
-.semrel
+examples/shop/shop
