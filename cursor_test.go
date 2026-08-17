@@ -72,27 +72,29 @@ func TestNewCursorParams(t *testing.T) {
 		orderBy flop.OrderBy
 		filter  filter.Filter
 	}
-	type want struct {
-		limit int32
-		after flop.CursorPosition
+	type cursorParams struct {
+		limit   int32
+		after   flop.CursorPosition
+		orderBy flop.OrderBy
+		filter  filter.Filter
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    want
-		wantErr assert.ErrorFunc
+		name             string
+		args             args
+		wantCursorParams cursorParams
+		wantErr          assert.ErrorFunc
 	}{
 		{
-			name:    "page size",
-			args:    args{size: 2},
-			want:    want{limit: 3},
-			wantErr: assert.NoError,
+			name:             "page size",
+			args:             args{size: 2},
+			wantCursorParams: cursorParams{limit: 3},
+			wantErr:          assert.NoError,
 		},
 		{
-			name:    "maximum int32 page size",
-			args:    args{size: math.MaxInt32},
-			want:    want{limit: math.MaxInt32},
-			wantErr: assert.NoError,
+			name:             "maximum int32 page size",
+			args:             args{size: math.MaxInt32},
+			wantCursorParams: cursorParams{limit: math.MaxInt32},
+			wantErr:          assert.NoError,
 		},
 		{
 			name: "cursor",
@@ -100,7 +102,9 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: page.NextCursor, size: 2,
 				orderBy: orderBy, filter: activeFilter,
 			},
-			want:    want{limit: 3, after: position},
+			wantCursorParams: cursorParams{
+				limit: 3, after: position, orderBy: orderBy, filter: activeFilter,
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -109,7 +113,9 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: allValuesPage.NextCursor, size: 1,
 				orderBy: orderBy, filter: activeFilter,
 			},
-			want:    want{limit: 2, after: allValues},
+			wantCursorParams: cursorParams{
+				limit: 2, after: allValues, orderBy: orderBy, filter: activeFilter,
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -118,7 +124,9 @@ func TestNewCursorParams(t *testing.T) {
 				cursor: page.NextCursor, size: 3,
 				orderBy: orderBy, filter: activeFilter,
 			},
-			want:    want{limit: 4, after: position},
+			wantCursorParams: cursorParams{
+				limit: 4, after: position, orderBy: orderBy, filter: activeFilter,
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -301,8 +309,12 @@ func TestNewCursorParams(t *testing.T) {
 			if gotErr != nil {
 				return
 			}
-			assert.Equal(t, test.want.limit, got.Limit())
-			assert.Equal(t, test.want.after, got.After())
+			assert.Equal(t, test.wantCursorParams, cursorParams{
+				limit:   got.Limit(),
+				after:   got.After(),
+				orderBy: got.OrderBy(),
+				filter:  got.Filter(),
+			})
 		})
 	}
 }
@@ -317,15 +329,15 @@ func TestNewCursorPage(t *testing.T) {
 		params   flop.CursorParams
 		position func(int32) (flop.CursorPosition, error)
 	}
-	type want struct {
+	type cursorPage struct {
 		items     []int32
 		hasCursor bool
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    want
-		wantErr assert.ErrorFunc
+		name           string
+		args           args
+		wantCursorPage cursorPage
+		wantErr        assert.ErrorFunc
 	}{
 		{
 			name:    "zero parameters",
@@ -333,16 +345,16 @@ func TestNewCursorPage(t *testing.T) {
 			wantErr: assert.Error,
 		},
 		{
-			name:    "last page",
-			args:    args{rows: []int32{1, 2}, params: params},
-			want:    want{items: []int32{1, 2}},
-			wantErr: assert.NoError,
+			name:           "last page",
+			args:           args{rows: []int32{1, 2}, params: params},
+			wantCursorPage: cursorPage{items: []int32{1, 2}},
+			wantErr:        assert.NoError,
 		},
 		{
-			name:    "empty page",
-			args:    args{rows: []int32{}, params: params},
-			want:    want{items: []int32{}},
-			wantErr: assert.NoError,
+			name:           "empty page",
+			args:           args{rows: []int32{}, params: params},
+			wantCursorPage: cursorPage{items: []int32{}},
+			wantErr:        assert.NoError,
 		},
 		{
 			name: "next page",
@@ -352,8 +364,8 @@ func TestNewCursorPage(t *testing.T) {
 					return flop.CursorPosition{{Path: "id", Value: expr.Int64Value(int64(row))}}, nil
 				},
 			},
-			want:    want{items: []int32{1, 2}, hasCursor: true},
-			wantErr: assert.NoError,
+			wantCursorPage: cursorPage{items: []int32{1, 2}, hasCursor: true},
+			wantErr:        assert.NoError,
 		},
 		{
 			name: "nil cursor position function",
@@ -457,8 +469,10 @@ func TestNewCursorPage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got, gotErr := flop.NewCursorPage(test.args.rows, test.args.params, test.args.position)
-			assert.Equal(t, test.want.items, got.Items)
-			assert.Equal(t, test.want.hasCursor, got.NextCursor != "")
+			assert.Equal(t, test.wantCursorPage, cursorPage{
+				items:     got.Items,
+				hasCursor: got.NextCursor != "",
+			})
 			test.wantErr(t, gotErr)
 		})
 	}

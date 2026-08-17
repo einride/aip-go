@@ -58,33 +58,59 @@ func TestCursorQuery(t *testing.T) {
 		filter.Filter{},
 	)
 	assert.NoError(t, err)
+	mismatchedPosition := mismatchedPositionParams(t, now)
 
+	type args struct {
+		base   sq.SelectBuilder
+		params flop.CursorParams
+	}
 	tests := []struct {
 		name     string
-		base     sq.SelectBuilder
-		params   flop.CursorParams
+		args     args
 		wantSQL  string
 		wantArgs []any
-		wantErr  assert.ErrorAssertionFunc
+		wantErr  assert.ErrorFunc
 	}{
 		{
-			name: "first page", base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}), params: first,
-			wantSQL: "SELECT id FROM orders WHERE tenant_id = $1 ORDER BY created_at DESC, id ASC LIMIT 3", wantArgs: []any{7},
-			wantErr: assert.NoError,
+			name: "first page",
+			args: args{base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}), params: first},
+			wantSQL: "SELECT id FROM orders WHERE tenant_id = $1 " +
+				"ORDER BY created_at DESC, id ASC LIMIT 3",
+			wantArgs: []any{7},
+			wantErr:  assert.NoError,
 		},
 		{
-			name: "seek with mixed directions", base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}), params: next,
-			wantSQL:  "SELECT id FROM orders WHERE tenant_id = $1 AND (created_at < $2 OR (created_at = $3 AND id > $4)) ORDER BY created_at DESC, id ASC LIMIT 3",
+			name: "seek with mixed directions",
+			args: args{base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}), params: next},
+			wantSQL: "SELECT id FROM orders WHERE tenant_id = $1 " +
+				"AND (created_at < $2 OR (created_at = $3 AND id > $4)) " +
+				"ORDER BY created_at DESC, id ASC LIMIT 3",
 			wantArgs: []any{7, now.Add(-time.Second), now.Add(-time.Second), int64(2)},
 			wantErr:  assert.NoError,
 		},
-		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: first, wantErr: assert.Error},
-		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: assert.Error},
-		{name: "invalid order column", base: psql.Select("id").From("orders"), params: invalidOrder, wantErr: assert.Error},
+		{
+			name:    "base order",
+			args:    args{base: psql.Select("id").From("orders").OrderBy("id"), params: first},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing order",
+			args:    args{base: psql.Select("id").From("orders"), params: withoutOrder},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "invalid order column",
+			args:    args{base: psql.Select("id").From("orders"), params: invalidOrder},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "cursor position mismatch",
+			args:    args{base: psql.Select("id").From("orders"), params: mismatchedPosition},
+			wantErr: assert.Error,
+		},
 		{
 			name:     "single order field",
-			base:     psql.Select("id").From("orders"),
-			params:   singleOrder,
+			args:     args{base: psql.Select("id").From("orders"), params: singleOrder},
 			wantSQL:  "SELECT id FROM orders WHERE id > $1 ORDER BY id ASC LIMIT 2",
 			wantArgs: []any{int64(1)},
 			wantErr:  assert.NoError,
@@ -93,7 +119,7 @@ func TestCursorQuery(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			gotSQL, gotArgs, err := CursorQuery(test.base, test.params).ToSql()
+			gotSQL, gotArgs, err := CursorQuery(test.args.base, test.args.params).ToSql()
 			test.wantErr(t, err)
 			if err != nil {
 				return
@@ -127,47 +153,149 @@ func singleOrderParams(t *testing.T) flop.CursorParams {
 	return params
 }
 
-// Paginator never produces a position inconsistent with its order, so these
-// defenses are exercised against cursorPredicate directly.
-func TestCursorPredicate(t *testing.T) {
+// mismatchedPositionParams returns parameters whose position does not match
+// their order. Paginator.CursorParams validates the two against each other, but
+// NewCursorParams only checks the binding, which covers the order and filter and
+// not the position, so the mismatch survives a cursor round trip.
+func mismatchedPositionParams(t *testing.T, now time.Time) flop.CursorParams {
+	t.Helper()
+	orderBy := flop.OrderBy{Fields: []flop.Field{flop.Asc("id")}}
+	params, err := flop.NewCursorParams("", 1, orderBy, filter.Filter{})
+	assert.NoError(t, err)
+	page, err := flop.NewCursorPage(
+		[]queryRow{{ID: 1}, {ID: 2}},
+		params,
+		func(queryRow) (flop.CursorPosition, error) {
+			return flop.CursorPosition{
+				{Path: "created_at", Value: expr.TimeValue(now)},
+				{Path: "id", Value: expr.Int64Value(1)},
+			}, nil
+		},
+	)
+	assert.NoError(t, err)
+	mismatched, err := flop.NewCursorParams(page.NextCursor, 1, orderBy, filter.Filter{})
+	assert.NoError(t, err)
+	return mismatched
+}
+
+func Test_cursorPredicate(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, time.August, 16, 10, 0, 0, 0, time.UTC)
 	orderBy := flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}}
 
+	type args struct {
+		orderBy flop.OrderBy
+		pos     flop.CursorPosition
+	}
 	tests := []struct {
 		name     string
-		position flop.CursorPosition
+		args     args
+		wantSQL  string
+		wantArgs []any
+		wantErr  assert.ErrorFunc
 	}{
 		{
-			name: "position mismatch",
-			position: flop.CursorPosition{
-				{Path: "id", Value: expr.TimeValue(now)},
-				{Path: "id", Value: expr.Int64Value(2)},
+			name: "single ascending field",
+			args: args{
+				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Asc("id")}},
+				pos:     flop.CursorPosition{{Path: "id", Value: expr.Int64Value(2)}},
 			},
+			wantSQL:  "id > ?",
+			wantArgs: []any{int64(2)},
+			wantErr:  assert.NoError,
+		},
+		{
+			name: "single descending field",
+			args: args{
+				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at")}},
+				pos:     flop.CursorPosition{{Path: "created_at", Value: expr.TimeValue(now)}},
+			},
+			wantSQL:  "created_at < ?",
+			wantArgs: []any{now},
+			wantErr:  assert.NoError,
+		},
+		{
+			name: "mixed directions",
+			args: args{
+				orderBy: orderBy,
+				pos: flop.CursorPosition{
+					{Path: "created_at", Value: expr.TimeValue(now)},
+					{Path: "id", Value: expr.Int64Value(2)},
+				},
+			},
+			wantSQL:  "(created_at < ? OR (created_at = ? AND id > ?))",
+			wantArgs: []any{now, now, int64(2)},
+			wantErr:  assert.NoError,
+		},
+		{
+			name: "three fields",
+			args: args{
+				orderBy: flop.OrderBy{Fields: []flop.Field{
+					flop.Desc("created_at"), flop.Asc("name"), flop.Asc("id"),
+				}},
+				pos: flop.CursorPosition{
+					{Path: "created_at", Value: expr.TimeValue(now)},
+					{Path: "name", Value: expr.StringValue("a")},
+					{Path: "id", Value: expr.Int64Value(2)},
+				},
+			},
+			wantSQL: "(created_at < ? OR (created_at = ? AND name > ?) " +
+				"OR (created_at = ? AND name = ? AND id > ?))",
+			wantArgs: []any{now, now, "a", now, "a", int64(2)},
+			wantErr:  assert.NoError,
+		},
+		{
+			name: "position mismatch",
+			args: args{
+				orderBy: orderBy,
+				pos: flop.CursorPosition{
+					{Path: "id", Value: expr.TimeValue(now)},
+					{Path: "id", Value: expr.Int64Value(2)},
+				},
+			},
+			wantErr: assert.Error,
 		},
 		{
 			name: "position length mismatch",
-			position: flop.CursorPosition{
-				{Path: "created_at", Value: expr.TimeValue(now)},
+			args: args{
+				orderBy: orderBy,
+				pos: flop.CursorPosition{
+					{Path: "created_at", Value: expr.TimeValue(now)},
+				},
 			},
+			wantErr: assert.Error,
 		},
 		{
 			name: "null position",
-			position: flop.CursorPosition{
-				{Path: "created_at", Value: expr.NullValue()},
-				{Path: "id", Value: expr.Int64Value(2)},
+			args: args{
+				orderBy: orderBy,
+				pos: flop.CursorPosition{
+					{Path: "created_at", Value: expr.NullValue()},
+					{Path: "id", Value: expr.Int64Value(2)},
+				},
 			},
+			wantErr: assert.Error,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := cursorPredicate(orderBy, test.position)
-			assert.Error(t, err)
+			got, err := cursorPredicate(test.args.orderBy, test.args.pos)
+			test.wantErr(t, err)
+			if err != nil {
+				return
+			}
+			gotSQL, gotArgs, err := got.ToSql()
+			assert.NoError(t, err)
+			assert.Equal(t, test.wantSQL, gotSQL)
+			assert.Equal(t, test.wantArgs, gotArgs)
 		})
 	}
 }
 
+// OffsetParams carries an order only through Paginator.OffsetParams, which
+// resolves it first, so applyOrder cannot fail here. That branch stays as a
+// defense and is the one uncovered block in the package.
 func TestOffsetQuery(t *testing.T) {
 	t.Parallel()
 	paginator := queryPaginator(t)
@@ -178,45 +306,66 @@ func TestOffsetQuery(t *testing.T) {
 	withoutOrder, err := flop.NewOffsetParams(1, 10)
 	assert.NoError(t, err)
 
+	type args struct {
+		base   sq.SelectBuilder
+		params flop.OffsetParams
+	}
 	tests := []struct {
-		name    string
-		base    sq.SelectBuilder
-		params  flop.OffsetParams
-		wantSQL string
-		wantErr assert.ErrorAssertionFunc
+		name     string
+		args     args
+		wantSQL  string
+		wantArgs []any
+		wantErr  assert.ErrorFunc
 	}{
 		{
+			name: "base arguments are preserved",
+			args: args{
+				base:   psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}),
+				params: params,
+			},
+			wantSQL: "SELECT id FROM orders WHERE tenant_id = $1 " +
+				"ORDER BY created_at DESC, id ASC LIMIT 20 OFFSET 40",
+			wantArgs: []any{7},
+			wantErr:  assert.NoError,
+		},
+		{
 			name:    "offset page",
-			base:    psql.Select("id").From("orders"),
-			params:  params,
+			args:    args{base: psql.Select("id").From("orders"), params: params},
 			wantSQL: "SELECT id FROM orders ORDER BY created_at DESC, id ASC LIMIT 20 OFFSET 40",
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "first page",
-			base:    psql.Select("id").From("orders"),
-			params:  firstPage,
+			args:    args{base: psql.Select("id").From("orders"), params: firstPage},
 			wantSQL: "SELECT id FROM orders ORDER BY created_at DESC, id ASC LIMIT 20",
 			wantErr: assert.NoError,
 		},
-		{name: "base order", base: psql.Select("id").From("orders").OrderBy("id"), params: params, wantErr: assert.Error},
 		{
-			name:    "invalid parameters",
-			base:    psql.Select("id").From("orders"),
-			params:  flop.OffsetParams{},
+			name:    "base order",
+			args:    args{base: psql.Select("id").From("orders").OrderBy("id"), params: params},
 			wantErr: assert.Error,
 		},
-		{name: "missing order", base: psql.Select("id").From("orders"), params: withoutOrder, wantErr: assert.Error},
+		{
+			name:    "empty parameters",
+			args:    args{base: psql.Select("id").From("orders"), params: flop.OffsetParams{}},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing order",
+			args:    args{base: psql.Select("id").From("orders"), params: withoutOrder},
+			wantErr: assert.Error,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			gotSQL, _, err := OffsetQuery(test.base, test.params).ToSql()
+			gotSQL, gotArgs, err := OffsetQuery(test.args.base, test.args.params).ToSql()
 			test.wantErr(t, err)
 			if err != nil {
 				return
 			}
 			assert.Equal(t, test.wantSQL, gotSQL)
+			assert.Equal(t, test.wantArgs, gotArgs)
 		})
 	}
 }
@@ -228,7 +377,7 @@ func TestCountQuery(t *testing.T) {
 		base     sq.SelectBuilder
 		wantSQL  string
 		wantArgs []any
-		wantErr  assert.ErrorAssertionFunc
+		wantErr  assert.ErrorFunc
 	}{
 		{
 			name: "count", base: psql.Select("id").From("orders").Where(sq.Eq{"tenant_id": 7}).Limit(20).Offset(40),

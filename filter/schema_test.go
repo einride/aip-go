@@ -14,42 +14,42 @@ func TestNewFilterField(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		got     filter.Field
-		want    filter.Field
-		wantErr assert.ErrorFunc
+		name      string
+		got       filter.Field
+		wantField filter.Field
+		wantErr   assert.ErrorFunc
 	}{
 		{
-			name:    "plain",
-			got:     filter.NewField("age", filter.TypeInt, false),
-			want:    filter.Field{Name: "age", Type: filter.TypeInt},
-			wantErr: assert.NoError,
+			name:      "plain",
+			got:       filter.NewField("age", filter.TypeInt, false),
+			wantField: filter.Field{Name: "age", Type: filter.TypeInt},
+			wantErr:   assert.NoError,
 		},
 		{
-			name:    "searchable",
-			got:     filter.NewField("name", filter.TypeString, true),
-			want:    filter.Field{Name: "name", Type: filter.TypeString, Search: true},
-			wantErr: assert.NoError,
+			name:      "searchable",
+			got:       filter.NewField("name", filter.TypeString, true),
+			wantField: filter.Field{Name: "name", Type: filter.TypeString, Search: true},
+			wantErr:   assert.NoError,
 		},
 		{
-			name:    "enum keeps its values",
-			got:     filter.NewField("state", filter.Enum("open", "closed"), false),
-			want:    filter.Field{Name: "state", Type: filter.Enum("open", "closed")},
-			wantErr: assert.NoError,
+			name:      "enum keeps its values",
+			got:       filter.NewField("state", filter.Enum("open", "closed"), false),
+			wantField: filter.Field{Name: "state", Type: filter.Enum("open", "closed")},
+			wantErr:   assert.NoError,
 		},
 		{
 			// NewField declares, NewSchema validates.
-			name:    "invalid declaration is not rejected",
-			got:     filter.NewField("bad-name", filter.Type{}, true),
-			want:    filter.Field{Name: "bad-name", Search: true},
-			wantErr: assert.Error,
+			name:      "invalid declaration is not rejected",
+			got:       filter.NewField("bad-name", filter.Type{}, true),
+			wantField: filter.Field{Name: "bad-name", Search: true},
+			wantErr:   assert.Error,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, test.want, test.got)
+			assert.Equal(t, test.wantField, test.got)
 			_, err := filter.NewSchema([]filter.Field{test.got}, filter.Limits{})
 			test.wantErr(t, err)
 		})
@@ -59,39 +59,59 @@ func TestNewFilterField(t *testing.T) {
 func TestNewFilterSchema(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name   string
+	type args struct {
 		fields []filter.Field
 		limits filter.Limits
+	}
+	tests := []struct {
+		name string
+		args args
 	}{
 		{name: "no fields"},
 		{
-			name:   "invalid limits",
-			fields: []filter.Field{filter.NewField("id", filter.TypeInt, false)},
-			limits: filter.Limits{MaxNodes: -1},
-		},
-		{name: "invalid field name", fields: []filter.Field{filter.NewField("bad-name", filter.TypeInt, false)}},
-		{
-			name: "duplicate field",
-			fields: []filter.Field{
-				filter.NewField("id", filter.TypeInt, false),
-				filter.NewField("id", filter.TypeInt, false),
+			name: "invalid limits",
+			args: args{
+				fields: []filter.Field{filter.NewField("id", filter.TypeInt, false)},
+				limits: filter.Limits{MaxNodes: -1},
 			},
 		},
-		{name: "invalid field type", fields: []filter.Field{filter.NewField("id", filter.Type{}, false)}},
-		{name: "empty enum", fields: []filter.Field{filter.NewField("state", filter.Enum(), false)}},
-		{name: "empty enum value", fields: []filter.Field{filter.NewField("state", filter.Enum(""), false)}},
 		{
-			name:   "duplicate enum value",
-			fields: []filter.Field{filter.NewField("state", filter.Enum("open", "open"), false)},
+			name: "invalid field name",
+			args: args{fields: []filter.Field{filter.NewField("bad-name", filter.TypeInt, false)}},
 		},
-		{name: "non-string search field", fields: []filter.Field{filter.NewField("id", filter.TypeInt, true)}},
+		{
+			name: "duplicate field",
+			args: args{fields: []filter.Field{
+				filter.NewField("id", filter.TypeInt, false),
+				filter.NewField("id", filter.TypeInt, false),
+			}},
+		},
+		{
+			name: "invalid field type",
+			args: args{fields: []filter.Field{filter.NewField("id", filter.Type{}, false)}},
+		},
+		{
+			name: "empty enum",
+			args: args{fields: []filter.Field{filter.NewField("state", filter.Enum(), false)}},
+		},
+		{
+			name: "empty enum value",
+			args: args{fields: []filter.Field{filter.NewField("state", filter.Enum(""), false)}},
+		},
+		{
+			name: "duplicate enum value",
+			args: args{fields: []filter.Field{filter.NewField("state", filter.Enum("open", "open"), false)}},
+		},
+		{
+			name: "non-string search field",
+			args: args{fields: []filter.Field{filter.NewField("id", filter.TypeInt, true)}},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := filter.NewSchema(test.fields, test.limits)
+			_, err := filter.NewSchema(test.args.fields, test.args.limits)
 			assert.Error(t, err)
 		})
 	}
@@ -124,17 +144,23 @@ func TestFilterSchema_Validate(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
+	type validated struct {
+		canonical string
+		// expr pins the tree where canonical cannot: the rendering is identical
+		// across numeric kinds, so a skipped conversion would still match.
+		expr expr.Expr
+	}
 	tests := []struct {
-		name    string
-		input   string
-		filter  filter.Filter
-		schema  *filter.Schema
-		want    string
-		wantErr assert.ErrorFunc
+		name       string
+		input      string
+		filter     filter.Filter
+		schema     *filter.Schema
+		wantFilter validated
+		wantErr    assert.ErrorFunc
 	}{
 		{name: "empty", wantErr: assert.NoError},
-		{name: "has on a list", input: `tags:"blue"`, want: `tags : "blue"`, wantErr: assert.NoError},
-		{name: "has with a bare identifier", input: "tags:blue", want: `tags : "blue"`, wantErr: assert.NoError},
+		{name: "has on a list", input: `tags:"blue"`, wantFilter: validated{canonical: `tags : "blue"`}, wantErr: assert.NoError},
+		{name: "has with a bare identifier", input: "tags:blue", wantFilter: validated{canonical: `tags : "blue"`}, wantErr: assert.NoError},
 		{name: "has rejects a non-string", input: "tags:1", wantErr: assert.Error},
 		{name: "has rejects null", input: "tags:null", wantErr: assert.Error},
 		{name: "has is rejected on a string", input: `name:"x"`, wantErr: assert.Error},
@@ -142,36 +168,57 @@ func TestFilterSchema_Validate(t *testing.T) {
 		{name: "has is rejected on an enum", input: "state:open", wantErr: assert.Error},
 		{name: "list rejects equality", input: `tags = "blue"`, wantErr: assert.Error},
 		{name: "list rejects ordering", input: `tags > "blue"`, wantErr: assert.Error},
-		{name: "typed integer", input: `age = "42"`, want: "age = 42", wantErr: assert.NoError},
-		{name: "typed unsigned integer", input: `count = "42"`, want: "count = 42", wantErr: assert.NoError},
-		{name: "typed float", input: `score = "1.5"`, want: "score = 1.5", wantErr: assert.NoError},
 		{
-			name:    "typed timestamp",
-			input:   `created_at >= "2026-08-16T10:00:00+07:00"`,
-			want:    "created_at >= 2026-08-16T03:00:00Z",
+			name: "typed integer", input: `age = "42"`, wantFilter: validated{
+				canonical: "age = 42",
+				expr:      expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)},
+			},
 			wantErr: assert.NoError,
 		},
-		{name: "typed duration", input: `wait < "1.5s"`, want: "wait < 1.5s", wantErr: assert.NoError},
+		{
+			name: "typed unsigned integer", input: `count = "42"`, wantFilter: validated{
+				canonical: "count = 42",
+				expr:      expr.ComparisonExpr{Field: "count", Op: expr.Equal, Value: expr.Uint64Value(42)},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "typed float", input: `score = "1.5"`, wantFilter: validated{
+				canonical: "score = 1.5",
+				expr:      expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Float64Value(1.5)},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:       "typed timestamp",
+			input:      `created_at >= "2026-08-16T10:00:00+07:00"`,
+			wantFilter: validated{canonical: "created_at >= 2026-08-16T03:00:00Z"},
+			wantErr:    assert.NoError,
+		},
+		{name: "typed duration", input: `wait < "1.5s"`, wantFilter: validated{canonical: "wait < 1.5s"}, wantErr: assert.NoError},
 		{
 			name: "native boolean",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "active", Op: expr.Equal, Value: expr.BoolValue(true)},
 			},
-			want:    "active = true",
-			wantErr: assert.NoError,
+			wantFilter: validated{canonical: "active = true"},
+			wantErr:    assert.NoError,
 		},
 		{
-			name:    "native integer",
-			filter:  filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)}},
-			want:    "age = 42",
-			wantErr: assert.NoError,
+			name:       "native integer",
+			filter:     filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)}},
+			wantFilter: validated{canonical: "age = 42"},
+			wantErr:    assert.NoError,
 		},
 		{
 			name: "unsigned converted to integer",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Uint64Value(42)},
 			},
-			want:    "age = 42",
+			wantFilter: validated{
+				canonical: "age = 42",
+				expr:      expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)},
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -179,15 +226,18 @@ func TestFilterSchema_Validate(t *testing.T) {
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "count", Op: expr.Equal, Value: expr.Uint64Value(42)},
 			},
-			want:    "count = 42",
-			wantErr: assert.NoError,
+			wantFilter: validated{canonical: "count = 42"},
+			wantErr:    assert.NoError,
 		},
 		{
 			name: "integer converted to unsigned",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "count", Op: expr.Equal, Value: expr.Int64Value(42)},
 			},
-			want:    "count = 42",
+			wantFilter: validated{
+				canonical: "count = 42",
+				expr:      expr.ComparisonExpr{Field: "count", Op: expr.Equal, Value: expr.Uint64Value(42)},
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -195,15 +245,18 @@ func TestFilterSchema_Validate(t *testing.T) {
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Float64Value(1.5)},
 			},
-			want:    "score = 1.5",
-			wantErr: assert.NoError,
+			wantFilter: validated{canonical: "score = 1.5"},
+			wantErr:    assert.NoError,
 		},
 		{
 			name: "integer converted to float",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Int64Value(1)},
 			},
-			want:    "score = 1",
+			wantFilter: validated{
+				canonical: "score = 1",
+				expr:      expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Float64Value(1)},
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -211,7 +264,10 @@ func TestFilterSchema_Validate(t *testing.T) {
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Uint64Value(1)},
 			},
-			want:    "score = 1",
+			wantFilter: validated{
+				canonical: "score = 1",
+				expr:      expr.ComparisonExpr{Field: "score", Op: expr.Equal, Value: expr.Float64Value(1)},
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -219,26 +275,26 @@ func TestFilterSchema_Validate(t *testing.T) {
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "created_at", Op: expr.Equal, Value: expr.TimeValue(time.Unix(1, 0))},
 			},
-			want:    "created_at = 1970-01-01T00:00:01Z",
-			wantErr: assert.NoError,
+			wantFilter: validated{canonical: "created_at = 1970-01-01T00:00:01Z"},
+			wantErr:    assert.NoError,
 		},
 		{
 			name: "native duration",
 			filter: filter.Filter{
 				Expr: expr.ComparisonExpr{Field: "wait", Op: expr.Equal, Value: expr.DurationValue(time.Second)},
 			},
-			want:    "wait = 1s",
-			wantErr: assert.NoError,
+			wantFilter: validated{canonical: "wait = 1s"},
+			wantErr:    assert.NoError,
 		},
 		{
-			name:    "null equality",
-			filter:  filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.NullValue()}},
-			want:    "age = null",
-			wantErr: assert.NoError,
+			name:       "null equality",
+			filter:     filter.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.NullValue()}},
+			wantFilter: validated{canonical: "age = null"},
+			wantErr:    assert.NoError,
 		},
-		{name: "text search", input: "42", want: `"42"`, wantErr: assert.NoError},
-		{name: "negation", input: `NOT name = "x"`, want: `NOT (name = "x")`, wantErr: assert.NoError},
-		{name: "enum", input: "state = open", want: `state = "open"`, wantErr: assert.NoError},
+		{name: "text search", input: "42", wantFilter: validated{canonical: `"42"`}, wantErr: assert.NoError},
+		{name: "negation", input: `NOT name = "x"`, wantFilter: validated{canonical: `NOT (name = "x")`}, wantErr: assert.NoError},
+		{name: "enum", input: "state = open", wantFilter: validated{canonical: `state = "open"`}, wantErr: assert.NoError},
 		{
 			name:    "zero-value schema",
 			schema:  new(filter.Schema),
@@ -342,7 +398,10 @@ func TestFilterSchema_Validate(t *testing.T) {
 			if err != nil {
 				return
 			}
-			assert.Equal(t, test.want, got.String())
+			assert.Equal(t, test.wantFilter.canonical, got.String())
+			if test.wantFilter.expr != nil {
+				assert.Equal(t, test.wantFilter.expr, got.Expr)
+			}
 		})
 	}
 }

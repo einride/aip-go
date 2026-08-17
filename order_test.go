@@ -13,17 +13,17 @@ func TestParseOrderBy(t *testing.T) {
 		input string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    flop.OrderBy
-		wantErr assert.ErrorFunc
+		name        string
+		args        args
+		wantOrderBy flop.OrderBy
+		wantErr     assert.ErrorFunc
 	}{
-		{name: "empty", args: args{input: ""}, want: flop.OrderBy{}, wantErr: assert.NoError},
-		{name: "whitespace only", args: args{input: " \n\t"}, want: flop.OrderBy{}, wantErr: assert.NoError},
+		{name: "empty", args: args{input: ""}, wantOrderBy: flop.OrderBy{}, wantErr: assert.NoError},
+		{name: "whitespace only", args: args{input: " \n\t"}, wantOrderBy: flop.OrderBy{}, wantErr: assert.NoError},
 		{
 			name: "fields",
 			args: args{input: "create_time desc, user.name asc, id"},
-			want: flop.OrderBy{Fields: []flop.Field{
+			wantOrderBy: flop.OrderBy{Fields: []flop.Field{
 				{Path: "create_time", Desc: true},
 				{Path: "user.name"},
 				{Path: "id"},
@@ -33,7 +33,7 @@ func TestParseOrderBy(t *testing.T) {
 		{
 			name: "explicit ascending and whitespace",
 			args: args{input: "  create_time   asc ,\tuser_id desc  "},
-			want: flop.OrderBy{Fields: []flop.Field{
+			wantOrderBy: flop.OrderBy{Fields: []flop.Field{
 				{Path: "create_time"},
 				{Path: "user_id", Desc: true},
 			}},
@@ -53,7 +53,7 @@ func TestParseOrderBy(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := flop.ParseOrderBy(test.args.input)
-			assert.Equal(t, test.want, got)
+			assert.Equal(t, test.wantOrderBy, got)
 			test.wantErr(t, err)
 		})
 	}
