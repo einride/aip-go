@@ -2,8 +2,6 @@ package flop
 
 import (
 	"fmt"
-
-	"github.com/ysomad/flop/filter"
 )
 
 // OffsetParams contains parameters for offset pagination.
@@ -13,7 +11,7 @@ type OffsetParams struct {
 	limit  int32
 
 	orderBy OrderBy
-	filter  filter.Filter
+	filter  Filter
 }
 
 // Page returns the one-based page number.
@@ -29,7 +27,7 @@ func (p OffsetParams) Limit() int32 { return p.limit }
 func (p OffsetParams) OrderBy() OrderBy { return p.orderBy.clone() }
 
 // Filter returns the validated filter associated with these parameters.
-func (p OffsetParams) Filter() filter.Filter { return p.filter }
+func (p OffsetParams) Filter() Filter { return p.filter }
 
 // NewOffsetParams parses a one-based page number and page size into storage
 // parameters. pageSize must already be normalized by the caller.

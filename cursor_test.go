@@ -12,7 +12,6 @@ import (
 
 	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/assert"
 )
 
@@ -20,7 +19,7 @@ func TestNewCursorParams(t *testing.T) {
 	t.Parallel()
 	orderBy, err := flop.ParseOrderBy("created_at desc, id")
 	assert.NoError(t, err)
-	activeFilter, err := filter.Parse("active = true")
+	activeFilter, err := flop.ParseFilter("active = true")
 	assert.NoError(t, err)
 	first, err := flop.NewCursorParams("", 1, orderBy, activeFilter)
 	assert.NoError(t, err)
@@ -54,7 +53,7 @@ func TestNewCursorParams(t *testing.T) {
 		func(int32) (flop.CursorPosition, error) { return allValues, nil },
 	)
 	assert.NoError(t, err)
-	otherFilter, err := filter.Parse("active = false")
+	otherFilter, err := flop.ParseFilter("active = false")
 	assert.NoError(t, err)
 	otherOrderBy, err := flop.ParseOrderBy("id")
 	assert.NoError(t, err)
@@ -70,13 +69,13 @@ func TestNewCursorParams(t *testing.T) {
 		cursor  string
 		size    int32
 		orderBy flop.OrderBy
-		filter  filter.Filter
+		filter  flop.Filter
 	}
 	type cursorParams struct {
 		limit   int32
 		after   flop.CursorPosition
 		orderBy flop.OrderBy
-		filter  filter.Filter
+		filter  flop.Filter
 	}
 	tests := []struct {
 		name             string
@@ -320,7 +319,7 @@ func TestNewCursorParams(t *testing.T) {
 }
 
 func TestNewCursorPage(t *testing.T) {
-	params, err := flop.NewCursorParams("", 2, flop.OrderBy{}, filter.Filter{})
+	params, err := flop.NewCursorParams("", 2, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	positionErr := errors.New("cursor position failed")
 

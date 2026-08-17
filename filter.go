@@ -1,4 +1,4 @@
-package filter
+package flop
 
 import (
 	"errors"
@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	maxBytes = 64 << 10
-	maxDepth = 64
-	maxNodes = 256
+	maxFilterBytes = 64 << 10
+	maxFilterDepth = 64
+	maxFilterNodes = 256
 )
 
 // Filter is the parsed form of an AIP-160 filter.
@@ -26,16 +26,16 @@ type Filter struct {
 // String returns a canonical representation of f.
 func (f Filter) String() string { return expr.Canonical(f.Expr) }
 
-// Parse parses an AIP-160 filter.
+// ParseFilter parses an AIP-160 filter.
 //
 // Functions are deliberately unsupported.
-func Parse(input string) (Filter, error) {
+func ParseFilter(input string) (Filter, error) {
 	trimmed := strings.TrimSpace(input)
 	if trimmed == "" {
 		return Filter{}, nil
 	}
-	if len(input) > maxBytes {
-		return Filter{}, newError(Position{Line: 1, Column: 1}, nil, "filter is too large")
+	if len(input) > maxFilterBytes {
+		return Filter{}, newError(FilterPosition{Line: 1, Column: 1}, nil, "filter is too large")
 	}
 	p := newParser(trimmed)
 	return p.parse()
@@ -50,7 +50,7 @@ type parser struct {
 	depth int
 }
 
-// newParser expects input that Parse has already trimmed.
+// newParser expects input that ParseFilter has already trimmed.
 func newParser(filter string) parser {
 	return parser{lexer: newLexer(filter)}
 }
@@ -80,7 +80,7 @@ type operand struct {
 	path   string
 	value  expr.Value
 	isPath bool
-	pos    Position
+	pos    FilterPosition
 }
 
 // expression returns the operand as an unqualified text-search term.
@@ -218,7 +218,7 @@ func (p *parser) parseSimple() (expr.Expr, error) {
 //	  ;
 func (p *parser) parseComposite() (expr.Expr, error) {
 	start := p.lexer.position()
-	if p.depth >= maxDepth {
+	if p.depth >= maxFilterDepth {
 		return nil, p.errorf(start, "nesting is too deep")
 	}
 	p.depth++
@@ -318,7 +318,7 @@ func (p *parser) parseComparable() (operand, error) {
 //	member
 //	  : value {DOT field}
 //	  ;
-func (p *parser) parseMember(first token, pos Position) (operand, error) {
+func (p *parser) parseMember(first token, pos FilterPosition) (operand, error) {
 	parts := []string{first.Value}
 	for {
 		if err := p.eatTokens(tokenDot); err != nil {
@@ -388,11 +388,11 @@ func (p *parser) eatTokens(want ...tokenType) error {
 	return nil
 }
 
-func (p *parser) errorf(pos Position, format string, args ...any) error {
+func (p *parser) errorf(pos FilterPosition, format string, args ...any) error {
 	return newError(pos, nil, format, args...)
 }
 
-func (p *parser) wrapf(err error, pos Position, format string, args ...any) error {
+func (p *parser) wrapf(err error, pos FilterPosition, format string, args ...any) error {
 	return newError(pos, err, format, args...)
 }
 

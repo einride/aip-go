@@ -5,7 +5,6 @@ import (
 	"slices"
 
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/ident"
 )
 
@@ -36,7 +35,7 @@ func Desc(path string) Field { return Field{Path: path, Desc: true} }
 type Paginator[T any] struct {
 	cols         map[string]Col[T]
 	keys         []string
-	filterSchema *filter.Schema
+	filterSchema *FilterSchema
 	defaultOrder OrderBy
 	defaultSize  int32
 	maxSize      int32
@@ -45,7 +44,7 @@ type Paginator[T any] struct {
 // NewPaginator validates and copies an endpoint declaration.
 func NewPaginator[T any](
 	cols []Col[T],
-	schema *filter.Schema,
+	schema *FilterSchema,
 	defaultOrder []Field,
 	defaultSize int32,
 	maxSize int32,
@@ -99,7 +98,7 @@ func NewPaginator[T any](
 }
 
 // CursorParams creates validated cursor parameters for a request.
-func (p *Paginator[T]) CursorParams(cursor string, pageSize int32, orderBy OrderBy, f filter.Filter) (CursorParams, error) {
+func (p *Paginator[T]) CursorParams(cursor string, pageSize int32, orderBy OrderBy, f Filter) (CursorParams, error) {
 	pageSize, err := p.normalizePageSize(pageSize)
 	if err != nil {
 		return CursorParams{}, err
@@ -123,7 +122,7 @@ func (p *Paginator[T]) CursorParams(cursor string, pageSize int32, orderBy Order
 }
 
 // OffsetParams creates validated page-number parameters for a request.
-func (p *Paginator[T]) OffsetParams(page, pageSize int32, orderBy OrderBy, f filter.Filter) (OffsetParams, error) {
+func (p *Paginator[T]) OffsetParams(page, pageSize int32, orderBy OrderBy, f Filter) (OffsetParams, error) {
 	pageSize, err := p.normalizePageSize(pageSize)
 	if err != nil {
 		return OffsetParams{}, err

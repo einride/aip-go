@@ -1,22 +1,22 @@
-package filter_test
+package flop_test
 
 import (
 	"errors"
 	"strings"
 	"testing"
 
-	"github.com/ysomad/flop/filter"
+	"github.com/ysomad/flop"
 )
 
-// FuzzParse checks that no input panics, that every canonical rendering is
-// itself parseable, and that canonicalization settles after one pass.
+// FuzzParseFilter checks that no input panics, that every canonical rendering
+// is itself parseable, and that canonicalization settles after one pass.
 //
 // It deliberately does not require the first canonical form to equal the
 // second: Canonical does not preserve type, so a float such as -0.0 renders as
 // "-0" and re-parses as an integer. That is harmless because the canonical
 // string is only ever hashed into a cursor fingerprint, never re-parsed, and
 // the same request always canonicalizes the same way.
-func FuzzParse(f *testing.F) {
+func FuzzParseFilter(f *testing.F) {
 	seeds := []string{
 		"",
 		"a = 1",
@@ -38,7 +38,7 @@ func FuzzParse(f *testing.F) {
 	}
 
 	f.Fuzz(func(t *testing.T, input string) {
-		parsed, err := filter.Parse(input)
+		parsed, err := flop.ParseFilter(input)
 		if err != nil {
 			return
 		}
@@ -63,21 +63,22 @@ func FuzzParse(f *testing.F) {
 //
 // Canonical output parenthesises every logical node, but the parser only bounds
 // parenthesis nesting — a long unparenthesised sequence such as "a b c ..."
-// parses at zero nesting cost and then renders deeper than Parse will accept.
-// That is harmless: canonical output is hashed into a cursor fingerprint and is
-// never fed back through Parse, and Schema.Validate rejects trees this deep via
-// Limits.MaxDepth long before one reaches a cursor. Any other parse failure
-// means a rendering the parser cannot read, which is a defect.
-func reparse(t *testing.T, canonical, input string) (filter.Filter, bool) {
+// parses at zero nesting cost and then renders deeper than ParseFilter will
+// accept. That is harmless: canonical output is hashed into a cursor
+// fingerprint and is never fed back through ParseFilter, and
+// FilterSchema.Validate rejects trees this deep via FilterLimits.MaxDepth long
+// before one reaches a cursor. Any other parse failure means a rendering the
+// parser cannot read, which is a defect.
+func reparse(t *testing.T, canonical, input string) (flop.Filter, bool) {
 	t.Helper()
-	parsed, err := filter.Parse(canonical)
+	parsed, err := flop.ParseFilter(canonical)
 	if err == nil {
 		return parsed, true
 	}
-	var filterErr *filter.Error
+	var filterErr *flop.FilterError
 	if errors.As(err, &filterErr) && filterErr.Msg == "nesting is too deep" {
-		return filter.Filter{}, false
+		return flop.Filter{}, false
 	}
 	t.Fatalf("canonical form does not parse: %q from %q: %v", canonical, input, err)
-	return filter.Filter{}, false
+	return flop.Filter{}, false
 }

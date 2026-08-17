@@ -1,4 +1,4 @@
-package filter
+package flop
 
 import (
 	"errors"
@@ -98,7 +98,7 @@ func TestLexer_Errors(t *testing.T) {
 			t.Parallel()
 			_, err := lexAll(t, test.input)
 			assert.Error(t, err)
-			var filterErr *Error
+			var filterErr *FilterError
 			assert.ErrorAs(t, err, &filterErr)
 		})
 	}

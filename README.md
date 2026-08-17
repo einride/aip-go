@@ -6,13 +6,12 @@
 
 Declarative cursor and page-number pagination for Go 1.22+
 
-Four packages:
+Three packages:
 
 | Package | Contents |
 | --- | --- |
-| `flop` | ordering, cursors, page numbers, `Paginator` |
+| `flop` | ordering, filtering, cursors, page numbers, `Paginator` |
 | [`flop/expr`](./expr) | expression nodes, typed values, `Canonical` rendering |
-| [`flop/filter`](./filter) | `Filter`, the AIP-160 parser, per-endpoint `Schema` |
 | [`flop/sqflop`](./sqflop) | Squirrel query builders and filter compiler |
 
 ## Declare an endpoint
@@ -21,14 +20,14 @@ Every endpoint explicitly declares its sortable fields, uniqueness keys,
 filter schema, default sort, default page size, and maximum page size:
 
 ```go
-var orderFilters, _ = filter.NewSchema(
-	[]filter.Field{
-		filter.NewField("state", filter.Enum("pending", "paid"), false),
-		filter.NewField("total", filter.TypeInt, false),
-		filter.NewField("customer_name", filter.TypeString, true),
-		filter.NewField("tags", filter.TypeStringList, false),
+var orderFilters, _ = flop.NewFilterSchema(
+	[]flop.FilterField{
+		flop.NewFilterField("state", flop.Enum("pending", "paid"), false),
+		flop.NewFilterField("total", flop.TypeInt, false),
+		flop.NewFilterField("customer_name", flop.TypeString, true),
+		flop.NewFilterField("tags", flop.TypeStringList, false),
 	},
-	filter.Limits{MaxBytes: 4096, MaxDepth: 16, MaxNodes: 128},
+	flop.FilterLimits{MaxBytes: 4096, MaxDepth: 16, MaxNodes: 128},
 )
 
 var orders, err = flop.NewPaginator(
@@ -58,7 +57,7 @@ The parser accepts the [AIP-160 grammar](https://google.aip.dev/assets/misc/ebnf
 
 ```go
 orderBy, err := flop.ParseOrderBy(req.OrderBy)
-f, err := filter.Parse(req.Filter)
+f, err := flop.ParseFilter(req.Filter)
 params, err := orders.CursorParams(req.Cursor, req.PageSize, orderBy, f)
 if err != nil {
 	// Invalid order, filter, cursor, or non-positive page size: HTTP 400
@@ -82,9 +81,9 @@ filterCompiler, err := sqflop.NewFilterCompiler(orderFilters, map[string]string{
 base := psql.Select("id", "total", "created_at").
 	From("orders").
 	Where(sq.Eq{"tenant_id": req.Tenant})
-base = filterCompiler.Apply(base, params.Filter())
+base = filterCompiler.Where(base, params.Filter())
 
-query := sqflop.Cursor(base, params)
+query := sqflop.CursorQuery(base, params)
 sql, args, err := query.ToSql()
 ```
 

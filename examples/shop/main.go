@@ -17,7 +17,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/sqflop"
 )
 
@@ -69,15 +68,15 @@ var (
 	paginator      = mustPaginator()
 )
 
-func mustFilterSchema() *filter.Schema {
-	schema, err := filter.NewSchema([]filter.Field{
-		filter.NewField("id", filter.TypeString, true),
-		filter.NewField("amount", filter.TypeInt, false),
-		filter.NewField("created_at", filter.TypeTime, false),
-		filter.NewField("captured_at", filter.TypeTime, false),
-		filter.NewField("provider", filter.TypeString, true),
-		filter.NewField("user_id", filter.TypeString, true),
-	}, filter.Limits{MaxBytes: 4096, MaxDepth: 16, MaxNodes: 128})
+func mustFilterSchema() *flop.FilterSchema {
+	schema, err := flop.NewFilterSchema([]flop.FilterField{
+		flop.NewFilterField("id", flop.TypeString, true),
+		flop.NewFilterField("amount", flop.TypeInt, false),
+		flop.NewFilterField("created_at", flop.TypeTime, false),
+		flop.NewFilterField("captured_at", flop.TypeTime, false),
+		flop.NewFilterField("provider", flop.TypeString, true),
+		flop.NewFilterField("user_id", flop.TypeString, true),
+	}, flop.FilterLimits{MaxBytes: 4096, MaxDepth: 16, MaxNodes: 128})
 	if err != nil {
 		panic(err)
 	}
@@ -196,13 +195,13 @@ func handleCursorPayments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter, err := filter.Parse(req.Filter)
+	f, err := flop.ParseFilter(req.Filter)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	params, err := paginator.CursorParams(req.Cursor, req.PageSize, orderBy, filter)
+	params, err := paginator.CursorParams(req.Cursor, req.PageSize, orderBy, f)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -241,13 +240,13 @@ func handleOffsetPayments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter, err := filter.Parse(req.Filter)
+	f, err := flop.ParseFilter(req.Filter)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	params, err := paginator.OffsetParams(req.Page, req.PageSize, orderBy, filter)
+	params, err := paginator.OffsetParams(req.Page, req.PageSize, orderBy, f)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return

@@ -8,7 +8,6 @@ import (
 
 	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/assert"
 )
 
@@ -20,14 +19,14 @@ type paginatorRow struct {
 
 func testPaginator(t *testing.T) *flop.Paginator[paginatorRow] {
 	t.Helper()
-	schema, err := filter.NewSchema([]filter.Field{
-		filter.NewField("age", filter.TypeInt, false),
-		filter.NewField("active", filter.TypeBool, false),
-		filter.NewField("name", filter.TypeString, true),
-		filter.NewField("state", filter.Enum("active", "disabled"), false),
-		filter.NewField("created_at", filter.TypeTime, false),
-		filter.NewField("wait", filter.TypeDuration, false),
-	}, filter.Limits{MaxBytes: 1024, MaxDepth: 16, MaxNodes: 64})
+	schema, err := flop.NewFilterSchema([]flop.FilterField{
+		flop.NewFilterField("age", flop.TypeInt, false),
+		flop.NewFilterField("active", flop.TypeBool, false),
+		flop.NewFilterField("name", flop.TypeString, true),
+		flop.NewFilterField("state", flop.Enum("active", "disabled"), false),
+		flop.NewFilterField("created_at", flop.TypeTime, false),
+		flop.NewFilterField("wait", flop.TypeDuration, false),
+	}, flop.FilterLimits{MaxBytes: 1024, MaxDepth: 16, MaxNodes: 64})
 	assert.NoError(t, err)
 	paginator, err := flop.NewPaginator(
 		[]flop.Col[paginatorRow]{
@@ -56,7 +55,7 @@ func TestNewPaginator(t *testing.T) {
 	key := flop.Key("id", func(row paginatorRow) expr.Value { return expr.Int64Value(row.ID) })
 	type args struct {
 		columns     []flop.Col[paginatorRow]
-		schema      *filter.Schema
+		schema      *flop.FilterSchema
 		order       []flop.Field
 		defaultSize int32
 		maxSize     int32
@@ -68,7 +67,7 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "no columns",
 			args: args{
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -87,7 +86,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "zero-value schema",
 			args: args{
 				columns:     []flop.Col[paginatorRow]{key},
-				schema:      new(filter.Schema),
+				schema:      new(flop.FilterSchema),
 				order:       []flop.Field{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -97,7 +96,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "no default order",
 			args: args{
 				columns:     []flop.Col[paginatorRow]{key},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -106,7 +105,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "invalid sizes",
 			args: args{
 				columns:     []flop.Col[paginatorRow]{key},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("id")},
 				defaultSize: 2,
 				maxSize:     1,
@@ -118,7 +117,7 @@ func TestNewPaginator(t *testing.T) {
 				columns: []flop.Col[paginatorRow]{
 					flop.Key("bad-name", func(row paginatorRow) expr.Value { return expr.Int64Value(row.ID) }),
 				},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -128,7 +127,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "nil value function",
 			args: args{
 				columns:     []flop.Col[paginatorRow]{flop.Key[paginatorRow]("id", nil)},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -138,7 +137,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "duplicate column",
 			args: args{
 				columns:     []flop.Col[paginatorRow]{key, key},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -150,7 +149,7 @@ func TestNewPaginator(t *testing.T) {
 				columns: []flop.Col[paginatorRow]{
 					flop.Sortable("id", func(row paginatorRow) expr.Value { return expr.Int64Value(row.ID) }),
 				},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -160,7 +159,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "unknown default order",
 			args: args{
 				columns:     []flop.Col[paginatorRow]{key},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("missing")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -170,7 +169,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "duplicate default order",
 			args: args{
 				columns:     []flop.Col[paginatorRow]{key},
-				schema:      filter.Disabled(),
+				schema:      flop.DisabledFilter(),
 				order:       []flop.Field{flop.Asc("id"), flop.Desc("id")},
 				defaultSize: 1,
 				maxSize:     1,
@@ -196,7 +195,7 @@ func TestNewPaginator(t *testing.T) {
 func TestPaginator_CursorParams(t *testing.T) {
 	t.Parallel()
 	paginator := testPaginator(t)
-	seed, err := paginator.CursorParams("", 1, flop.OrderBy{}, filter.Filter{})
+	seed, err := paginator.CursorParams("", 1, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	seedTime := time.Unix(1, 0)
 	seedPage, err := paginator.CursorPage(
@@ -297,7 +296,7 @@ func TestPaginator_CursorParams(t *testing.T) {
 			if len(test.args.orderBy.Fields) != 0 {
 				orderBy = test.args.orderBy
 			}
-			filter, err := filter.Parse(test.args.filter)
+			filter, err := flop.ParseFilter(test.args.filter)
 			assert.NoError(t, err)
 			got, err := paginator.CursorParams(test.args.cursor, test.args.size, orderBy, filter)
 			test.wantErr(t, err)
@@ -375,7 +374,7 @@ func TestPaginator_OffsetParams(t *testing.T) {
 			t.Parallel()
 			order, err := flop.ParseOrderBy(test.args.order)
 			assert.NoError(t, err)
-			filter, err := filter.Parse(test.args.filter)
+			filter, err := flop.ParseFilter(test.args.filter)
 			assert.NoError(t, err)
 			got, err := paginator.OffsetParams(test.args.page, test.args.size, order, filter)
 			test.wantErr(t, err)
@@ -396,13 +395,13 @@ func TestPaginator_OffsetParams(t *testing.T) {
 func TestPaginator_CursorPage(t *testing.T) {
 	t.Parallel()
 	paginator := testPaginator(t)
-	params, err := paginator.CursorParams("", 2, flop.OrderBy{}, filter.Filter{})
+	params, err := paginator.CursorParams("", 2, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	unknownParams, err := flop.NewCursorParams(
 		"",
 		2,
 		flop.OrderBy{Fields: []flop.Field{flop.Asc("missing")}},
-		filter.Filter{},
+		flop.Filter{},
 	)
 	assert.NoError(t, err)
 	emptyParams := flop.CursorParams{}
@@ -477,7 +476,7 @@ func TestPaginator_CursorPage(t *testing.T) {
 			}
 			got := cursorPage{items: len(page.Items)}
 			if page.NextCursor != "" {
-				next, err := paginator.CursorParams(page.NextCursor, 1, flop.OrderBy{}, filter.Filter{})
+				next, err := paginator.CursorParams(page.NextCursor, 1, flop.OrderBy{}, flop.Filter{})
 				assert.NoError(t, err)
 				got.after = next.After()
 			}

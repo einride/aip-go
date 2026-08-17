@@ -5,14 +5,14 @@ import (
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/ident"
 )
 
 // FilterCompiler compiles validated filters into Squirrel predicates.
 type FilterCompiler struct {
-	schema *filter.Schema
+	schema *flop.FilterSchema
 	fields map[string]string
 }
 
@@ -20,8 +20,8 @@ type FilterCompiler struct {
 // fields use their own name as the column, so only columns that differ — a
 // table-qualified name, or a rename — need an entry. A nil map leaves every
 // field on its own name.
-func NewFilterCompiler(schema *filter.Schema, fields map[string]string) (*FilterCompiler, error) {
-	if _, err := schema.Validate(filter.Filter{}); err != nil {
+func NewFilterCompiler(schema *flop.FilterSchema, fields map[string]string) (*FilterCompiler, error) {
+	if _, err := schema.Validate(flop.Filter{}); err != nil {
 		return nil, fmt.Errorf("sqflop: %w", err)
 	}
 
@@ -54,7 +54,7 @@ func NewFilterCompiler(schema *filter.Schema, fields map[string]string) (*Filter
 }
 
 // Where adds filter to base. Compilation errors surface when ToSql is called.
-func (c *FilterCompiler) Where(base sq.SelectBuilder, f filter.Filter) sq.SelectBuilder {
+func (c *FilterCompiler) Where(base sq.SelectBuilder, f flop.Filter) sq.SelectBuilder {
 	validated, err := c.schema.Validate(f)
 	if err != nil {
 		return wrapErr(base, "filter: %w", err)

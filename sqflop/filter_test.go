@@ -4,20 +4,20 @@ import (
 	"testing"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/assert"
 )
 
-func testFilterSchema(t *testing.T) *filter.Schema {
+func testFilterSchema(t *testing.T) *flop.FilterSchema {
 	t.Helper()
-	schema, err := filter.NewSchema([]filter.Field{
-		filter.NewField("state", filter.Enum("pending", "paid"), false),
-		filter.NewField("total", filter.TypeInt, false),
-		filter.NewField("name", filter.TypeString, true),
-		filter.NewField("deleted", filter.TypeBool, false),
-		filter.NewField("tags", filter.TypeStringList, false),
-	}, filter.Limits{})
+	schema, err := flop.NewFilterSchema([]flop.FilterField{
+		flop.NewFilterField("state", flop.Enum("pending", "paid"), false),
+		flop.NewFilterField("total", flop.TypeInt, false),
+		flop.NewFilterField("name", flop.TypeString, true),
+		flop.NewFilterField("deleted", flop.TypeBool, false),
+		flop.NewFilterField("tags", flop.TypeStringList, false),
+	}, flop.FilterLimits{})
 	assert.NoError(t, err)
 	return schema
 }
@@ -202,7 +202,7 @@ func TestFilterCompiler_Where(t *testing.T) {
 				return
 			}
 
-			filter, err := filter.Parse(test.args.filter)
+			filter, err := flop.ParseFilter(test.args.filter)
 			assert.NoError(t, err)
 
 			gotSQL, gotArgs, gotErr := compiler.Where(psql.Select("id").From("orders o"), filter).ToSql()
@@ -264,7 +264,7 @@ func TestFilterCompiler_ApplyDefaultColumns(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			f, err := filter.Parse(test.args.filter)
+			f, err := flop.ParseFilter(test.args.filter)
 			assert.NoError(t, err)
 			gotSQL, gotArgs, gotErr := test.args.compiler.Where(psql.Select("id").From("orders o"), f).ToSql()
 			assert.NoError(t, gotErr)
@@ -278,7 +278,7 @@ func TestNewFilterCompiler(t *testing.T) {
 	t.Parallel()
 	schema := testFilterSchema(t)
 	type args struct {
-		schema *filter.Schema
+		schema *flop.FilterSchema
 		fields map[string]string
 	}
 	tests := []struct {

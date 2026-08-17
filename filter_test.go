@@ -1,12 +1,12 @@
-package filter_test
+package flop_test
 
 import (
 	"math"
 	"strings"
 	"testing"
 
+	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/assert"
 )
 
@@ -16,14 +16,14 @@ func TestParseFilter(t *testing.T) {
 	tests := []struct {
 		name       string
 		input      string
-		wantFilter filter.Filter
+		wantFilter flop.Filter
 		wantErr    assert.ErrorFunc
 	}{
-		{name: "empty", input: " \n\t", wantFilter: filter.Filter{}, wantErr: assert.NoError},
+		{name: "empty", input: " \n\t", wantFilter: flop.Filter{}, wantErr: assert.NoError},
 		{
 			name:  "comparison",
 			input: "price >= 12.5",
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "price", Op: expr.GreaterOrEqual, Value: expr.Float64Value(12.5),
 			}},
 			wantErr: assert.NoError,
@@ -31,7 +31,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "all comparison operators",
 			input: "a != 1 AND b < 2 AND c <= 3 AND d > 4",
-			wantFilter: filter.Filter{Expr: expr.LogicalExpr{
+			wantFilter: flop.Filter{Expr: expr.LogicalExpr{
 				Left: expr.LogicalExpr{
 					Left: expr.LogicalExpr{
 						Left:  expr.ComparisonExpr{Field: "a", Op: expr.NotEqual, Value: expr.Int64Value(1)},
@@ -49,7 +49,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "minimum int64",
 			input: "value = -9223372036854775808",
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "value", Op: expr.Equal, Value: expr.Int64Value(math.MinInt64),
 			}},
 			wantErr: assert.NoError,
@@ -57,7 +57,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "maximum uint64",
 			input: "value = 18446744073709551615",
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "value", Op: expr.Equal, Value: expr.Uint64Value(math.MaxUint64),
 			}},
 			wantErr: assert.NoError,
@@ -65,7 +65,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "escaped unicode string",
 			input: `name = "line\n\u4e16\u754c"`,
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "name", Op: expr.Equal, Value: expr.StringValue("line\n世界"),
 			}},
 			wantErr: assert.NoError,
@@ -73,31 +73,31 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:       "escaped quote",
 			input:      `"a\"b"`,
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.StringValue(`a"b`)}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.StringValue(`a"b`)}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:       "single quoted apostrophe",
 			input:      `'it\'s'`,
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.StringValue("it's")}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.StringValue("it's")}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:       "double quote inside single quotes",
 			input:      `'a"b'`,
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.StringValue(`a"b`)}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.StringValue(`a"b`)}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:       "quoted keyword is text",
 			input:      `"and"`,
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.StringValue("and")}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.StringValue("and")}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:  "aip precedence",
 			input: "a = 1 OR b = 2 AND c = 3",
-			wantFilter: filter.Filter{Expr: expr.LogicalExpr{
+			wantFilter: flop.Filter{Expr: expr.LogicalExpr{
 				Left: expr.LogicalExpr{
 					Left: expr.ComparisonExpr{
 						Field: "a", Op: expr.Equal, Value: expr.Int64Value(1),
@@ -117,7 +117,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "sequence",
 			input: `"blue" "chair"`,
-			wantFilter: filter.Filter{Expr: expr.LogicalExpr{
+			wantFilter: flop.Filter{Expr: expr.LogicalExpr{
 				Left:  expr.TextExpr{V: expr.StringValue("blue")},
 				Op:    expr.Seq,
 				Right: expr.TextExpr{V: expr.StringValue("chair")},
@@ -127,13 +127,13 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:       "word text",
 			input:      "chair",
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.StringValue("chair")}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.StringValue("chair")}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:  "negation",
 			input: "-deleted = true",
-			wantFilter: filter.Filter{Expr: expr.NotExpr{
+			wantFilter: flop.Filter{Expr: expr.NotExpr{
 				Expr: expr.ComparisonExpr{
 					Field: "deleted", Op: expr.Equal, Value: expr.BoolValue(true),
 				},
@@ -143,7 +143,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "not and literal values",
 			input: "NOT (active = false OR deleted = null)",
-			wantFilter: filter.Filter{Expr: expr.NotExpr{Expr: expr.LogicalExpr{
+			wantFilter: flop.Filter{Expr: expr.NotExpr{Expr: expr.LogicalExpr{
 				Left:  expr.ComparisonExpr{Field: "active", Op: expr.Equal, Value: expr.BoolValue(false)},
 				Op:    expr.Or,
 				Right: expr.ComparisonExpr{Field: "deleted", Op: expr.Equal, Value: expr.NullValue()},
@@ -153,7 +153,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "field value",
 			input: "state = active",
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "state", Op: expr.Equal, Value: expr.StringValue("active"),
 			}},
 			wantErr: assert.NoError,
@@ -161,18 +161,18 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:       "parenthesized",
 			input:      "(a = 1)",
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{Field: "a", Op: expr.Equal, Value: expr.Int64Value(1)}},
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{Field: "a", Op: expr.Equal, Value: expr.Int64Value(1)}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name: "trailing whitespace", input: "a ",
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.StringValue("a")}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.StringValue("a")}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:  "terminal wildcard",
 			input: `labels.* = "value"`,
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "labels.*", Op: expr.Equal, Value: expr.StringValue("value"),
 			}},
 			wantErr: assert.NoError,
@@ -180,24 +180,24 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:       "decimal without fraction",
 			input:      "1.",
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.Float64Value(1)}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.Float64Value(1)}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name: "positive exponent", input: "1e+2",
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.Float64Value(100)}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.Float64Value(100)}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:       "negative exponent",
 			input:      "1E-2",
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.Float64Value(0.01)}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.Float64Value(0.01)}},
 			wantErr:    assert.NoError,
 		},
 		{
 			name:  "has",
 			input: `tags:"blue"`,
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "tags", Op: expr.Has, Value: expr.StringValue("blue"),
 			}},
 			wantErr: assert.NoError,
@@ -205,7 +205,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "has bare identifier",
 			input: "tags:blue",
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "tags", Op: expr.Has, Value: expr.StringValue("blue"),
 			}},
 			wantErr: assert.NoError,
@@ -213,7 +213,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "has dotted path",
 			input: `metadata.tags:"blue"`,
-			wantFilter: filter.Filter{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.ComparisonExpr{
 				Field: "metadata.tags", Op: expr.Has, Value: expr.StringValue("blue"),
 			}},
 			wantErr: assert.NoError,
@@ -221,7 +221,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:  "negated has",
 			input: `NOT tags:"blue"`,
-			wantFilter: filter.Filter{Expr: expr.NotExpr{Expr: expr.ComparisonExpr{
+			wantFilter: flop.Filter{Expr: expr.NotExpr{Expr: expr.ComparisonExpr{
 				Field: "tags", Op: expr.Has, Value: expr.StringValue("blue"),
 			}}},
 			wantErr: assert.NoError,
@@ -229,7 +229,7 @@ func TestParseFilter(t *testing.T) {
 		{
 			name:       "googlesql escape",
 			input:      `'a\?b'`,
-			wantFilter: filter.Filter{Expr: expr.TextExpr{V: expr.StringValue("a?b")}},
+			wantFilter: flop.Filter{Expr: expr.TextExpr{V: expr.StringValue("a?b")}},
 			wantErr:    assert.NoError,
 		},
 		{name: "double negation is not a term", input: `NOT NOT name = "x"`, wantErr: assert.Error},
@@ -276,7 +276,7 @@ func TestParseFilter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := filter.Parse(test.input)
+			got, err := flop.ParseFilter(test.input)
 			assert.Equal(t, test.wantFilter, got)
 			test.wantErr(t, err)
 		})

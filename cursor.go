@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/ident"
 )
 
@@ -40,7 +39,7 @@ type CursorParams struct {
 	pageSize int32
 	binding  [sha256.Size]byte
 	orderBy  OrderBy
-	filter   filter.Filter
+	filter   Filter
 }
 
 // After returns the position the next page starts after. It is empty for the
@@ -62,7 +61,7 @@ func NewCursorParams(
 	cursor string,
 	pageSize int32,
 	orderBy OrderBy,
-	f filter.Filter,
+	f Filter,
 ) (CursorParams, error) {
 	if pageSize <= 0 {
 		return CursorParams{}, fmt.Errorf("flop: page size must be positive")
@@ -92,7 +91,7 @@ func NewCursorParams(
 func (p CursorParams) OrderBy() OrderBy { return p.orderBy.clone() }
 
 // Filter returns the validated filter associated with these parameters.
-func (p CursorParams) Filter() filter.Filter { return p.filter }
+func (p CursorParams) Filter() Filter { return p.filter }
 
 // CursorPage is a page returned by cursor pagination.
 type CursorPage[T any] struct {
@@ -166,7 +165,7 @@ func (p CursorPosition) clone() CursorPosition {
 	return slices.Clone(p)
 }
 
-func cursorBinding(o OrderBy, f filter.Filter) [sha256.Size]byte {
+func cursorBinding(o OrderBy, f Filter) [sha256.Size]byte {
 	hash := sha256.New()
 	writeHashString(hash, o.String())
 	writeHashString(hash, f.String())

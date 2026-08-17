@@ -1,4 +1,4 @@
-package filter
+package flop
 
 import (
 	"errors"
@@ -10,13 +10,10 @@ import (
 	"github.com/ysomad/flop/internal/ident"
 )
 
-// Position is a position in a filter expression.
-type Position struct {
-	// Offset is the byte offset, starting at 0.
+// FilterPosition is a position in a filter expression.
+type FilterPosition struct {
 	Offset int32
-	// Line is the line number, starting at 1.
-	Line int32
-	// Column is the column number, starting at 1.
+	Line   int32
 	Column int32
 }
 
@@ -112,7 +109,7 @@ func (t tokenType) isComparator() bool {
 func (t tokenType) test(other tokenType) bool { return t == other }
 
 type token struct {
-	Position Position
+	Position FilterPosition
 	Type     tokenType
 	Value    string
 }
@@ -130,12 +127,12 @@ func (t token) unquote() (string, error) {
 // It is copyable: the parser saves and restores one by value to backtrack.
 type lexer struct {
 	filter     string
-	tokenStart Position
-	tokenEnd   Position
+	tokenStart FilterPosition
+	tokenEnd   FilterPosition
 }
 
 func newLexer(filter string) lexer {
-	start := Position{Offset: 0, Line: 1, Column: 1}
+	start := FilterPosition{Offset: 0, Line: 1, Column: 1}
 	return lexer{filter: filter, tokenStart: start, tokenEnd: start}
 }
 
@@ -237,7 +234,7 @@ func (l *lexer) lexNumber() (token, error) {
 	return l.emit(tokenText)
 }
 
-func (l *lexer) position() Position { return l.tokenStart }
+func (l *lexer) position() FilterPosition { return l.tokenStart }
 
 func (l *lexer) emit(t tokenType) (token, error) {
 	tok := token{

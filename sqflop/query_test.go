@@ -7,7 +7,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/expr"
-	"github.com/ysomad/flop/filter"
 	"github.com/ysomad/flop/internal/assert"
 )
 
@@ -25,7 +24,7 @@ func queryPaginator(t *testing.T) *flop.Paginator[queryRow] {
 			flop.Sortable("created_at", func(row queryRow) expr.Value { return expr.TimeValue(row.CreatedAt) }),
 			flop.Key("id", func(row queryRow) expr.Value { return expr.Int64Value(row.ID) }),
 		},
-		filter.Disabled(),
+		flop.DisabledFilter(),
 		[]flop.Field{flop.Desc("created_at")},
 		2,
 		100,
@@ -37,7 +36,7 @@ func queryPaginator(t *testing.T) *flop.Paginator[queryRow] {
 func TestCursorQuery(t *testing.T) {
 	t.Parallel()
 	paginator := queryPaginator(t)
-	first, err := paginator.CursorParams("", 2, flop.OrderBy{}, filter.Filter{})
+	first, err := paginator.CursorParams("", 2, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	now := time.Date(2026, time.August, 16, 10, 0, 0, 0, time.UTC)
 	page, err := paginator.CursorPage([]queryRow{
@@ -46,16 +45,16 @@ func TestCursorQuery(t *testing.T) {
 		{ID: 3, CreatedAt: now.Add(-2 * time.Second)},
 	}, first)
 	assert.NoError(t, err)
-	next, err := paginator.CursorParams(page.NextCursor, 2, flop.OrderBy{}, filter.Filter{})
+	next, err := paginator.CursorParams(page.NextCursor, 2, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	singleOrder := singleOrderParams(t)
-	withoutOrder, err := flop.NewCursorParams("", 1, flop.OrderBy{}, filter.Filter{})
+	withoutOrder, err := flop.NewCursorParams("", 1, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	invalidOrder, err := flop.NewCursorParams(
 		"",
 		1,
 		flop.OrderBy{Fields: []flop.Field{{Path: "bad-name"}}},
-		filter.Filter{},
+		flop.Filter{},
 	)
 	assert.NoError(t, err)
 	mismatchedPosition := mismatchedPositionParams(t, now)
@@ -138,17 +137,17 @@ func singleOrderParams(t *testing.T) flop.CursorParams {
 		[]flop.Col[queryRow]{
 			flop.Key("id", func(row queryRow) expr.Value { return expr.Int64Value(row.ID) }),
 		},
-		filter.Disabled(),
+		flop.DisabledFilter(),
 		[]flop.Field{flop.Asc("id")},
 		1,
 		100,
 	)
 	assert.NoError(t, err)
-	first, err := paginator.CursorParams("", 1, flop.OrderBy{}, filter.Filter{})
+	first, err := paginator.CursorParams("", 1, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	page, err := paginator.CursorPage([]queryRow{{ID: 1}, {ID: 2}}, first)
 	assert.NoError(t, err)
-	params, err := paginator.CursorParams(page.NextCursor, 1, flop.OrderBy{}, filter.Filter{})
+	params, err := paginator.CursorParams(page.NextCursor, 1, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	return params
 }
@@ -160,7 +159,7 @@ func singleOrderParams(t *testing.T) flop.CursorParams {
 func mismatchedPositionParams(t *testing.T, now time.Time) flop.CursorParams {
 	t.Helper()
 	orderBy := flop.OrderBy{Fields: []flop.Field{flop.Asc("id")}}
-	params, err := flop.NewCursorParams("", 1, orderBy, filter.Filter{})
+	params, err := flop.NewCursorParams("", 1, orderBy, flop.Filter{})
 	assert.NoError(t, err)
 	page, err := flop.NewCursorPage(
 		[]queryRow{{ID: 1}, {ID: 2}},
@@ -173,7 +172,7 @@ func mismatchedPositionParams(t *testing.T, now time.Time) flop.CursorParams {
 		},
 	)
 	assert.NoError(t, err)
-	mismatched, err := flop.NewCursorParams(page.NextCursor, 1, orderBy, filter.Filter{})
+	mismatched, err := flop.NewCursorParams(page.NextCursor, 1, orderBy, flop.Filter{})
 	assert.NoError(t, err)
 	return mismatched
 }
@@ -299,9 +298,9 @@ func Test_cursorPredicate(t *testing.T) {
 func TestOffsetQuery(t *testing.T) {
 	t.Parallel()
 	paginator := queryPaginator(t)
-	params, err := paginator.OffsetParams(3, 20, flop.OrderBy{}, filter.Filter{})
+	params, err := paginator.OffsetParams(3, 20, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
-	firstPage, err := paginator.OffsetParams(1, 20, flop.OrderBy{}, filter.Filter{})
+	firstPage, err := paginator.OffsetParams(1, 20, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	withoutOrder, err := flop.NewOffsetParams(1, 10)
 	assert.NoError(t, err)
