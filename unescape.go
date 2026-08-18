@@ -6,6 +6,9 @@ import (
 	"unicode/utf8"
 )
 
+//nolint:gochecknoglobals
+var newlineNormalizer = strings.NewReplacer("\r\n", "\n", "\r", "\n")
+
 // Unescape takes a quoted string, unquotes, and unescapes it.
 //
 // This function performs escaping compatible with GoogleSQL.
@@ -187,6 +190,3 @@ func unhex(b byte) (rune, bool) {
 	}
 	return 0, false
 }
-
-//nolint:gochecknoglobals
-var newlineNormalizer = strings.NewReplacer("\r\n", "\n", "\r", "\n")

@@ -57,12 +57,7 @@ func (p CursorParams) Limit() int32 {
 // NewCursorParams parses pagination inputs and returns backend-neutral storage
 // parameters. orderBy and filter bind a cursor to the current request.
 // pageSize must already be normalized by the caller.
-func NewCursorParams(
-	cursor string,
-	pageSize int32,
-	orderBy OrderBy,
-	f Filter,
-) (CursorParams, error) {
+func NewCursorParams(cursor string, pageSize int32, orderBy OrderBy, f Filter) (CursorParams, error) {
 	if pageSize <= 0 {
 		return CursorParams{}, fmt.Errorf("flop: page size must be positive")
 	}
@@ -263,30 +258,30 @@ func readBytes(r *bytes.Reader) ([]byte, error) {
 func writeValue(w io.Writer, v expr.Value) {
 	_, _ = w.Write([]byte{byte(v.Kind())})
 	var fixed [8]byte
-	switch value := v.Any().(type) {
+	switch val := v.Any().(type) {
 	case bool:
-		if value {
+		if val {
 			_, _ = w.Write([]byte{1})
 		} else {
 			_, _ = w.Write([]byte{0})
 		}
 	case int64:
-		binary.BigEndian.PutUint64(fixed[:], uint64(value))
+		binary.BigEndian.PutUint64(fixed[:], uint64(val))
 		_, _ = w.Write(fixed[:])
 	case uint64:
-		binary.BigEndian.PutUint64(fixed[:], value)
+		binary.BigEndian.PutUint64(fixed[:], val)
 		_, _ = w.Write(fixed[:])
 	case float64:
-		binary.BigEndian.PutUint64(fixed[:], math.Float64bits(value))
+		binary.BigEndian.PutUint64(fixed[:], math.Float64bits(val))
 		_, _ = w.Write(fixed[:])
 	case string:
-		writeBytes(w, []byte(value))
+		writeBytes(w, []byte(val))
 	case []byte:
-		writeBytes(w, value)
+		writeBytes(w, val)
 	case time.Time:
-		writeBytes(w, []byte(value.UTC().Format(time.RFC3339Nano)))
+		writeBytes(w, []byte(val.UTC().Format(time.RFC3339Nano)))
 	case time.Duration:
-		binary.BigEndian.PutUint64(fixed[:], uint64(value))
+		binary.BigEndian.PutUint64(fixed[:], uint64(val))
 		_, _ = w.Write(fixed[:])
 	}
 }
@@ -326,23 +321,23 @@ func readValue(r *bytes.Reader) (expr.Value, error) {
 		if err := readFixed(); err != nil {
 			return expr.Value{}, err
 		}
-		value := expr.Float64Value(math.Float64frombits(binary.BigEndian.Uint64(fixed[:])))
-		if !value.Valid() {
+		val := expr.Float64Value(math.Float64frombits(binary.BigEndian.Uint64(fixed[:])))
+		if !val.Valid() {
 			return expr.Value{}, fmt.Errorf("flop: invalid cursor")
 		}
-		return value, nil
+		return val, nil
 	case expr.StringKind:
-		value, err := readBytes(r)
-		return expr.StringValue(string(value)), err
+		val, err := readBytes(r)
+		return expr.StringValue(string(val)), err
 	case expr.BytesKind:
-		value, err := readBytes(r)
-		return expr.BytesValue(value), err
+		val, err := readBytes(r)
+		return expr.BytesValue(val), err
 	case expr.TimeKind:
-		value, err := readBytes(r)
+		val, err := readBytes(r)
 		if err != nil {
 			return expr.Value{}, err
 		}
-		parsed, err := time.Parse(time.RFC3339Nano, string(value))
+		parsed, err := time.Parse(time.RFC3339Nano, string(val))
 		if err != nil {
 			return expr.Value{}, fmt.Errorf("flop: invalid cursor")
 		}

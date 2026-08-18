@@ -2,6 +2,7 @@ package flop
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -35,16 +36,19 @@ func ParseFilter(input string) (Filter, error) {
 		return Filter{}, nil
 	}
 	if len(input) > maxFilterBytes {
-		return Filter{}, newFilterError(FilterPosition{Line: 1, Column: 1}, nil, "filter is too large")
+		return Filter{}, &FilterError{Pos: FilterPosition{Line: 1, Column: 1}, Msg: "filter is too large"}
 	}
 	p := newFilterParser(trimmed)
 	return p.parse()
 }
 
-// filterParser is a recursive-descent filterParser for the AIP-160 grammar.
+// filterParser is a recursive-descent parser for the AIP-160 grammar.
 //
-// Backtracking copies the filterParser by value, so every field must remain safely
-// copyable; the lexer holds only its input string and cursor positions.
+// Methods that consume input take a pointer receiver. Lookahead methods take a
+// value receiver, so they parse against a copy and leave the caller's position
+// untouched; eatTokens rolls back explicitly because it commits on success.
+// Both rely on every field remaining safely copyable; the lexer holds only its
+// input string and cursor positions.
 type filterParser struct {
 	lexer lexer
 	depth int
@@ -265,7 +269,7 @@ func (p *filterParser) parseRestriction() (expr.Expr, error) {
 	if !comparable.isPath || !validPath(comparable.path) {
 		return nil, p.errorf(comparable.pos, "comparison requires a field")
 	}
-	operator, ok := comparisonOp(comparator.Type)
+	operator, ok := comparator.Type.comparisonOp()
 	if !ok {
 		return nil, p.errorf(comparator.Position, "invalid comparison operator")
 	}
@@ -353,9 +357,7 @@ func (p *filterParser) parseToken(fns ...func(tokenType) bool) (token, error) {
 	return token{}, p.errorf(tok.Position, "unexpected token %s", tok.Type)
 }
 
-func (p *filterParser) sniff(fns ...func(tokenType) bool) bool {
-	start := *p
-	defer func() { *p = start }()
+func (p filterParser) sniff(fns ...func(tokenType) bool) bool {
 	for _, fn := range fns {
 		tok, err := p.lexer.lex()
 		if err != nil || !fn(tok.Type) {
@@ -365,9 +367,7 @@ func (p *filterParser) sniff(fns ...func(tokenType) bool) bool {
 	return true
 }
 
-func (p *filterParser) sniffTokens(want ...tokenType) bool {
-	start := *p
-	defer func() { *p = start }()
+func (p filterParser) sniffTokens(want ...tokenType) bool {
 	for _, wantType := range want {
 		if tok, err := p.lexer.lex(); err != nil || tok.Type != wantType {
 			return false
@@ -388,33 +388,12 @@ func (p *filterParser) eatTokens(want ...tokenType) error {
 	return nil
 }
 
-func (p *filterParser) errorf(pos FilterPosition, format string, args ...any) error {
-	return newFilterError(pos, nil, format, args...)
+func (p filterParser) errorf(pos FilterPosition, format string, args ...any) error {
+	return &FilterError{Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
-func (p *filterParser) wrapf(err error, pos FilterPosition, format string, args ...any) error {
-	return newFilterError(pos, err, format, args...)
-}
-
-func comparisonOp(t tokenType) (expr.ComparisonOp, bool) {
-	switch t {
-	case tokenEquals:
-		return expr.Equal, true
-	case tokenNotEquals:
-		return expr.NotEqual, true
-	case tokenLess:
-		return expr.Less, true
-	case tokenLessEquals:
-		return expr.LessOrEqual, true
-	case tokenGreater:
-		return expr.Greater, true
-	case tokenGreaterEquals:
-		return expr.GreaterOrEqual, true
-	case tokenHas:
-		return expr.Has, true
-	default:
-		return 0, false
-	}
+func (p filterParser) wrapf(err error, pos FilterPosition, format string, args ...any) error {
+	return &FilterError{Pos: pos, Msg: fmt.Sprintf(format, args...), cause: err}
 }
 
 func parseNumber(literal string) (expr.Value, error) {
@@ -435,11 +414,11 @@ func parseNumber(literal string) (expr.Value, error) {
 	if value, err := strconv.ParseInt(literal, 10, 64); err == nil {
 		return expr.Int64Value(value), nil
 	}
-	value, err := strconv.ParseUint(literal, 10, 64)
+	val, err := strconv.ParseUint(literal, 10, 64)
 	if err != nil {
 		return expr.Value{}, err
 	}
-	return expr.Uint64Value(value), nil
+	return expr.Uint64Value(val), nil
 }
 
 // validPath reports whether path is a filter field path: dot-separated

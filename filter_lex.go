@@ -2,11 +2,13 @@ package flop
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/ysomad/flop/expr"
 	"github.com/ysomad/flop/internal/ident"
 )
 
@@ -107,6 +109,27 @@ func (t tokenType) isComparator() bool {
 }
 
 func (t tokenType) test(other tokenType) bool { return t == other }
+
+func (t tokenType) comparisonOp() (expr.ComparisonOp, bool) {
+	switch t {
+	case tokenEquals:
+		return expr.Equal, true
+	case tokenNotEquals:
+		return expr.NotEqual, true
+	case tokenLess:
+		return expr.Less, true
+	case tokenLessEquals:
+		return expr.LessOrEqual, true
+	case tokenGreater:
+		return expr.Greater, true
+	case tokenGreaterEquals:
+		return expr.GreaterOrEqual, true
+	case tokenHas:
+		return expr.Has, true
+	default:
+		return 0, false
+	}
+}
 
 type token struct {
 	Position FilterPosition
@@ -285,7 +308,7 @@ func (l *lexer) sniffRune(want rune) bool {
 }
 
 func (l *lexer) errorf(format string, args ...any) error {
-	return newFilterError(l.tokenStart, nil, format, args...)
+	return &FilterError{Pos: l.tokenStart, Msg: fmt.Sprintf(format, args...)}
 }
 
 func isText(r rune) bool { return ident.IsContinue(r) || r == '*' }

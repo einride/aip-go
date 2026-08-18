@@ -176,6 +176,7 @@ func (c *FilterCompiler) text(val expr.Value, negated bool) (sq.Sqlizer, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	fields := c.schema.SearchFields()
 	predicates := make([]sq.Sqlizer, 0, len(fields))
 	for _, field := range fields {
