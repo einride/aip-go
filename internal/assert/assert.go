@@ -8,7 +8,7 @@ import (
 
 type ErrorFunc = func(t *testing.T, err error)
 
-func Equal[T any](t *testing.T, want, got T) {
+func Equal(t *testing.T, want, got any) {
 	t.Helper()
 	if !reflect.DeepEqual(want, got) {
 		t.Fatalf("want %#v, got %#v", want, got)
