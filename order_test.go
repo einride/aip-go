@@ -23,7 +23,7 @@ func TestParseOrderBy(t *testing.T) {
 		{
 			name: "fields",
 			args: args{input: "create_time desc, user.name asc, id"},
-			wantOrderBy: flop.OrderBy{Fields: []flop.Field{
+			wantOrderBy: flop.OrderBy{Fields: []flop.OrderField{
 				{Path: "create_time", Desc: true},
 				{Path: "user.name"},
 				{Path: "id"},
@@ -33,7 +33,7 @@ func TestParseOrderBy(t *testing.T) {
 		{
 			name: "explicit ascending and whitespace",
 			args: args{input: "  create_time   asc ,\tuser_id desc  "},
-			wantOrderBy: flop.OrderBy{Fields: []flop.Field{
+			wantOrderBy: flop.OrderBy{Fields: []flop.OrderField{
 				{Path: "create_time"},
 				{Path: "user_id", Desc: true},
 			}},
@@ -63,17 +63,17 @@ func TestOrderBy_String(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "", (flop.OrderBy{}).String())
-	assert.Equal(t, "create_time desc, id", (flop.OrderBy{Fields: []flop.Field{
+	assert.Equal(t, "create_time desc, id", (flop.OrderBy{Fields: []flop.OrderField{
 		{Path: "create_time", Desc: true},
 		{Path: "id"},
 	}}).String())
 }
 
-func TestField_SQL(t *testing.T) {
+func TestOrderField_SQL(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name  string
-		field flop.Field
+		field flop.OrderField
 		want  string
 	}{
 		{name: "ascending", field: flop.Asc("created_at"), want: "created_at ASC"},

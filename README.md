@@ -31,7 +31,7 @@ var orderFilters, _ = flop.NewFilterSchema(
 )
 
 var orders, err = flop.NewPaginator(
-	[]flop.Col[Order]{
+	[]flop.Column[Order]{
 		flop.Sortable("total", func(o Order) expr.Value {
 			return expr.Int64Value(o.Total)
 		}),
@@ -43,7 +43,7 @@ var orders, err = flop.NewPaginator(
 		}),
 	},
 	orderFilters,
-	[]flop.Field{flop.Desc("created_at")},
+	[]flop.OrderField{flop.Desc("created_at")},
 	50,  // endpoint default
 	250, // endpoint maximum
 )

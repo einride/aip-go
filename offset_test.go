@@ -69,7 +69,7 @@ func TestNewOffsetParams(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			got, gotErr := flop.NewOffsetParams(test.args.pageNumber, test.args.pageSize)
+			got, gotErr := flop.NewOffsetParams(test.args.pageNumber, test.args.pageSize, flop.OrderBy{}, flop.Filter{})
 			assert.Equal(t, test.wantOffsetParams, offsetParams{
 				pageNumber: got.Page(),
 				offset:     got.Offset(),
@@ -80,11 +80,24 @@ func TestNewOffsetParams(t *testing.T) {
 	}
 }
 
+func TestNewOffsetParams_CarriesOrderAndFilter(t *testing.T) {
+	t.Parallel()
+	orderBy, err := flop.ParseOrderBy("created_at desc, id")
+	assert.NoError(t, err)
+	filter, err := flop.ParseFilter("age = 42")
+	assert.NoError(t, err)
+
+	got, err := flop.NewOffsetParams(2, 10, orderBy, filter)
+	assert.NoError(t, err)
+	assert.Equal(t, orderBy, got.OrderBy())
+	assert.Equal(t, filter.String(), got.Filter().String())
+}
+
 func TestNewOffsetPage(t *testing.T) {
 	t.Parallel()
-	secondPageParams, err := flop.NewOffsetParams(2, 2)
+	secondPageParams, err := flop.NewOffsetParams(2, 2, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
-	thirdPageParams, err := flop.NewOffsetParams(3, 2)
+	thirdPageParams, err := flop.NewOffsetParams(3, 2, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 	type args struct {
 		rows       []int32

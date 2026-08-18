@@ -8,15 +8,21 @@ import (
 	"github.com/ysomad/flop/internal/ident"
 )
 
-// Field is one field in an AIP-132 order_by expression.
-type Field struct {
+// OrderField is one field in an AIP-132 order_by expression.
+type OrderField struct {
 	Path string
 	Desc bool
 }
 
+// Asc creates an ascending order field.
+func Asc(path string) OrderField { return OrderField{Path: path} }
+
+// Desc creates a descending order field.
+func Desc(path string) OrderField { return OrderField{Path: path, Desc: true} }
+
 // SQL returns the field as an explicit SQL ORDER BY expression.
 // Path is safe only after it has been checked against a trusted declaration.
-func (f Field) SQL() string {
+func (f OrderField) SQL() string {
 	if f.Desc {
 		return f.Path + " DESC"
 	}
@@ -27,7 +33,7 @@ func (f Field) SQL() string {
 //
 // The zero value represents no client-provided ordering.
 type OrderBy struct {
-	Fields []Field
+	Fields []OrderField
 }
 
 func (o OrderBy) clone() OrderBy {
@@ -41,7 +47,7 @@ func ParseOrderBy(input string) (OrderBy, error) {
 	}
 
 	parts := strings.Split(input, ",")
-	fields := make([]Field, 0, len(parts))
+	fields := make([]OrderField, 0, len(parts))
 	seen := make(map[string]struct{}, len(parts))
 	for _, part := range parts {
 		words := strings.Fields(part)
@@ -55,7 +61,7 @@ func ParseOrderBy(input string) (OrderBy, error) {
 			return OrderBy{}, fmt.Errorf("flop: duplicate order_by path")
 		}
 
-		field := Field{Path: words[0]}
+		field := OrderField{Path: words[0]}
 		if len(words) == 2 {
 			switch words[1] {
 			case "asc":

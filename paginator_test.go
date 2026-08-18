@@ -29,7 +29,7 @@ func testPaginator(t *testing.T) *flop.Paginator[paginatorRow] {
 	}, flop.FilterLimits{MaxBytes: 1024, MaxDepth: 16, MaxNodes: 64})
 	assert.NoError(t, err)
 	paginator, err := flop.NewPaginator(
-		[]flop.Col[paginatorRow]{
+		[]flop.Column[paginatorRow]{
 			flop.Sortable("created_at", func(row paginatorRow) expr.Value {
 				if row.NullTime {
 					return expr.NullValue()
@@ -41,7 +41,7 @@ func testPaginator(t *testing.T) *flop.Paginator[paginatorRow] {
 			}),
 		},
 		schema,
-		[]flop.Field{flop.Desc("created_at")},
+		[]flop.OrderField{flop.Desc("created_at")},
 		2,
 		5,
 	)
@@ -54,9 +54,9 @@ func TestNewPaginator(t *testing.T) {
 
 	key := flop.Key("id", func(row paginatorRow) expr.Value { return expr.Int64Value(row.ID) })
 	type args struct {
-		columns     []flop.Col[paginatorRow]
+		columns     []flop.Column[paginatorRow]
 		schema      *flop.FilterSchema
-		order       []flop.Field
+		order       []flop.OrderField
 		defaultSize int32
 		maxSize     int32
 	}
@@ -68,7 +68,7 @@ func TestNewPaginator(t *testing.T) {
 			name: "no columns",
 			args: args{
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("id")},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -76,8 +76,8 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "nil schema",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{key},
-				order:       []flop.Field{flop.Asc("id")},
+				columns:     []flop.Column[paginatorRow]{key},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -85,9 +85,9 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "zero-value schema",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{key},
+				columns:     []flop.Column[paginatorRow]{key},
 				schema:      new(flop.FilterSchema),
-				order:       []flop.Field{flop.Asc("id")},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -95,7 +95,7 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "no default order",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{key},
+				columns:     []flop.Column[paginatorRow]{key},
 				schema:      flop.DisabledFilter(),
 				defaultSize: 1,
 				maxSize:     1,
@@ -104,9 +104,9 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "invalid sizes",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{key},
+				columns:     []flop.Column[paginatorRow]{key},
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("id")},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 2,
 				maxSize:     1,
 			},
@@ -114,11 +114,11 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "invalid column",
 			args: args{
-				columns: []flop.Col[paginatorRow]{
+				columns: []flop.Column[paginatorRow]{
 					flop.Key("bad-name", func(row paginatorRow) expr.Value { return expr.Int64Value(row.ID) }),
 				},
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("id")},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -126,9 +126,9 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "nil value function",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{flop.Key[paginatorRow]("id", nil)},
+				columns:     []flop.Column[paginatorRow]{flop.Key[paginatorRow]("id", nil)},
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("id")},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -136,9 +136,9 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "duplicate column",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{key, key},
+				columns:     []flop.Column[paginatorRow]{key, key},
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("id")},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -146,11 +146,11 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "no key column",
 			args: args{
-				columns: []flop.Col[paginatorRow]{
+				columns: []flop.Column[paginatorRow]{
 					flop.Sortable("id", func(row paginatorRow) expr.Value { return expr.Int64Value(row.ID) }),
 				},
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("id")},
+				order:       []flop.OrderField{flop.Asc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -158,9 +158,9 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "unknown default order",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{key},
+				columns:     []flop.Column[paginatorRow]{key},
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("missing")},
+				order:       []flop.OrderField{flop.Asc("missing")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -168,9 +168,9 @@ func TestNewPaginator(t *testing.T) {
 		{
 			name: "duplicate default order",
 			args: args{
-				columns:     []flop.Col[paginatorRow]{key},
+				columns:     []flop.Column[paginatorRow]{key},
 				schema:      flop.DisabledFilter(),
-				order:       []flop.Field{flop.Asc("id"), flop.Desc("id")},
+				order:       []flop.OrderField{flop.Asc("id"), flop.Desc("id")},
 				defaultSize: 1,
 				maxSize:     1,
 			},
@@ -241,7 +241,7 @@ func TestPaginator_CursorParams(t *testing.T) {
 			args: args{filter: `age = '42' active = true`},
 			wantCursorParams: cursorParams{
 				limit:   3,
-				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{flop.Desc("created_at"), flop.Asc("id")}},
 				filter:  `(age = 42 AND active = true)`,
 			},
 			wantErr: assert.NoError,
@@ -251,7 +251,7 @@ func TestPaginator_CursorParams(t *testing.T) {
 			args: args{size: 5, order: "id desc"},
 			wantCursorParams: cursorParams{
 				limit:   6,
-				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Desc("id")}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{flop.Desc("id")}},
 			},
 			wantErr: assert.NoError,
 		},
@@ -260,7 +260,7 @@ func TestPaginator_CursorParams(t *testing.T) {
 			args: args{size: 99},
 			wantCursorParams: cursorParams{
 				limit:   6,
-				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{flop.Desc("created_at"), flop.Asc("id")}},
 			},
 			wantErr: assert.NoError,
 		},
@@ -274,7 +274,7 @@ func TestPaginator_CursorParams(t *testing.T) {
 			name: "invalid order path",
 			args: args{
 				size:    1,
-				orderBy: flop.OrderBy{Fields: []flop.Field{{Path: "bad-name"}}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{{Path: "bad-name"}}},
 			},
 			wantErr: assert.Error,
 		},
@@ -282,7 +282,7 @@ func TestPaginator_CursorParams(t *testing.T) {
 			name: "duplicate order",
 			args: args{
 				size:    1,
-				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Asc("id"), flop.Desc("id")}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{flop.Asc("id"), flop.Desc("id")}},
 			},
 			wantErr: assert.Error,
 		},
@@ -329,7 +329,7 @@ func TestPaginator_OffsetParams(t *testing.T) {
 		orderBy flop.OrderBy
 		filter  string
 	}
-	defaultOrder := flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}}
+	defaultOrder := flop.OrderBy{Fields: []flop.OrderField{flop.Desc("created_at"), flop.Asc("id")}}
 	tests := []struct {
 		name             string
 		args             args
@@ -359,7 +359,7 @@ func TestPaginator_OffsetParams(t *testing.T) {
 			wantOffsetParams: offsetParams{
 				page:    1,
 				limit:   1,
-				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Desc("id")}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{flop.Desc("id")}},
 				filter:  "age = 42",
 			},
 			wantErr: assert.NoError,
@@ -400,7 +400,7 @@ func TestPaginator_CursorPage(t *testing.T) {
 	unknownParams, err := flop.NewCursorParams(
 		"",
 		2,
-		flop.OrderBy{Fields: []flop.Field{flop.Asc("missing")}},
+		flop.OrderBy{Fields: []flop.OrderField{flop.Asc("missing")}},
 		flop.Filter{},
 	)
 	assert.NoError(t, err)

@@ -30,10 +30,11 @@ func (p OffsetParams) OrderBy() OrderBy { return p.orderBy.clone() }
 func (p OffsetParams) Filter() Filter { return p.filter }
 
 // NewOffsetParams parses a one-based page number and page size into storage
-// parameters. pageSize must already be normalized by the caller.
+// parameters. orderBy and filter are carried through to storage unchanged.
+// pageSize must already be normalized by the caller.
 //
 // A zero page number selects the first page.
-func NewOffsetParams(page, pageSize int32) (OffsetParams, error) {
+func NewOffsetParams(page, pageSize int32, orderBy OrderBy, f Filter) (OffsetParams, error) {
 	if page < 0 {
 		return OffsetParams{}, fmt.Errorf("flop: page number must not be negative")
 	}
@@ -45,9 +46,11 @@ func NewOffsetParams(page, pageSize int32) (OffsetParams, error) {
 	}
 	offset := int64(page-1) * int64(pageSize)
 	return OffsetParams{
-		page:   page,
-		offset: offset,
-		limit:  pageSize,
+		page:    page,
+		offset:  offset,
+		limit:   pageSize,
+		orderBy: orderBy.clone(),
+		filter:  f,
 	}, nil
 }
 

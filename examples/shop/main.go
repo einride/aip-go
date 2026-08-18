@@ -85,7 +85,7 @@ func mustFilterSchema() *flop.FilterSchema {
 
 func mustPaginator() *flop.Paginator[payment] {
 	pag, err := flop.NewPaginator(
-		[]flop.Col[payment]{
+		[]flop.Column[payment]{
 			flop.Key("id", func(p payment) expr.Value { return expr.StringValue(p.ID) }),
 			flop.Sortable("amount", func(p payment) expr.Value { return expr.Int64Value(p.Amount) }),
 			flop.Sortable("provider", func(p payment) expr.Value { return expr.StringValue(p.Provider) }),
@@ -93,7 +93,7 @@ func mustPaginator() *flop.Paginator[payment] {
 			flop.Key("captured_at", func(p payment) expr.Value { return expr.TimeValue(p.CapturedAt) }),
 		},
 		paymentFilters,
-		[]flop.Field{flop.Desc("captured_at")},
+		[]flop.OrderField{flop.Desc("captured_at")},
 		25,
 		100,
 	)

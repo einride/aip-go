@@ -20,12 +20,12 @@ var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 func queryPaginator(t *testing.T) *flop.Paginator[queryRow] {
 	t.Helper()
 	paginator, err := flop.NewPaginator(
-		[]flop.Col[queryRow]{
+		[]flop.Column[queryRow]{
 			flop.Sortable("created_at", func(row queryRow) expr.Value { return expr.TimeValue(row.CreatedAt) }),
 			flop.Key("id", func(row queryRow) expr.Value { return expr.Int64Value(row.ID) }),
 		},
 		flop.DisabledFilter(),
-		[]flop.Field{flop.Desc("created_at")},
+		[]flop.OrderField{flop.Desc("created_at")},
 		2,
 		100,
 	)
@@ -53,7 +53,7 @@ func TestCursorQuery(t *testing.T) {
 	invalidOrder, err := flop.NewCursorParams(
 		"",
 		1,
-		flop.OrderBy{Fields: []flop.Field{{Path: "bad-name"}}},
+		flop.OrderBy{Fields: []flop.OrderField{{Path: "bad-name"}}},
 		flop.Filter{},
 	)
 	assert.NoError(t, err)
@@ -134,11 +134,11 @@ func TestCursorQuery(t *testing.T) {
 func singleOrderParams(t *testing.T) flop.CursorParams {
 	t.Helper()
 	paginator, err := flop.NewPaginator(
-		[]flop.Col[queryRow]{
+		[]flop.Column[queryRow]{
 			flop.Key("id", func(row queryRow) expr.Value { return expr.Int64Value(row.ID) }),
 		},
 		flop.DisabledFilter(),
-		[]flop.Field{flop.Asc("id")},
+		[]flop.OrderField{flop.Asc("id")},
 		1,
 		100,
 	)
@@ -158,7 +158,7 @@ func singleOrderParams(t *testing.T) flop.CursorParams {
 // not the position, so the mismatch survives a cursor round trip.
 func mismatchedPositionParams(t *testing.T, now time.Time) flop.CursorParams {
 	t.Helper()
-	orderBy := flop.OrderBy{Fields: []flop.Field{flop.Asc("id")}}
+	orderBy := flop.OrderBy{Fields: []flop.OrderField{flop.Asc("id")}}
 	params, err := flop.NewCursorParams("", 1, orderBy, flop.Filter{})
 	assert.NoError(t, err)
 	page, err := flop.NewCursorPage(
@@ -180,7 +180,7 @@ func mismatchedPositionParams(t *testing.T, now time.Time) flop.CursorParams {
 func Test_cursorPredicate(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, time.August, 16, 10, 0, 0, 0, time.UTC)
-	orderBy := flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at"), flop.Asc("id")}}
+	orderBy := flop.OrderBy{Fields: []flop.OrderField{flop.Desc("created_at"), flop.Asc("id")}}
 
 	type args struct {
 		orderBy flop.OrderBy
@@ -196,7 +196,7 @@ func Test_cursorPredicate(t *testing.T) {
 		{
 			name: "single ascending field",
 			args: args{
-				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Asc("id")}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{flop.Asc("id")}},
 				pos:     flop.CursorPosition{{Path: "id", Value: expr.Int64Value(2)}},
 			},
 			wantSQL:  "id > ?",
@@ -206,7 +206,7 @@ func Test_cursorPredicate(t *testing.T) {
 		{
 			name: "single descending field",
 			args: args{
-				orderBy: flop.OrderBy{Fields: []flop.Field{flop.Desc("created_at")}},
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{flop.Desc("created_at")}},
 				pos:     flop.CursorPosition{{Path: "created_at", Value: expr.TimeValue(now)}},
 			},
 			wantSQL:  "created_at < ?",
@@ -229,7 +229,7 @@ func Test_cursorPredicate(t *testing.T) {
 		{
 			name: "three fields",
 			args: args{
-				orderBy: flop.OrderBy{Fields: []flop.Field{
+				orderBy: flop.OrderBy{Fields: []flop.OrderField{
 					flop.Desc("created_at"), flop.Asc("name"), flop.Asc("id"),
 				}},
 				pos: flop.CursorPosition{
@@ -302,7 +302,7 @@ func TestOffsetQuery(t *testing.T) {
 	assert.NoError(t, err)
 	firstPage, err := paginator.OffsetParams(1, 20, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
-	withoutOrder, err := flop.NewOffsetParams(1, 10)
+	withoutOrder, err := flop.NewOffsetParams(1, 10, flop.OrderBy{}, flop.Filter{})
 	assert.NoError(t, err)
 
 	type args struct {
