@@ -1,67 +1,81 @@
-package flop_test
+package flop
 
 import (
 	"math"
 	"testing"
 
-	"github.com/ysomad/flop"
 	"github.com/ysomad/flop/internal/assert"
 )
 
 func TestNewOffsetParams(t *testing.T) {
 	t.Parallel()
+
+	carriedOrder := OrderBy{Fields: []OrderField{Desc("created_at"), Asc("id")}}
+	carriedFilter, err := ParseFilter("age = 42")
+	assert.NoError(t, err)
+
 	type args struct {
-		pageNumber int32
-		pageSize   int32
+		page     int32
+		pageSize int32
+		orderBy  OrderBy
+		filter   Filter
 	}
-	type offsetParams struct {
-		pageNumber int32
-		offset     int64
-		limit      int32
-	}
+
 	tests := []struct {
-		name             string
-		args             args
-		wantOffsetParams offsetParams
-		wantErr          assert.ErrorFunc
+		name    string
+		args    args
+		want    OffsetParams
+		wantErr assert.ErrorFunc
 	}{
 		{
-			name:             "zero page selects first page",
-			args:             args{pageSize: 10},
-			wantOffsetParams: offsetParams{pageNumber: 1, offset: 0, limit: 10},
-			wantErr:          assert.NoError,
+			name:    "zero page selects first page",
+			args:    args{pageSize: 10},
+			want:    OffsetParams{page: 1, offset: 0, limit: 10},
+			wantErr: assert.NoError,
 		},
 		{
-			name:             "requested page",
-			args:             args{pageNumber: 3, pageSize: 20},
-			wantOffsetParams: offsetParams{pageNumber: 3, offset: 40, limit: 20},
-			wantErr:          assert.NoError,
+			name:    "requested page",
+			args:    args{page: 3, pageSize: 20},
+			want:    OffsetParams{page: 3, offset: 40, limit: 20},
+			wantErr: assert.NoError,
 		},
 		{
-			name:             "page size is not clamped",
-			args:             args{pageNumber: 2, pageSize: 101},
-			wantOffsetParams: offsetParams{pageNumber: 2, offset: 101, limit: 101},
-			wantErr:          assert.NoError,
+			name:    "page size is not clamped",
+			args:    args{page: 2, pageSize: 101},
+			want:    OffsetParams{page: 2, offset: 101, limit: 101},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "maximum page and size do not overflow int64",
-			args: args{pageNumber: math.MaxInt32, pageSize: math.MaxInt32},
-			wantOffsetParams: offsetParams{
-				pageNumber: math.MaxInt32,
-				offset:     int64(math.MaxInt32-1) * int64(math.MaxInt32),
-				limit:      math.MaxInt32,
+			args: args{page: math.MaxInt32, pageSize: math.MaxInt32},
+			want: OffsetParams{
+				page:   math.MaxInt32,
+				offset: int64(math.MaxInt32-1) * int64(math.MaxInt32),
+				limit:  math.MaxInt32,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "carries order and filter",
+			args: args{page: 2, pageSize: 10, orderBy: carriedOrder, filter: carriedFilter},
+			want: OffsetParams{
+				page:    2,
+				offset:  10,
+				limit:   10,
+				orderBy: carriedOrder,
+				filter:  carriedFilter,
 			},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "negative page number",
-			args:    args{pageNumber: -1, pageSize: 10},
+			args:    args{page: -1, pageSize: 10},
 			wantErr: assert.Error,
 		},
-		{name: "zero page size", args: args{pageNumber: 1}, wantErr: assert.Error},
+		{name: "zero page size", args: args{page: 1}, wantErr: assert.Error},
 		{
 			name:    "negative page size",
-			args:    args{pageNumber: 1, pageSize: -1},
+			args:    args{page: 1, pageSize: -1},
 			wantErr: assert.Error,
 		},
 	}
@@ -69,51 +83,39 @@ func TestNewOffsetParams(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			got, gotErr := flop.NewOffsetParams(test.args.pageNumber, test.args.pageSize, flop.OrderBy{}, flop.Filter{})
-			assert.Equal(t, test.wantOffsetParams, offsetParams{
-				pageNumber: got.Page(),
-				offset:     got.Offset(),
-				limit:      got.Limit(),
-			})
+			got, gotErr := NewOffsetParams(
+				test.args.page,
+				test.args.pageSize,
+				test.args.orderBy,
+				test.args.filter,
+			)
+			assert.Equal(t, test.want, got)
 			test.wantErr(t, gotErr)
 		})
 	}
 }
 
-func TestNewOffsetParams_CarriesOrderAndFilter(t *testing.T) {
-	t.Parallel()
-	orderBy, err := flop.ParseOrderBy("created_at desc, id")
-	assert.NoError(t, err)
-	filter, err := flop.ParseFilter("age = 42")
-	assert.NoError(t, err)
-
-	got, err := flop.NewOffsetParams(2, 10, orderBy, filter)
-	assert.NoError(t, err)
-	assert.Equal(t, orderBy, got.OrderBy())
-	assert.Equal(t, filter.String(), got.Filter().String())
-}
-
 func TestNewOffsetPage(t *testing.T) {
 	t.Parallel()
-	secondPageParams, err := flop.NewOffsetParams(2, 2, flop.OrderBy{}, flop.Filter{})
+	secondPageParams, err := NewOffsetParams(2, 2, OrderBy{}, Filter{})
 	assert.NoError(t, err)
-	thirdPageParams, err := flop.NewOffsetParams(3, 2, flop.OrderBy{}, flop.Filter{})
+	thirdPageParams, err := NewOffsetParams(3, 2, OrderBy{}, Filter{})
 	assert.NoError(t, err)
 	type args struct {
 		rows       []int32
-		params     flop.OffsetParams
+		params     OffsetParams
 		totalItems int64
 	}
 	tests := []struct {
-		name           string
-		args           args
-		wantOffsetPage flop.OffsetPage[int32]
-		wantErr        assert.ErrorFunc
+		name    string
+		args    args
+		want    OffsetPage[int32]
+		wantErr assert.ErrorFunc
 	}{
 		{
 			name: "middle page",
 			args: args{rows: []int32{3, 4}, params: secondPageParams, totalItems: 5},
-			wantOffsetPage: flop.OffsetPage[int32]{
+			want: OffsetPage[int32]{
 				Items: []int32{3, 4}, Number: 2,
 				TotalPages: 3, TotalItems: 5,
 			},
@@ -122,7 +124,7 @@ func TestNewOffsetPage(t *testing.T) {
 		{
 			name: "last page",
 			args: args{rows: []int32{5}, params: thirdPageParams, totalItems: 5},
-			wantOffsetPage: flop.OffsetPage[int32]{
+			want: OffsetPage[int32]{
 				Items: []int32{5}, Number: 3,
 				TotalPages: 3, TotalItems: 5,
 			},
@@ -131,7 +133,7 @@ func TestNewOffsetPage(t *testing.T) {
 		{
 			name: "page beyond end",
 			args: args{rows: []int32{}, params: thirdPageParams, totalItems: 0},
-			wantOffsetPage: flop.OffsetPage[int32]{
+			want: OffsetPage[int32]{
 				Items: []int32{}, Number: 3,
 				TotalPages: 0, TotalItems: 0,
 			},
@@ -149,7 +151,7 @@ func TestNewOffsetPage(t *testing.T) {
 		},
 		{
 			name:    "zero parameters",
-			args:    args{params: flop.OffsetParams{}},
+			args:    args{params: OffsetParams{}},
 			wantErr: assert.Error,
 		},
 	}
@@ -157,12 +159,12 @@ func TestNewOffsetPage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			got, gotErr := flop.NewOffsetPage(
+			got, gotErr := NewOffsetPage(
 				test.args.rows,
 				test.args.params,
 				test.args.totalItems,
 			)
-			assert.Equal(t, test.wantOffsetPage, got)
+			assert.Equal(t, test.want, got)
 			test.wantErr(t, gotErr)
 		})
 	}
