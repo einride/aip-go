@@ -59,7 +59,7 @@ func (p CursorParams) Limit() int32 {
 // pageSize must already be normalized by the caller.
 func NewCursorParams(cursor string, pageSize int32, orderBy OrderBy, f Filter) (CursorParams, error) {
 	if pageSize <= 0 {
-		return CursorParams{}, fmt.Errorf("flop: page size must be positive")
+		return CursorParams{}, errorf(ErrInvalidPageSize, "must be positive")
 	}
 	binding := cursorBinding(orderBy, f)
 	params := CursorParams{
@@ -76,7 +76,7 @@ func NewCursorParams(cursor string, pageSize int32, orderBy OrderBy, f Filter) (
 		return CursorParams{}, err
 	}
 	if binding != gotBinding {
-		return CursorParams{}, fmt.Errorf("flop: cursor does not match the request")
+		return CursorParams{}, errorf(ErrCursorMismatch, "issued for a different order or filter")
 	}
 	params.after = after.clone()
 	return params, nil
@@ -102,10 +102,10 @@ func NewCursorPage[T any](
 	position func(T) (CursorPosition, error),
 ) (CursorPage[T], error) {
 	if params.pageSize <= 0 {
-		return CursorPage[T]{}, fmt.Errorf("flop: invalid cursor parameters")
+		return CursorPage[T]{}, errorf(ErrDeclaration, "cursor parameters have no page size")
 	}
 	if int64(len(rows)) > int64(params.Limit()) {
-		return CursorPage[T]{}, fmt.Errorf("flop: storage returned too many rows")
+		return CursorPage[T]{}, errorf(ErrTooManyRows, "more rows than the cursor limit")
 	}
 	hasNext := int64(len(rows)) > int64(params.pageSize)
 	items := rows
@@ -117,7 +117,7 @@ func NewCursorPage[T any](
 		return page, nil
 	}
 	if position == nil {
-		return CursorPage[T]{}, fmt.Errorf("flop: nil cursor position function")
+		return CursorPage[T]{}, errorf(ErrDeclaration, "nil cursor position function")
 	}
 	next, err := position(items[len(items)-1])
 	if err != nil {
@@ -132,23 +132,23 @@ func NewCursorPage[T any](
 
 func (p CursorPosition) validate() error {
 	if len(p) == 0 {
-		return fmt.Errorf("flop: cursor position must not be empty")
+		return errorf(ErrInvalidCursor, "position is empty")
 	}
 	seen := make(map[string]struct{}, len(p))
 	for _, field := range p {
 		if !ident.ValidPath(field.Path) {
-			return fmt.Errorf("flop: invalid cursor position path")
+			return errorf(ErrInvalidCursor, "position path is malformed")
 		}
 		if _, ok := seen[field.Path]; ok {
-			return fmt.Errorf("flop: duplicate cursor position path")
+			return errorf(ErrInvalidCursor, "position repeats a path")
 		}
 		if !field.Value.Valid() {
-			return fmt.Errorf("flop: invalid cursor position value")
+			return errorf(ErrInvalidCursor, "position holds an unrepresentable value")
 		}
 		// A null is representable, so Valid accepts it, but no backend can
 		// build a seek predicate from one.
 		if field.Value.Kind() == expr.NullKind {
-			return fmt.Errorf("flop: cursor position value must not be null")
+			return errorf(ErrInvalidCursor, "position holds a null")
 		}
 		seen[field.Path] = struct{}{}
 	}
@@ -192,23 +192,23 @@ func encodeCursor(pos CursorPosition, bb [sha256.Size]byte) string {
 func decodeCursor(cursor string) (CursorPosition, [sha256.Size]byte, error) {
 	var zero, binding [sha256.Size]byte
 	if len(cursor) > base64.RawURLEncoding.EncodedLen(maxCursorBytes) {
-		return nil, zero, fmt.Errorf("flop: cursor is too large")
+		return nil, zero, errorf(ErrInvalidCursor, "too large")
 	}
 	encoded, err := base64.RawURLEncoding.DecodeString(cursor)
 	if err != nil {
-		return nil, zero, fmt.Errorf("flop: invalid cursor")
+		return nil, zero, errorf(ErrInvalidCursor, "malformed encoding")
 	}
 	reader := bytes.NewReader(encoded)
 	version, err := reader.ReadByte()
 	if err != nil || version != cursorVersion {
-		return nil, zero, fmt.Errorf("flop: unsupported cursor")
+		return nil, zero, errorf(ErrInvalidCursor, "unsupported version")
 	}
 	if _, err := io.ReadFull(reader, binding[:]); err != nil {
-		return nil, zero, fmt.Errorf("flop: invalid cursor")
+		return nil, zero, errorf(ErrInvalidCursor, "malformed encoding")
 	}
 	count, err := binary.ReadUvarint(reader)
 	if err != nil || count > uint64(reader.Len()) {
-		return nil, zero, fmt.Errorf("flop: invalid cursor")
+		return nil, zero, errorf(ErrInvalidCursor, "malformed encoding")
 	}
 	position := make(CursorPosition, int(count))
 	for i := range position {
@@ -223,7 +223,7 @@ func decodeCursor(cursor string) (CursorPosition, [sha256.Size]byte, error) {
 		position[i] = CursorField{Path: string(path), Value: val}
 	}
 	if reader.Len() != 0 {
-		return nil, zero, fmt.Errorf("flop: invalid cursor")
+		return nil, zero, errorf(ErrInvalidCursor, "malformed encoding")
 	}
 	if err := position.validate(); err != nil {
 		return nil, zero, err
@@ -245,7 +245,7 @@ func writeBytes(w io.Writer, bb []byte) {
 func readBytes(r *bytes.Reader) ([]byte, error) {
 	size, err := binary.ReadUvarint(r)
 	if err != nil || size > uint64(r.Len()) {
-		return nil, fmt.Errorf("flop: invalid cursor")
+		return nil, errorf(ErrInvalidCursor, "malformed encoding")
 	}
 	v := make([]byte, int(size))
 	_, _ = io.ReadFull(r, v)
@@ -289,12 +289,12 @@ func writeValue(w io.Writer, v expr.Value) {
 func readValue(r *bytes.Reader) (expr.Value, error) {
 	kind, err := r.ReadByte()
 	if err != nil {
-		return expr.Value{}, fmt.Errorf("flop: invalid cursor")
+		return expr.Value{}, errorf(ErrInvalidCursor, "malformed encoding")
 	}
 	var fixed [8]byte
 	readFixed := func() error {
 		if _, err := io.ReadFull(r, fixed[:]); err != nil {
-			return fmt.Errorf("flop: invalid cursor")
+			return errorf(ErrInvalidCursor, "malformed encoding")
 		}
 		return nil
 	}
@@ -304,7 +304,7 @@ func readValue(r *bytes.Reader) (expr.Value, error) {
 	case expr.BoolKind:
 		value, err := r.ReadByte()
 		if err != nil || value > 1 {
-			return expr.Value{}, fmt.Errorf("flop: invalid cursor")
+			return expr.Value{}, errorf(ErrInvalidCursor, "malformed encoding")
 		}
 		return expr.BoolValue(value == 1), nil
 	case expr.Int64Kind:
@@ -323,7 +323,7 @@ func readValue(r *bytes.Reader) (expr.Value, error) {
 		}
 		val := expr.Float64Value(math.Float64frombits(binary.BigEndian.Uint64(fixed[:])))
 		if !val.Valid() {
-			return expr.Value{}, fmt.Errorf("flop: invalid cursor")
+			return expr.Value{}, errorf(ErrInvalidCursor, "malformed encoding")
 		}
 		return val, nil
 	case expr.StringKind:
@@ -339,7 +339,7 @@ func readValue(r *bytes.Reader) (expr.Value, error) {
 		}
 		parsed, err := time.Parse(time.RFC3339Nano, string(val))
 		if err != nil {
-			return expr.Value{}, fmt.Errorf("flop: invalid cursor")
+			return expr.Value{}, errorf(ErrInvalidCursor, "malformed encoding")
 		}
 		return expr.TimeValue(parsed), nil
 	case expr.DurationKind:
@@ -348,6 +348,6 @@ func readValue(r *bytes.Reader) (expr.Value, error) {
 		}
 		return expr.DurationValue(time.Duration(binary.BigEndian.Uint64(fixed[:]))), nil
 	default:
-		return expr.Value{}, fmt.Errorf("flop: invalid cursor")
+		return expr.Value{}, errorf(ErrInvalidCursor, "malformed encoding")
 	}
 }

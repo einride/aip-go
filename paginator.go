@@ -1,7 +1,6 @@
 package flop
 
 import (
-	"fmt"
 	"slices"
 
 	"github.com/ysomad/flop/expr"
@@ -12,6 +11,7 @@ import (
 type Column[T any] struct {
 	path  string
 	key   bool
+	kind  expr.ValueKind
 	value func(T) expr.Value
 }
 
@@ -20,7 +20,11 @@ func Sortable[T any](path string, value func(T) expr.Value) Column[T] {
 	return Column[T]{path: path, value: value}
 }
 
-// Key declares an orderable column that makes cursor ordering unique.
+// Key declares an orderable column that identifies a row.
+//
+// Declare one Key per column of the storage key: one for a table keyed on id
+// alone, or one per part of a composite key such as (id, captured_at). The key
+// columns must identify a row together; an individual one need not be unique.
 func Key[T any](path string, value func(T) expr.Value) Column[T] {
 	return Column[T]{path: path, key: true, value: value}
 }
@@ -44,16 +48,16 @@ func NewPaginator[T any](
 	maxSize int32,
 ) (*Paginator[T], error) {
 	if len(cols) == 0 {
-		return nil, fmt.Errorf("flop: paginator has no columns")
+		return nil, errorf(ErrDeclaration, "paginator has no columns")
 	}
 	if !schema.Initialized() {
-		return nil, fmt.Errorf("flop: paginator has an uninitialized filter schema")
+		return nil, errorf(ErrDeclaration, "paginator has an uninitialized filter schema")
 	}
 	if len(defaultOrder) == 0 {
-		return nil, fmt.Errorf("flop: paginator has no default order")
+		return nil, errorf(ErrDeclaration, "paginator has no default order")
 	}
 	if defaultSize <= 0 || maxSize <= 0 || defaultSize > maxSize {
-		return nil, fmt.Errorf("flop: invalid page-size limits")
+		return nil, errorf(ErrDeclaration, "invalid page-size limits")
 	}
 
 	pag := Paginator[T]{
@@ -65,26 +69,31 @@ func NewPaginator[T any](
 
 	for _, col := range cols {
 		if !ident.ValidPath(col.path) {
-			return nil, fmt.Errorf("flop: invalid column %q", col.path)
+			return nil, errorf(ErrDeclaration, "invalid column %q", col.path)
 		}
 		if col.value == nil {
-			return nil, fmt.Errorf("flop: column %q has no value function", col.path)
+			return nil, errorf(ErrDeclaration, "column %q has no value function", col.path)
 		}
 		if _, exists := pag.cols[col.path]; exists {
-			return nil, fmt.Errorf("flop: duplicate column %q", col.path)
+			return nil, errorf(ErrDeclaration, "duplicate column %q", col.path)
 		}
+		// expr constructors pick their kind from the Go type, not the value, so
+		// the zero row reports the kind real rows will produce. NullKind means
+		// the column reported null and stays unchecked.
+		var zero T
+		col.kind = col.value(zero).Kind()
 		pag.cols[col.path] = col
 		if col.key {
 			pag.keys = append(pag.keys, col.path)
 		}
 	}
 	if len(pag.keys) == 0 {
-		return nil, fmt.Errorf("flop: paginator has no key columns")
+		return nil, errorf(ErrDeclaration, "paginator has no key columns")
 	}
 
 	resolvedDefault, err := pag.resolveOrder(OrderBy{Fields: slices.Clone(defaultOrder)})
 	if err != nil {
-		return nil, fmt.Errorf("flop: invalid default order: %w", err)
+		return nil, errorf(ErrDeclaration, "invalid default order: %w", err)
 	}
 	pag.defaultOrder = resolvedDefault
 
@@ -109,7 +118,7 @@ func (p *Paginator[T]) CursorParams(cursor string, pageSize int32, orderBy Order
 	if err != nil {
 		return CursorParams{}, err
 	}
-	if err := validateCursorPosition(params.After(), orderBy); err != nil {
+	if err := p.validateCursorPosition(params.After(), orderBy); err != nil {
 		return CursorParams{}, err
 	}
 	return params, nil
@@ -136,7 +145,7 @@ func (p *Paginator[T]) OffsetParams(page, pageSize int32, orderBy OrderBy, f Fil
 func (p *Paginator[T]) CursorPage(rows []T, params CursorParams) (CursorPage[T], error) {
 	orderBy := params.OrderBy()
 	if len(orderBy.Fields) == 0 {
-		return CursorPage[T]{}, fmt.Errorf("flop: cursor parameters have no order")
+		return CursorPage[T]{}, errorf(ErrDeclaration, "cursor parameters have no order")
 	}
 
 	return NewCursorPage(rows, params, func(row T) (CursorPosition, error) {
@@ -145,11 +154,11 @@ func (p *Paginator[T]) CursorPage(rows []T, params CursorParams) (CursorPage[T],
 		for i, field := range orderBy.Fields {
 			col, ok := p.cols[field.Path]
 			if !ok {
-				return nil, fmt.Errorf("flop: cursor column %q is not declared", field.Path)
+				return nil, errorf(ErrDeclaration, "cursor column %q is not declared", field.Path)
 			}
 			val := col.value(row)
 			if val.Kind() == expr.NullKind {
-				return nil, fmt.Errorf("flop: cursor column %q is null", field.Path)
+				return nil, errorf(ErrInvalidCursor, "column %q is null", field.Path)
 			}
 			pos[i] = CursorField{Path: field.Path, Value: val}
 		}
@@ -160,7 +169,7 @@ func (p *Paginator[T]) CursorPage(rows []T, params CursorParams) (CursorPage[T],
 
 func (p *Paginator[T]) normalizePageSize(size int32) (int32, error) {
 	if size < 0 {
-		return 0, fmt.Errorf("flop: page size must not be negative")
+		return 0, errorf(ErrInvalidPageSize, "must not be negative")
 	}
 	if size == 0 {
 		return p.defaultSize, nil
@@ -180,13 +189,13 @@ func (p *Paginator[T]) resolveOrder(orderBy OrderBy) (OrderBy, error) {
 	seen := make(map[string]struct{}, len(fields)+len(p.keys))
 	for _, field := range fields {
 		if !ident.ValidPath(field.Path) {
-			return OrderBy{}, fmt.Errorf("flop: invalid order field %q", field.Path)
+			return OrderBy{}, errorf(ErrInvalidOrder, "malformed field %q", field.Path)
 		}
 		if _, ok := p.cols[field.Path]; !ok {
-			return OrderBy{}, fmt.Errorf("flop: unknown order field %q", field.Path)
+			return OrderBy{}, errorf(ErrInvalidOrder, "unknown field %q", field.Path)
 		}
 		if _, duplicate := seen[field.Path]; duplicate {
-			return OrderBy{}, fmt.Errorf("flop: duplicate order field %q", field.Path)
+			return OrderBy{}, errorf(ErrInvalidOrder, "duplicate field %q", field.Path)
 		}
 		seen[field.Path] = struct{}{}
 		resolved = append(resolved, field)
@@ -200,19 +209,29 @@ func (p *Paginator[T]) resolveOrder(orderBy OrderBy) (OrderBy, error) {
 	return OrderBy{Fields: resolved}, nil
 }
 
-func validateCursorPosition(pos CursorPosition, orderBy OrderBy) error {
+// validateCursorPosition checks a decoded position against the declared
+// columns. The binding is an unkeyed digest, so a rewritten payload passes it;
+// the kind check is what stops one reaching storage.
+func (p *Paginator[T]) validateCursorPosition(pos CursorPosition, orderBy OrderBy) error {
 	if len(pos) == 0 {
 		return nil
 	}
 	if len(pos) != len(orderBy.Fields) {
-		return fmt.Errorf("flop: cursor position does not match the resolved order")
+		return errorf(ErrInvalidCursor, "position does not match the resolved order")
 	}
 	for i, field := range pos {
 		if field.Path != orderBy.Fields[i].Path {
-			return fmt.Errorf("flop: cursor position does not match the resolved order")
+			return errorf(ErrInvalidCursor, "position does not match the resolved order")
 		}
 		if field.Value.Kind() == expr.NullKind {
-			return fmt.Errorf("flop: cursor column %q is null", field.Path)
+			return errorf(ErrInvalidCursor, "column %q is null", field.Path)
+		}
+		col, ok := p.cols[field.Path]
+		if !ok {
+			return errorf(ErrInvalidCursor, "column %q is not declared", field.Path)
+		}
+		if col.kind != expr.NullKind && field.Value.Kind() != col.kind {
+			return errorf(ErrInvalidCursor, "column %q holds the wrong value type", field.Path)
 		}
 	}
 	return nil

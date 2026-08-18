@@ -115,20 +115,15 @@ func (c *FilterCompiler) comparison(fld string, op expr.ComparisonOp, val expr.V
 	if !ok {
 		return nil, fmt.Errorf("unknown filter field %q", fld)
 	}
-	if c.schema.IsString(fld) && (op == expr.Equal || op == expr.NotEqual) {
-		text, _ := val.Any().(string)
-		if val.Kind() == expr.StringKind && hasBoundaryWildcard(text) {
-			pattern, err := filterPattern(text, false)
-			if err != nil {
-				return nil, err
-			}
-			if op == expr.NotEqual {
-				return sq.NotLike{column: pattern}, nil
-			}
-			return sq.Like{column: pattern}, nil
-		}
-	}
 	argument := val.Any()
+	// Wildcards apply to declared string columns only. Every other type has a
+	// parsed value that an asterisk cannot meaningfully match against.
+	if text, ok := argument.(string); ok && c.schema.IsString(fld) {
+		if (op == expr.Equal || op == expr.NotEqual) && hasWildcard(text) {
+			return like(column, likePattern(text, false), op == expr.NotEqual), nil
+		}
+		argument = literalText(text)
+	}
 	switch op {
 	case expr.Equal:
 		return sq.Eq{column: argument}, nil
@@ -161,6 +156,9 @@ func (c *FilterCompiler) has(fld string, val expr.Value, negated bool) (sq.Sqliz
 	if !ok {
 		return nil, fmt.Errorf("invalid has value")
 	}
+	// Membership is exact, so an asterisk here is data rather than a wildcard,
+	// but the escape still resolves so `\*` reaches the column as `*`.
+	text = literalText(text)
 	if negated {
 		return sq.Expr("NOT (? = ANY("+column+"))", text), nil
 	}
@@ -168,24 +166,19 @@ func (c *FilterCompiler) has(fld string, val expr.Value, negated bool) (sq.Sqliz
 }
 
 func (c *FilterCompiler) text(val expr.Value, negated bool) (sq.Sqlizer, error) {
-	text, ok := val.Any().(string)
+	term, ok := val.Any().(string)
 	if !ok {
 		return nil, fmt.Errorf("invalid text search value")
 	}
-	pattern, err := filterPattern(text, true)
-	if err != nil {
-		return nil, err
-	}
+	// A term that names its own wildcards is honoured as written; one that does
+	// not falls back to matching anywhere, which is what a bare search term
+	// means.
+	pattern := likePattern(term, !hasWildcard(term))
 
 	fields := c.schema.SearchFields()
 	predicates := make([]sq.Sqlizer, 0, len(fields))
 	for _, field := range fields {
-		column := c.fields[field]
-		if negated {
-			predicates = append(predicates, sq.NotLike{column: pattern})
-		} else {
-			predicates = append(predicates, sq.Like{column: pattern})
-		}
+		predicates = append(predicates, like(c.fields[field], pattern, negated))
 	}
 	if negated {
 		return sq.And(predicates), nil
@@ -193,27 +186,90 @@ func (c *FilterCompiler) text(val expr.Value, negated bool) (sq.Sqlizer, error) 
 	return sq.Or(predicates), nil
 }
 
-func filterPattern(val string, contains bool) (string, error) {
-	leading := strings.HasPrefix(val, "*")
-	trailing := strings.HasSuffix(val, "*")
-	if leading {
-		val = strings.TrimPrefix(val, "*")
+// likeEscape is the escape character declared on every generated LIKE. User
+// data never reaches the pattern unescaped, so a value containing %, _, or a
+// backslash matches literally instead of being rejected or silently widened.
+const likeEscape = '\\'
+
+// hasWildcard reports whether val holds an unescaped asterisk.
+//
+// Bytes are enough: a wildcard, an escape, and the LIKE metacharacters are all
+// ASCII, and no byte of a multi-byte rune can collide with them.
+func hasWildcard(val string) bool {
+	for i := 0; i < len(val); i++ {
+		switch val[i] {
+		case '\\':
+			i++ // whatever follows is escaped, wildcard or not
+		case '*':
+			return true
+		}
 	}
-	if trailing && val != "" {
-		val = strings.TrimSuffix(val, "*")
-	}
-	if strings.ContainsAny(val, "%_\\") {
-		return "", ErrUnsupportedPattern
-	}
-	if contains || leading {
-		val = "%" + val
-	}
-	if contains || trailing {
-		val += "%"
-	}
-	return val, nil
+	return false
 }
 
-func hasBoundaryWildcard(v string) bool {
-	return strings.HasPrefix(v, "*") || strings.HasSuffix(v, "*")
+// literalText resolves the pattern escape without giving the asterisk any
+// meaning, so `\*` becomes `*`. It is what a comparison uses when the value
+// holds no wildcard and therefore compiles to equality rather than LIKE.
+func literalText(val string) string {
+	if !strings.ContainsRune(val, likeEscape) {
+		return val
+	}
+	var b strings.Builder
+	b.Grow(len(val))
+	for i := 0; i < len(val); i++ {
+		if val[i] == '\\' && i+1 < len(val) {
+			i++
+		}
+		b.WriteByte(val[i])
+	}
+	return b.String()
+}
+
+// likePattern renders val as a SQL LIKE pattern: an unescaped asterisk becomes
+// %, `\*` becomes a literal asterisk, and every LIKE metacharacter carried by
+// the data is escaped with likeEscape. When contains is set the pattern also
+// matches anywhere in the column, which is what an unqualified search term
+// means.
+//
+// A value can express a literal asterisk or a literal backslash, but not a
+// literal backslash immediately followed by a wildcard: string unescaping runs
+// first, so `\\*` has already collapsed to `\*` by the time it arrives here.
+func likePattern(val string, contains bool) string {
+	var b strings.Builder
+	b.Grow(len(val) + 2)
+	if contains {
+		b.WriteByte('%')
+	}
+	for i := 0; i < len(val); i++ {
+		switch c := val[i]; {
+		case c == '\\' && i+1 < len(val):
+			i++
+			writeLikeLiteral(&b, val[i])
+		case c == '*':
+			b.WriteByte('%')
+		default:
+			writeLikeLiteral(&b, c)
+		}
+	}
+	if contains {
+		b.WriteByte('%')
+	}
+	return b.String()
+}
+
+func writeLikeLiteral(b *strings.Builder, c byte) {
+	if c == '%' || c == '_' || c == likeEscape {
+		b.WriteByte(likeEscape)
+	}
+	b.WriteByte(c)
+}
+
+// like builds a LIKE with an explicit escape declaration. Squirrel's sq.Like
+// cannot carry one, and the column is already checked against the identifier
+// rule by NewFilterCompiler, the same trust boundary ordering relies on.
+func like(column, pattern string, negated bool) sq.Sqlizer {
+	if negated {
+		return sq.Expr(column+" NOT LIKE ? ESCAPE '\\'", pattern)
+	}
+	return sq.Expr(column+" LIKE ? ESCAPE '\\'", pattern)
 }

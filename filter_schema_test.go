@@ -159,8 +159,18 @@ func TestFilterSchema_Validate(t *testing.T) {
 		wantErr    assert.ErrorFunc
 	}{
 		{name: "empty", wantErr: assert.NoError},
-		{name: "has on a list", input: `tags:"blue"`, wantFilter: validated{canonical: `tags : "blue"`}, wantErr: assert.NoError},
-		{name: "has with a bare identifier", input: "tags:blue", wantFilter: validated{canonical: `tags : "blue"`}, wantErr: assert.NoError},
+		{
+			name:       "has on a list",
+			input:      `tags:"blue"`,
+			wantFilter: validated{canonical: `tags : "blue"`},
+			wantErr:    assert.NoError,
+		},
+		{
+			name:       "has with a bare identifier",
+			input:      "tags:blue",
+			wantFilter: validated{canonical: `tags : "blue"`},
+			wantErr:    assert.NoError,
+		},
 		{name: "has rejects a non-string", input: "tags:1", wantErr: assert.Error},
 		{name: "has rejects null", input: "tags:null", wantErr: assert.Error},
 		{name: "has is rejected on a string", input: `name:"x"`, wantErr: assert.Error},
@@ -195,7 +205,12 @@ func TestFilterSchema_Validate(t *testing.T) {
 			wantFilter: validated{canonical: "created_at >= 2026-08-16T03:00:00Z"},
 			wantErr:    assert.NoError,
 		},
-		{name: "typed duration", input: `wait < "1.5s"`, wantFilter: validated{canonical: "wait < 1.5s"}, wantErr: assert.NoError},
+		{
+			name:       "typed duration",
+			input:      `wait < "1.5s"`,
+			wantFilter: validated{canonical: "wait < 1.5s"},
+			wantErr:    assert.NoError,
+		},
 		{
 			name: "native boolean",
 			filter: flop.Filter{
@@ -205,8 +220,10 @@ func TestFilterSchema_Validate(t *testing.T) {
 			wantErr:    assert.NoError,
 		},
 		{
-			name:       "native integer",
-			filter:     flop.Filter{Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)}},
+			name: "native integer",
+			filter: flop.Filter{
+				Expr: expr.ComparisonExpr{Field: "age", Op: expr.Equal, Value: expr.Int64Value(42)},
+			},
 			wantFilter: validated{canonical: "age = 42"},
 			wantErr:    assert.NoError,
 		},
@@ -293,8 +310,18 @@ func TestFilterSchema_Validate(t *testing.T) {
 			wantErr:    assert.NoError,
 		},
 		{name: "text search", input: "42", wantFilter: validated{canonical: `"42"`}, wantErr: assert.NoError},
-		{name: "negation", input: `NOT name = "x"`, wantFilter: validated{canonical: `NOT (name = "x")`}, wantErr: assert.NoError},
-		{name: "enum", input: "state = open", wantFilter: validated{canonical: `state = "open"`}, wantErr: assert.NoError},
+		{
+			name:       "negation",
+			input:      `NOT name = "x"`,
+			wantFilter: validated{canonical: `NOT (name = "x")`},
+			wantErr:    assert.NoError,
+		},
+		{
+			name:       "enum",
+			input:      "state = open",
+			wantFilter: validated{canonical: `state = "open"`},
+			wantErr:    assert.NoError,
+		},
 		{
 			name:    "zero-value schema",
 			schema:  new(flop.FilterSchema),
@@ -419,6 +446,28 @@ func TestFilterSchema_Fields(t *testing.T) {
 	schema, err := inspectionSchema()
 	assert.NoError(t, err)
 
+	tests := []struct {
+		name   string
+		schema *flop.FilterSchema
+		want   []flop.FilterField
+	}{
+		{
+			name:   "declared",
+			schema: schema,
+			want: []flop.FilterField{
+				flop.NewFilterField("name", flop.TypeString, true),
+				flop.NewFilterField("age", flop.TypeInt, false),
+			},
+		},
+		{name: "nil schema", schema: nil, want: nil},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, test.want, test.schema.Fields())
+		})
+	}
+
 	fields := schema.Fields()
 	fields[0].Name = "changed"
 	assert.Equal(t, "name", schema.Fields()[0].Name)
@@ -428,6 +477,22 @@ func TestFilterSchema_SearchFields(t *testing.T) {
 	t.Parallel()
 	schema, err := inspectionSchema()
 	assert.NoError(t, err)
+
+	tests := []struct {
+		name   string
+		schema *flop.FilterSchema
+		want   []string
+	}{
+		{name: "declared", schema: schema, want: []string{"name"}},
+		{name: "nil schema", schema: nil, want: nil},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, test.want, test.schema.SearchFields())
+		})
+	}
+
 	searchFields := schema.SearchFields()
 	searchFields[0] = "changed"
 	assert.Equal(t, []string{"name"}, schema.SearchFields())
@@ -437,19 +502,24 @@ func TestFilterSchema_IsString(t *testing.T) {
 	t.Parallel()
 	schema, err := inspectionSchema()
 	assert.NoError(t, err)
+	type args struct {
+		name string
+	}
 	tests := []struct {
-		name  string
-		field string
-		want  bool
+		name   string
+		schema *flop.FilterSchema
+		args   args
+		want   bool
 	}{
-		{name: "string", field: "name", want: true},
-		{name: "non-string", field: "age"},
-		{name: "missing", field: "missing"},
+		{name: "string", schema: schema, args: args{name: "name"}, want: true},
+		{name: "non-string", schema: schema, args: args{name: "age"}},
+		{name: "missing", schema: schema, args: args{name: "missing"}},
+		{name: "nil schema", schema: nil, args: args{name: "name"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, test.want, schema.IsString(test.field))
+			assert.Equal(t, test.want, test.schema.IsString(test.args.name))
 		})
 	}
 }

@@ -1,7 +1,6 @@
 package flop
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 
@@ -52,13 +51,13 @@ func ParseOrderBy(input string) (OrderBy, error) {
 	for _, part := range parts {
 		words := strings.Fields(part)
 		if len(words) == 0 || len(words) > 2 {
-			return OrderBy{}, fmt.Errorf("flop: invalid order_by field")
+			return OrderBy{}, errorf(ErrInvalidOrder, "malformed order_by field")
 		}
 		if !ident.ValidPath(words[0]) {
-			return OrderBy{}, fmt.Errorf("flop: invalid order_by path")
+			return OrderBy{}, errorf(ErrInvalidOrder, "malformed order_by path")
 		}
 		if _, ok := seen[words[0]]; ok {
-			return OrderBy{}, fmt.Errorf("flop: duplicate order_by path")
+			return OrderBy{}, errorf(ErrInvalidOrder, "duplicate order_by path")
 		}
 
 		field := OrderField{Path: words[0]}
@@ -68,7 +67,7 @@ func ParseOrderBy(input string) (OrderBy, error) {
 			case "desc":
 				field.Desc = true
 			default:
-				return OrderBy{}, fmt.Errorf("flop: invalid order_by direction")
+				return OrderBy{}, errorf(ErrInvalidOrder, "direction must be asc or desc")
 			}
 		}
 		seen[field.Path] = struct{}{}

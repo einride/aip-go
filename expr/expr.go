@@ -1,27 +1,33 @@
 package expr
 
-import "fmt"
+import "strings"
 
 // Canonical renders e as AIP-160 source. A nil expression renders as the empty
 // string.
 //
 // This is the only way to reach a node's rendering from outside the package,
-// because canonical is unexported. The output is what callers fingerprint, so
-// it is a compatibility surface rather than a debug format.
+// because appendCanonical is unexported. The output is what callers
+// fingerprint, so it is a compatibility surface rather than a debug format.
 func Canonical(e Expr) string {
 	if e == nil {
 		return ""
 	}
-	return e.canonical()
+	var b strings.Builder
+	e.appendCanonical(&b)
+	return b.String()
 }
 
 // Expr is a node in a filter expression tree.
 //
-// The set of expressions is closed: canonical is unexported, so only this
+// The set of expressions is closed: appendCanonical is unexported, so only this
 // package can implement Expr. Consumers rely on that to switch over the node
 // types exhaustively.
+//
+// Nodes append into a caller-owned builder rather than returning a string, so
+// rendering a tree of n nodes stays linear. Returning a string per node made
+// every level recopy the whole accumulated rendering.
 type Expr interface {
-	canonical() string
+	appendCanonical(*strings.Builder)
 }
 
 // LogicalOp joins two filter expressions.
@@ -43,14 +49,18 @@ type LogicalExpr struct {
 	Right Expr
 }
 
-func (e LogicalExpr) canonical() string {
+func (e LogicalExpr) appendCanonical(b *strings.Builder) {
 	// Seq renders as AND: whitespace sequencing is a conjunction, and the
 	// canonical form deliberately does not distinguish the two spellings.
 	op := " AND "
 	if e.Op == Or {
 		op = " OR "
 	}
-	return fmt.Sprintf("(%s%s%s)", e.Left.canonical(), op, e.Right.canonical())
+	b.WriteByte('(')
+	e.Left.appendCanonical(b)
+	b.WriteString(op)
+	e.Right.appendCanonical(b)
+	b.WriteByte(')')
 }
 
 // NotExpr negates Expr.
@@ -58,8 +68,10 @@ type NotExpr struct {
 	Expr Expr
 }
 
-func (e NotExpr) canonical() string {
-	return fmt.Sprintf("NOT (%s)", e.Expr.canonical())
+func (e NotExpr) appendCanonical(b *strings.Builder) {
+	b.WriteString("NOT (")
+	e.Expr.appendCanonical(b)
+	b.WriteByte(')')
 }
 
 // ComparisonOp compares a field with a literal value.
@@ -126,8 +138,12 @@ type ComparisonExpr struct {
 	Value Value
 }
 
-func (e ComparisonExpr) canonical() string {
-	return fmt.Sprintf("%s %s %s", e.Field, e.Op.String(), e.Value.Canonical())
+func (e ComparisonExpr) appendCanonical(b *strings.Builder) {
+	b.WriteString(e.Field)
+	b.WriteByte(' ')
+	b.WriteString(e.Op.String())
+	b.WriteByte(' ')
+	e.Value.appendCanonical(b)
 }
 
 // TextExpr is an unqualified text-search expression.
@@ -135,6 +151,6 @@ type TextExpr struct {
 	V Value
 }
 
-func (e TextExpr) canonical() string {
-	return e.V.Canonical()
+func (e TextExpr) appendCanonical(b *strings.Builder) {
+	e.V.appendCanonical(b)
 }

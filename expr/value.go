@@ -3,6 +3,7 @@ package expr
 import (
 	"math"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -119,25 +120,33 @@ func (v Value) Valid() bool {
 // so re-parsing "1" yields an integer rather than the float it came from.
 // Canonical output is hashed, never fed back through the parser.
 func (v Value) Canonical() string {
+	var b strings.Builder
+	v.appendCanonical(&b)
+	return b.String()
+}
+
+// appendCanonical writes Canonical into b. Expression nodes render through a
+// single shared builder, so a value must be able to append rather than
+// allocate a string of its own.
+func (v Value) appendCanonical(b *strings.Builder) {
+	var scratch [64]byte
 	switch v.kind {
 	case BoolKind:
-		return strconv.FormatBool(v.num != 0)
+		b.Write(strconv.AppendBool(scratch[:0], v.num != 0))
 	case Int64Kind:
-		return strconv.FormatInt(int64(v.num), 10)
+		b.Write(strconv.AppendInt(scratch[:0], int64(v.num), 10))
 	case Uint64Kind:
-		return strconv.FormatUint(v.num, 10)
+		b.Write(strconv.AppendUint(scratch[:0], v.num, 10))
 	case Float64Kind:
-		return strconv.FormatFloat(math.Float64frombits(v.num), 'g', -1, 64)
-	case StringKind:
-		return strconv.Quote(v.text)
-	case BytesKind:
-		return strconv.Quote(v.text)
+		b.Write(strconv.AppendFloat(scratch[:0], math.Float64frombits(v.num), 'g', -1, 64))
+	case StringKind, BytesKind:
+		b.Write(strconv.AppendQuote(scratch[:0], v.text))
 	case TimeKind:
-		return v.utc().Format(time.RFC3339Nano)
+		b.Write(v.utc().AppendFormat(scratch[:0], time.RFC3339Nano))
 	case DurationKind:
-		return time.Duration(v.num).String()
+		b.WriteString(time.Duration(v.num).String())
 	default: // NullKind and invalid internal values.
-		return "null"
+		b.WriteString("null")
 	}
 }
 

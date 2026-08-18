@@ -113,24 +113,48 @@ func TestFilterCompiler_Where(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "boundary wildcard", args: args{filter: `name = "book*"`},
-			wantSQL: "SELECT id FROM orders o WHERE o.name LIKE $1", wantArgs: []any{"book%"},
+			name: "trailing wildcard", args: args{filter: `name = "book*"`},
+			wantSQL: `SELECT id FROM orders o WHERE o.name LIKE $1 ESCAPE '\'`, wantArgs: []any{"book%"},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "negative boundary wildcard", args: args{filter: `name != "*book"`},
-			wantSQL: "SELECT id FROM orders o WHERE o.name NOT LIKE $1", wantArgs: []any{"%book"},
+			name: "negative leading wildcard", args: args{filter: `name != "*book"`},
+			wantSQL: `SELECT id FROM orders o WHERE o.name NOT LIKE $1 ESCAPE '\'`, wantArgs: []any{"%book"},
+			wantErr: assert.NoError,
+		},
+		{
+			// A wildcard is honoured wherever it sits, not only at a boundary.
+			name: "interior wildcard", args: args{filter: `name = "a*b"`},
+			wantSQL: `SELECT id FROM orders o WHERE o.name LIKE $1 ESCAPE '\'`, wantArgs: []any{"a%b"},
+			wantErr: assert.NoError,
+		},
+		{
+			// The reported filter: the underscore is data, not a LIKE
+			// metacharacter, and must be escaped rather than rejected.
+			name: "wildcard around an underscore", args: args{filter: `name = "*pay_10*"`},
+			wantSQL: `SELECT id FROM orders o WHERE o.name LIKE $1 ESCAPE '\'`, wantArgs: []any{`%pay\_10%`},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "escaped wildcard is a literal", args: args{filter: `name = "a\*b"`},
+			wantSQL: "SELECT id FROM orders o WHERE o.name = $1", wantArgs: []any{"a*b"},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "metacharacters without a wildcard compare literally",
+			args:    args{filter: `name = "100%_x"`},
+			wantSQL: "SELECT id FROM orders o WHERE o.name = $1", wantArgs: []any{"100%_x"},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "text sequence", args: args{filter: `"blue" "chair"`},
-			wantSQL:  "SELECT id FROM orders o WHERE ((o.name LIKE $1) AND (o.name LIKE $2))",
+			wantSQL:  `SELECT id FROM orders o WHERE ((o.name LIKE $1 ESCAPE '\') AND (o.name LIKE $2 ESCAPE '\'))`,
 			wantArgs: []any{"%blue%", "%chair%"},
 			wantErr:  assert.NoError,
 		},
 		{
 			name: "logical or", args: args{filter: `"blue" OR "chair"`},
-			wantSQL:  "SELECT id FROM orders o WHERE ((o.name LIKE $1) OR (o.name LIKE $2))",
+			wantSQL:  `SELECT id FROM orders o WHERE ((o.name LIKE $1 ESCAPE '\') OR (o.name LIKE $2 ESCAPE '\'))`,
 			wantArgs: []any{"%blue%", "%chair%"},
 			wantErr:  assert.NoError,
 		},
@@ -142,14 +166,45 @@ func TestFilterCompiler_Where(t *testing.T) {
 		},
 		{
 			name: "negated text", args: args{filter: `NOT "blue"`},
-			wantSQL: "SELECT id FROM orders o WHERE (o.name NOT LIKE $1)", wantArgs: []any{"%blue%"},
+			wantSQL: `SELECT id FROM orders o WHERE (o.name NOT LIKE $1 ESCAPE '\')`, wantArgs: []any{"%blue%"},
+			wantErr: assert.NoError,
+		},
+		{
+			// A search term carrying LIKE metacharacters matches them literally.
+			name: "text search escapes metacharacters", args: args{filter: `"a%b"`},
+			wantSQL: `SELECT id FROM orders o WHERE (o.name LIKE $1 ESCAPE '\')`, wantArgs: []any{`%a\%b%`},
+			wantErr: assert.NoError,
+		},
+		{
+			// An explicit wildcard replaces the implicit contains-anywhere match
+			// rather than compounding with it.
+			name: "text search with an explicit wildcard", args: args{filter: `"blue*"`},
+			wantSQL: `SELECT id FROM orders o WHERE (o.name LIKE $1 ESCAPE '\')`, wantArgs: []any{"blue%"},
 			wantErr: assert.NoError,
 		},
 		{name: "invalid filter", args: args{filter: "missing = 1"}, wantErr: assert.Error},
-		{name: "unsupported pattern", args: args{filter: `name = "*a_b*"`}, wantErr: assert.Error},
-		{name: "unsupported text pattern", args: args{filter: `"a%b"`}, wantErr: assert.Error},
-		{name: "unsupported left expression", args: args{filter: `"a%b" AND "ok"`}, wantErr: assert.Error},
-		{name: "unsupported right expression", args: args{filter: `"ok" AND "a%b"`}, wantErr: assert.Error},
+		{
+			name: "unsupported left expression",
+			call: func() (sq.Sqlizer, error) {
+				return compiler.compile(expr.LogicalExpr{
+					Left:  nil,
+					Op:    expr.And,
+					Right: expr.TextExpr{V: expr.StringValue("ok")},
+				}, false)
+			},
+			wantErr: assert.Error,
+		},
+		{
+			name: "unsupported right expression",
+			call: func() (sq.Sqlizer, error) {
+				return compiler.compile(expr.LogicalExpr{
+					Left:  expr.TextExpr{V: expr.StringValue("ok")},
+					Op:    expr.And,
+					Right: nil,
+				}, false)
+			},
+			wantErr: assert.Error,
+		},
 		{
 			// The expression set is closed, so an unknown node can only be a nil one.
 			name:    "unknown expression",
@@ -247,7 +302,7 @@ func TestFilterCompiler_ApplyDefaultColumns(t *testing.T) {
 		{
 			name:    "nil mapping searches field names",
 			args:    args{compiler: unmapped, filter: `"blue"`},
-			wantSQL: "SELECT id FROM orders o WHERE (name LIKE $1)", wantArgs: []any{"%blue%"},
+			wantSQL: `SELECT id FROM orders o WHERE (name LIKE $1 ESCAPE '\')`, wantArgs: []any{"%blue%"},
 		},
 		{
 			name:    "partial mapping overrides one column",

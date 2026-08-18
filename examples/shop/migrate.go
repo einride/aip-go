@@ -37,11 +37,18 @@ func migrate(ctx context.Context, db *pgxpool.Pool) error {
 				+ ((n * 7919) % 1461) * interval '1 day'
 				+ ((n * 104729) % 86400) * interval '1 second'
 				+ n * interval '1 microsecond',
+			-- captured_at collides on purpose, roughly 50 rows per timestamp.
+			-- A secondary sort key only orders rows that tie on the key before
+			-- it, so a unique captured_at would make "captured_at asc, amount
+			-- desc" indistinguishable from "captured_at asc", and would leave
+			-- the tie-breaking branch of the cursor seek untested.
+			--
+			-- The day bucket keeps the primary key intact: the four rows that
+			-- share an id are n, n+30000, n+60000 and n+90000, which land on
+			-- four different days.
 			timestamptz '2022-01-01 00:00:00+00'
-				+ ((n * 7919) % 1461) * interval '1 day'
-				+ ((n * 104729) % 86400) * interval '1 second'
-				+ (1 + (n * 97) % 604800) * interval '1 second'
-				+ n * interval '1 microsecond',
+				+ (n / 30000) * interval '1 day'
+				+ ((n % 30000) % 600) * interval '1 minute',
 			(ARRAY['stripe', 'adyen', 'paypal', 'checkout', 'worldpay', 'manual'])[(1 + n % 6)::int],
 			'usr_' || lpad(((n * 3571) % 25000)::text, 5, '0')
 		FROM generate_series(1::bigint, 120000::bigint) AS series(n)

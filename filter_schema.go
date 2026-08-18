@@ -88,7 +88,7 @@ func DisabledFilter() *FilterSchema {
 // NewFilterSchema validates and copies a filter declaration.
 func NewFilterSchema(fields []FilterField, limits FilterLimits) (*FilterSchema, error) {
 	if len(fields) == 0 {
-		return nil, fmt.Errorf("flop: filter schema has no fields")
+		return nil, errorf(ErrDeclaration, "filter schema has no fields")
 	}
 	if limits.MaxBytes == 0 {
 		limits.MaxBytes = maxFilterBytes
@@ -100,7 +100,7 @@ func NewFilterSchema(fields []FilterField, limits FilterLimits) (*FilterSchema, 
 		limits.MaxNodes = maxFilterNodes
 	}
 	if limits.MaxBytes < 0 || limits.MaxDepth < 0 || limits.MaxNodes < 0 {
-		return nil, fmt.Errorf("flop: filter limits must be positive")
+		return nil, errorf(ErrDeclaration, "filter limits must be positive")
 	}
 
 	schema := &FilterSchema{
@@ -112,16 +112,16 @@ func NewFilterSchema(fields []FilterField, limits FilterLimits) (*FilterSchema, 
 
 	for _, fld := range fields {
 		if !ident.ValidPath(fld.Name) {
-			return nil, fmt.Errorf("flop: invalid filter field %q", fld.Name)
+			return nil, errorf(ErrDeclaration, "invalid filter field %q", fld.Name)
 		}
 		if _, exists := schema.fields[fld.Name]; exists {
-			return nil, fmt.Errorf("flop: duplicate filter field %q", fld.Name)
+			return nil, errorf(ErrDeclaration, "duplicate filter field %q", fld.Name)
 		}
 		if err := validateType(fld.Type); err != nil {
-			return nil, fmt.Errorf("flop: filter field %q: %w", fld.Name, err)
+			return nil, errorf(ErrDeclaration, "filter field %q: %w", fld.Name, err)
 		}
 		if fld.Search && fld.Type.kind != stringType {
-			return nil, fmt.Errorf("flop: searchable filter field %q must be a string", fld.Name)
+			return nil, errorf(ErrDeclaration, "searchable filter field %q must be a string", fld.Name)
 		}
 		fld.Type.values = slices.Clone(fld.Type.values)
 		schema.fields[fld.Name] = fld
@@ -164,8 +164,12 @@ func (s *FilterSchema) Initialized() bool {
 	return s != nil && (s.disabled || len(s.fields) > 0)
 }
 
-// Fields returns the declared fields in declaration order.
+// Fields returns the declared fields in declaration order. A nil schema
+// declares nothing.
 func (s *FilterSchema) Fields() []FilterField {
+	if s == nil {
+		return nil
+	}
 	fields := make([]FilterField, 0, len(s.fieldOrder))
 	for _, name := range s.fieldOrder {
 		fld := s.fields[name]
@@ -175,13 +179,21 @@ func (s *FilterSchema) Fields() []FilterField {
 	return fields
 }
 
-// SearchFields returns searchable field names in declaration order.
+// SearchFields returns searchable field names in declaration order. A nil
+// schema declares nothing.
 func (s *FilterSchema) SearchFields() []string {
+	if s == nil {
+		return nil
+	}
 	return slices.Clone(s.searchOrder)
 }
 
-// IsString reports whether name is a declared string field.
+// IsString reports whether name is a declared string field. A nil schema
+// declares nothing.
 func (s *FilterSchema) IsString(name string) bool {
+	if s == nil {
+		return false
+	}
 	field, ok := s.fields[name]
 	return ok && field.Type.kind == stringType
 }
@@ -189,13 +201,13 @@ func (s *FilterSchema) IsString(name string) bool {
 // Validate checks a parsed filter against the schema and returns a typed copy.
 func (s *FilterSchema) Validate(f Filter) (Filter, error) {
 	if !s.Initialized() {
-		return Filter{}, fmt.Errorf("flop: uninitialized filter schema")
+		return Filter{}, errorf(ErrDeclaration, "uninitialized filter schema")
 	}
 	if f.Expr == nil {
 		return Filter{}, nil
 	}
 	if s.disabled {
-		return Filter{}, fmt.Errorf("flop: filtering is disabled")
+		return Filter{}, errorf(ErrInvalidFilter, "filtering is disabled")
 	}
 	nodes := 0
 	e, err := s.validateExpr(f.Expr, 1, &nodes)
@@ -204,7 +216,7 @@ func (s *FilterSchema) Validate(f Filter) (Filter, error) {
 	}
 	validated := Filter{Expr: e}
 	if len(validated.String()) > s.limits.MaxBytes {
-		return Filter{}, fmt.Errorf("flop: filter is too large")
+		return Filter{}, errorf(ErrInvalidFilter, "larger than the declared %d bytes", s.limits.MaxBytes)
 	}
 	return validated, nil
 }
@@ -212,13 +224,18 @@ func (s *FilterSchema) Validate(f Filter) (Filter, error) {
 func (s *FilterSchema) validateExpr(e expr.Expr, depth int, nodes *int) (expr.Expr, error) {
 	*nodes++
 	if depth > s.limits.MaxDepth {
-		return nil, fmt.Errorf("flop: filter nesting is too deep")
+		return nil, errorf(ErrInvalidFilter, "nested deeper than the declared %d", s.limits.MaxDepth)
 	}
 	if *nodes > s.limits.MaxNodes {
-		return nil, fmt.Errorf("flop: filter has too many expressions")
+		return nil, errorf(ErrInvalidFilter, "more than the declared %d expressions", s.limits.MaxNodes)
 	}
 	switch node := e.(type) {
 	case expr.LogicalExpr:
+		// Checked before recursing: an invalid operator is cheaper to find here
+		// and should outrank any error the subtrees happen to raise.
+		if node.Op != expr.And && node.Op != expr.Or && node.Op != expr.Seq {
+			return nil, errorf(ErrInvalidFilter, "invalid logical operator")
+		}
 		left, err := s.validateExpr(node.Left, depth+1, nodes)
 		if err != nil {
 			return nil, err
@@ -226,9 +243,6 @@ func (s *FilterSchema) validateExpr(e expr.Expr, depth int, nodes *int) (expr.Ex
 		right, err := s.validateExpr(node.Right, depth+1, nodes)
 		if err != nil {
 			return nil, err
-		}
-		if node.Op != expr.And && node.Op != expr.Or && node.Op != expr.Seq {
-			return nil, fmt.Errorf("flop: invalid filter logical operator")
 		}
 		return expr.LogicalExpr{Left: left, Op: node.Op, Right: right}, nil
 	case expr.NotExpr:
@@ -240,11 +254,11 @@ func (s *FilterSchema) validateExpr(e expr.Expr, depth int, nodes *int) (expr.Ex
 	case expr.ComparisonExpr:
 		field, ok := s.fields[node.Field]
 		if !ok {
-			return nil, fmt.Errorf("flop: unknown filter field %q", node.Field)
+			return nil, errorf(ErrInvalidFilter, "unknown field %q", node.Field)
 		}
 		value, err := coerceValue(node.Value, field.Type)
 		if err != nil {
-			return nil, fmt.Errorf("flop: filter field %q: %w", node.Field, err)
+			return nil, errorf(ErrInvalidFilter, "field %q: %w", node.Field, err)
 		}
 		if !opAllowed(node.Op, field.Type, value) {
 			return nil, fmt.Errorf(
@@ -256,17 +270,17 @@ func (s *FilterSchema) validateExpr(e expr.Expr, depth int, nodes *int) (expr.Ex
 		return expr.ComparisonExpr{Field: node.Field, Op: node.Op, Value: value}, nil
 	case expr.TextExpr:
 		if len(s.searchOrder) == 0 {
-			return nil, fmt.Errorf("flop: unqualified text search is disabled")
+			return nil, errorf(ErrInvalidFilter, "unqualified text search is disabled")
 		}
 		if !node.V.Valid() || node.V.Kind() == expr.NullKind {
-			return nil, fmt.Errorf("flop: invalid text search value")
+			return nil, errorf(ErrInvalidFilter, "invalid text search value")
 		}
 		if node.V.Kind() == expr.StringKind {
 			return expr.TextExpr{V: node.V}, nil
 		}
 		return expr.TextExpr{V: expr.StringValue(node.V.Canonical())}, nil
 	default:
-		return nil, fmt.Errorf("flop: invalid filter expression")
+		return nil, errorf(ErrInvalidFilter, "invalid expression")
 	}
 }
 

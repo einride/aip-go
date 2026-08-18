@@ -191,25 +191,25 @@ func handleCursorPayments(w http.ResponseWriter, r *http.Request) {
 
 	orderBy, err := flop.ParseOrderBy(req.OrderBy)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeListError(w, err)
 		return
 	}
 
 	f, err := flop.ParseFilter(req.Filter)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeListError(w, err)
 		return
 	}
 
 	params, err := paginator.CursorParams(req.Cursor, req.PageSize, orderBy, f)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeListError(w, err)
 		return
 	}
 
 	payments, err := listCursorPayments(r.Context(), params)
 	if err != nil {
-		writeInternalError(w, err)
+		writeListError(w, err)
 		return
 	}
 
@@ -236,25 +236,25 @@ func handleOffsetPayments(w http.ResponseWriter, r *http.Request) {
 
 	orderBy, err := flop.ParseOrderBy(req.OrderBy)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeListError(w, err)
 		return
 	}
 
 	f, err := flop.ParseFilter(req.Filter)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeListError(w, err)
 		return
 	}
 
 	params, err := paginator.OffsetParams(req.Page, req.PageSize, orderBy, f)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeListError(w, err)
 		return
 	}
 
 	items, total, err := listOffsetPayments(r.Context(), params)
 	if err != nil {
-		writeInternalError(w, err)
+		writeListError(w, err)
 		return
 	}
 
@@ -345,6 +345,26 @@ func scanPayments(rows pgx.Rows) ([]payment, error) {
 		pp = append(pp, p)
 	}
 	return pp, rows.Err()
+}
+
+// writeListError maps a pagination failure onto a status.
+//
+// flop names what it found wrong and takes no view on what that means, so
+// deciding which causes are the client's fault is the endpoint's job. Every
+// sentinel below reports values that reached flop unusable; anything else is a
+// misdeclared endpoint or a broken query, which the client cannot fix.
+func writeListError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, flop.ErrInvalidFilter),
+		errors.Is(err, flop.ErrInvalidOrder),
+		errors.Is(err, flop.ErrInvalidCursor),
+		errors.Is(err, flop.ErrCursorMismatch),
+		errors.Is(err, flop.ErrInvalidPageSize),
+		errors.Is(err, flop.ErrInvalidPage):
+		writeError(w, http.StatusBadRequest, err)
+	default:
+		writeInternalError(w, err)
+	}
 }
 
 func writeInternalError(w http.ResponseWriter, err error) {

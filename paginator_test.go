@@ -217,6 +217,9 @@ func TestPaginator_CursorParams(t *testing.T) {
 	shortPosition := forge(cursorField("id", intValue))
 	wrongPath := forge(cursorField("wrong_path", intValue), cursorField("id", intValue))
 	nullPosition := forge(cursorField("created_at", []byte{byte(expr.NullKind)}), cursorField("id", intValue))
+	// Decodes cleanly and carries a matching binding, but puts an integer where
+	// created_at holds a time.
+	wrongKind := forge(cursorField("created_at", intValue), cursorField("id", intValue))
 	type args struct {
 		cursor  string
 		size    int32
@@ -269,6 +272,7 @@ func TestPaginator_CursorParams(t *testing.T) {
 		{name: "short cursor position", args: args{cursor: shortPosition, size: 1}, wantErr: assert.Error},
 		{name: "mismatched cursor path", args: args{cursor: wrongPath, size: 1}, wantErr: assert.Error},
 		{name: "null cursor value", args: args{cursor: nullPosition, size: 1}, wantErr: assert.Error},
+		{name: "cursor value of the wrong kind", args: args{cursor: wrongKind, size: 1}, wantErr: assert.Error},
 		{name: "unknown order", args: args{size: 1, order: "unknown"}, wantErr: assert.Error},
 		{
 			name: "invalid order path",

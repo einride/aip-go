@@ -1,9 +1,5 @@
 package flop
 
-import (
-	"fmt"
-)
-
 // OffsetParams contains parameters for offset pagination.
 type OffsetParams struct {
 	page   int32
@@ -36,10 +32,10 @@ func (p OffsetParams) Filter() Filter { return p.filter }
 // A zero page number selects the first page.
 func NewOffsetParams(page, pageSize int32, orderBy OrderBy, f Filter) (OffsetParams, error) {
 	if page < 0 {
-		return OffsetParams{}, fmt.Errorf("flop: page number must not be negative")
+		return OffsetParams{}, errorf(ErrInvalidPage, "must not be negative")
 	}
 	if pageSize <= 0 {
-		return OffsetParams{}, fmt.Errorf("flop: page size must be positive")
+		return OffsetParams{}, errorf(ErrInvalidPageSize, "must be positive")
 	}
 	if page == 0 {
 		page = 1
@@ -66,10 +62,10 @@ type OffsetPage[T any] struct {
 // items.
 func NewOffsetPage[T any](rows []T, p OffsetParams, totalItems int64) (OffsetPage[T], error) {
 	if p.limit <= 0 || p.page <= 0 || p.offset < 0 || totalItems < 0 {
-		return OffsetPage[T]{}, fmt.Errorf("flop: invalid offset parameters")
+		return OffsetPage[T]{}, errorf(ErrDeclaration, "offset parameters are unset")
 	}
 	if int64(len(rows)) > int64(p.limit) {
-		return OffsetPage[T]{}, fmt.Errorf("flop: storage returned too many rows")
+		return OffsetPage[T]{}, errorf(ErrTooManyRows, "more rows than the page limit")
 	}
 	totalPages := totalItems / int64(p.limit)
 	if totalItems%int64(p.limit) != 0 {

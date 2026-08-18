@@ -8,10 +8,9 @@ import (
 )
 
 var (
-	ErrBaseOrderBy        = errors.New("base query has an ORDER BY")
-	ErrNoOrder            = errors.New("pagination has no resolved order")
-	ErrCursorPosition     = errors.New("cursor position does not match the resolved order")
-	ErrUnsupportedPattern = errors.New("filter pattern requires unsupported SQL escaping")
+	ErrBaseOrderBy    = errors.New("base query has an ORDER BY")
+	ErrNoOrder        = errors.New("pagination has no resolved order")
+	ErrCursorPosition = errors.New("cursor position does not match the resolved order")
 )
 
 // Err returns a Sqlizer that carries an error through a chainable builder.

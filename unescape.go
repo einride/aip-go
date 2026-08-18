@@ -22,12 +22,12 @@ func unescape(val string) (string, error) {
 
 	// Nothing to unescape / decode.
 	if n < 2 {
-		return val, errors.New("unable to unescape string")
+		return "", errors.New("unable to unescape string")
 	}
 
 	// Quoted string of some form, must have same first and last char.
 	if val[0] != val[n-1] || (val[0] != '"' && val[0] != '\'') {
-		return val, errors.New("unable to unescape string")
+		return "", errors.New("unable to unescape string")
 	}
 
 	val = val[1 : n-1]
@@ -41,6 +41,15 @@ func unescape(val string) (string, error) {
 	var runeTmp [utf8.UTFMax]byte
 	buf := make([]byte, 0, 3*n/2)
 	for len(val) > 0 {
+		// `\*` survives verbatim. An asterisk is a matching wildcard to the
+		// adapters that compile a filter, so collapsing the escape here would
+		// leave them unable to tell a literal asterisk from a wildcard, the
+		// same way quoting alone cannot.
+		if len(val) > 1 && val[0] == '\\' && val[1] == '*' {
+			buf = append(buf, '\\', '*')
+			val = val[2:]
+			continue
+		}
 		c, encode, rest, err := unescapeChar(val, false)
 		if err != nil {
 			return "", err

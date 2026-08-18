@@ -15,13 +15,16 @@ func IsContinue(r rune) bool {
 }
 
 // Valid reports whether id is a single well-formed identifier.
+//
+// The rule is ASCII-only, so id is scanned as bytes. Any multi-byte rune has
+// every byte >= 0x80 and fails IsContinue, which rejects it just as a rune
+// scan would, without decoding.
 func Valid(id string) bool {
-	runes := []rune(id)
-	if len(runes) == 0 || !IsStart(runes[0]) {
+	if id == "" || !IsStart(rune(id[0])) {
 		return false
 	}
-	for _, r := range runes[1:] {
-		if !IsContinue(r) {
+	for i := 1; i < len(id); i++ {
+		if !IsContinue(rune(id[i])) {
 			return false
 		}
 	}
@@ -29,14 +32,21 @@ func Valid(id string) bool {
 }
 
 // ValidPath reports whether path is a dot-separated sequence of identifiers.
+//
+// Segments are walked in place rather than split out, so validating a path
+// does not allocate.
 func ValidPath(path string) bool {
 	if path == "" {
 		return false
 	}
-	for _, part := range strings.Split(path, ".") {
-		if !Valid(part) {
+	for {
+		dot := strings.IndexByte(path, '.')
+		if dot < 0 {
+			return Valid(path)
+		}
+		if !Valid(path[:dot]) {
 			return false
 		}
+		path = path[dot+1:]
 	}
-	return true
 }
