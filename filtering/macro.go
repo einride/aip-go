@@ -148,9 +148,9 @@ func (c *Cursor) ReplaceWithDeclarations(newExpr *expr.Expr, opts []DeclarationO
 
 func maxID(exp *expr.Expr) int64 {
 	var maxFound int64
-	Walk(func(_, _ *expr.Expr) bool {
-		if exp.GetId() > maxFound {
-			maxFound = exp.GetId()
+	Walk(func(curr, _ *expr.Expr) bool {
+		if curr.GetId() > maxFound {
+			maxFound = curr.GetId()
 		}
 		return true
 	}, exp)
