@@ -507,6 +507,67 @@ func TestApplyMacros(t *testing.T) {
 	}
 }
 
+// Calling ApplyMacros twice on the same Filter is supported.
+func TestApplyMacrosTwice(t *testing.T) {
+	t.Parallel()
+
+	declarations, err := NewDeclarations(
+		DeclareStandardFunctions(),
+		DeclareIdent("name", TypeString),
+		DeclareIdent("status", TypeString),
+	)
+	assert.NilError(t, err)
+
+	filter, err := ParseFilter(&mockRequest{filter: `name:* AND status = "active"`}, declarations)
+	assert.NilError(t, err)
+
+	// Pass 1: rename fields to their qualified DB column names.
+	pass1Decls, err := NewDeclarations(
+		DeclareStandardFunctions(),
+		DeclareIdent("t.name", TypeString),
+		DeclareIdent("t.status", TypeString),
+	)
+	assert.NilError(t, err)
+
+	filter, err = ApplyMacros(filter, pass1Decls, func(cursor *Cursor) {
+		ident := cursor.Expr().GetIdentExpr()
+		if ident == nil {
+			return
+		}
+		switch ident.GetName() {
+		case "name":
+			cursor.Replace(Text("t.name"))
+		case "status":
+			cursor.Replace(Text("t.status"))
+		}
+	})
+	assert.NilError(t, err)
+
+	// Pass 2: rewrite HAS presence check (name:*) to NOT(field = "").
+	filter, err = ApplyMacros(filter, pass1Decls, func(cursor *Cursor) {
+		call := cursor.Expr().GetCallExpr()
+		if call == nil || call.GetFunction() != FunctionHas || len(call.GetArgs()) < 2 {
+			return
+		}
+		if call.GetArgs()[1].GetConstExpr().GetStringValue() != "*" {
+			return
+		}
+		cursor.Replace(Not(Equals(call.GetArgs()[0], String(""))))
+	})
+	assert.NilError(t, err)
+
+	assert.DeepEqual(
+		t,
+		And(
+			Not(Equals(Text("t.name"), String(""))),
+			Equals(Text("t.status"), String("active")),
+		),
+		filter.CheckedExpr.GetExpr(),
+		protocmp.Transform(),
+		protocmp.IgnoreFields(&expr.Expr{}, "id"),
+	)
+}
+
 type mockRequest struct {
 	filter string
 }
