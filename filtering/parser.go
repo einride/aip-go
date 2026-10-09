@@ -325,6 +325,9 @@ func (p *Parser) ParseMember() (_ *expr.Expr, err error) {
 	if err != nil {
 		return nil, err
 	}
+	if valueToken.Type == TokenTypeText && strings.EqualFold(valueToken.Value, "null") {
+		return parsedNull(p.nextID(valueToken.Position)), nil
+	}
 	if !p.sniffTokens(TokenTypeDot) {
 		if valueToken.Type == TokenTypeString {
 			unquoted, err := valueToken.Unquote()

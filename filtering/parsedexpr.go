@@ -8,6 +8,12 @@ func parsedFloat(id int64, value float64) *expr.Expr {
 	return result
 }
 
+func parsedNull(id int64) *expr.Expr {
+	result := Null()
+	result.Id = id
+	return result
+}
+
 func parsedInt(id, value int64) *expr.Expr {
 	result := Int(value)
 	result.Id = id

@@ -49,6 +49,8 @@ func (c *Checker) checkExpr(e *expr.Expr) error {
 	switch e.GetExprKind().(type) {
 	case *expr.Expr_ConstExpr:
 		switch e.GetConstExpr().GetConstantKind().(type) {
+		case *expr.Constant_NullValue:
+			return c.checkNullLiteral(e)
 		case *expr.Constant_BoolValue:
 			return c.checkBoolLiteral(e)
 		case *expr.Constant_DoubleValue:
@@ -234,6 +236,10 @@ func (c *Checker) checkDoubleLiteral(e *expr.Expr) error {
 
 func (c *Checker) checkBoolLiteral(e *expr.Expr) error {
 	return c.setType(e, TypeBool)
+}
+
+func (c *Checker) checkNullLiteral(e *expr.Expr) error {
+	return c.setType(e, TypeNull)
 }
 
 func (c *Checker) errorf(_ *expr.Expr, format string, args ...interface{}) error {
