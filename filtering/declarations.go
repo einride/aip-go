@@ -169,10 +169,11 @@ func (d *Declarations) declareEnumIdent(name string, enumType protoreflect.EnumT
 		FunctionEquals,
 		FunctionNotEquals,
 	} {
-		if err := d.declareFunction(
-			fn,
+		overloads := []*expr.Decl_FunctionDecl_Overload{
 			NewFunctionOverload(fn+"_"+enumIdentType.GetMessageType(), TypeBool, enumIdentType, enumIdentType),
-		); err != nil {
+		}
+		overloads = append(overloads, nullEqualityOverloads(fn, enumIdentType.GetMessageType(), enumIdentType)...)
+		if err := d.declareFunction(fn, overloads...); err != nil {
 			return err
 		}
 	}

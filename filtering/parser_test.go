@@ -84,6 +84,18 @@ func TestParser(t *testing.T) {
 			filter:   "package=com.google",
 			expected: Equals(Text("package"), Member(Text("com"), "google")),
 		},
+		{
+			filter:   "status = null",
+			expected: Equals(Text("status"), Null()),
+		},
+		{
+			filter:   "NULL != status",
+			expected: NotEquals(Null(), Text("status")),
+		},
+		{
+			filter:   "status = NuLl",
+			expected: Equals(Text("status"), Null()),
+		},
 
 		// Simple string unescaping tests.
 		{

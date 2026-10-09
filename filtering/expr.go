@@ -4,6 +4,7 @@ import (
 	"time"
 
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func Not(arg *expr.Expr) *expr.Expr {
@@ -38,6 +39,19 @@ func Float(value float64) *expr.Expr {
 			ConstExpr: &expr.Constant{
 				ConstantKind: &expr.Constant_DoubleValue{
 					DoubleValue: value,
+				},
+			},
+		},
+	}
+}
+
+// Null returns a new null constant expression.
+func Null() *expr.Expr {
+	return &expr.Expr{
+		ExprKind: &expr.Expr_ConstExpr{
+			ConstExpr: &expr.Constant{
+				ConstantKind: &expr.Constant_NullValue{
+					NullValue: structpb.NullValue_NULL_VALUE,
 				},
 			},
 		},
