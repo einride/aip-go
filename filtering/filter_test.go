@@ -453,3 +453,43 @@ func TestFilter_WithMacros_Chain(t *testing.T) {
 		protocmp.IgnoreFields(&expr.Expr{}, "id"),
 	)
 }
+
+// TestFilter_WithMacros_ChainUniqueIDs verifies that expressions added by chained WithMacros calls get IDs that are
+// unique in the whole filter, so that their entries in the type map don't collide.
+func TestFilter_WithMacros_ChainUniqueIDs(t *testing.T) {
+	t.Parallel()
+	decl, err := NewDeclarations(
+		DeclareStandardFunctions(),
+		DeclareIdent("a", TypeInt),
+		DeclareIdent("b", TypeInt),
+	)
+	assert.NilError(t, err)
+	renameTo := func(from, to string) Macro {
+		return func(cursor *Cursor) {
+			identExpr := cursor.Expr().GetIdentExpr()
+			if identExpr == nil || identExpr.GetName() != from {
+				return
+			}
+			cursor.ReplaceWithDeclarations(Text(to), []DeclarationOption{DeclareIdent(to, TypeInt)})
+		}
+	}
+	source, err := ParseFilter(&mockRequest{filter: `a = 1 AND b = 2`}, decl)
+	assert.NilError(t, err)
+	step1, err := source.WithMacros(renameTo("a", "col_a"))
+	assert.NilError(t, err)
+	step2, err := step1.WithMacros(renameTo("b", "col_b"))
+	assert.NilError(t, err)
+	assertUniqueExpressionIDs(t, step2.CheckedExpr.GetExpr())
+}
+
+// assertUniqueExpressionIDs asserts that no two expressions in e have the same ID.
+func assertUniqueExpressionIDs(t *testing.T, e *expr.Expr) {
+	t.Helper()
+	seenIDs := map[int64]*expr.Expr{}
+	Walk(func(currExpr, _ *expr.Expr) bool {
+		previous, ok := seenIDs[currExpr.GetId()]
+		assert.Assert(t, !ok, "duplicate expression ID %d: %v and %v", currExpr.GetId(), previous, currExpr)
+		seenIDs[currExpr.GetId()] = currExpr
+		return true
+	}, e)
+}
