@@ -9,7 +9,6 @@ import (
 	"go.einride.tech/sage/tools/sggit"
 	"go.einride.tech/sage/tools/sggo"
 	"go.einride.tech/sage/tools/sggolangcilintv2"
-	"go.einride.tech/sage/tools/sggolines"
 	"go.einride.tech/sage/tools/sggosemanticrelease"
 	"go.einride.tech/sage/tools/sgmdformat"
 	"go.einride.tech/sage/tools/sgyamlfmt"
@@ -59,11 +58,6 @@ func GoLint(ctx context.Context) error {
 func GoLintFix(ctx context.Context) error {
 	sg.Logger(ctx).Println("fixing Go files...")
 	return sggolangcilintv2.Fix(ctx, sggolangcilintv2.Config{})
-}
-
-func GoLines(ctx context.Context) error {
-	sg.Logger(ctx).Println("wrapping Go lines...")
-	return sggolines.Run(ctx)
 }
 
 func GoModTidy(ctx context.Context) error {

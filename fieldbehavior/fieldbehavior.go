@@ -174,7 +174,8 @@ func rangeFieldsWithBehaviors(
 			default:
 				return true
 			}
-		})
+		},
+	)
 }
 
 func hasAnyBehavior(haystack, needles []annotations.FieldBehavior) bool {
