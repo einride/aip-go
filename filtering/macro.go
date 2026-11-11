@@ -43,7 +43,9 @@ func applyMacros(
 
 // applyMacrosWithRoot applies macros to exp, which is root or a subtree of it, and returns the declaration options
 // that the macros added. Expressions added by macros get IDs after the highest one in root, so that they are unique
-// in the whole filter also when exp is a subtree.
+// in the whole filter also when exp is a subtree. declarations are what macros see through Cursor.LookupIdentType,
+// and the scope that exp is in: macros see calls to the scoped functions it declares, but not their arguments, which
+// are in other scopes.
 func applyMacrosWithRoot(
 	root *expr.Expr,
 	exp *expr.Expr,
@@ -79,7 +81,8 @@ func applyMacrosWithRoot(
 			}
 		}
 		declarationOptions = append(declarationOptions, cursor.declOptions...)
-		return true
+		_, isScopedCall := scopedCall(currExpr, decl)
+		return !isScopedCall
 	}, exp)
 	return declarationOptions, nil
 }
