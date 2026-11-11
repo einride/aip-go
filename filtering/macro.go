@@ -16,7 +16,8 @@ func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Fi
 		filter.CheckedExpr.GetExpr(),
 		filter.CheckedExpr.GetSourceInfo(),
 		filter.declarations,
-		macros...)
+		macros...,
+	)
 	if err != nil {
 		return Filter{}, err
 	}

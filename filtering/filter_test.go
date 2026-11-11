@@ -40,7 +40,8 @@ func TestFilter_WithMacros(t *testing.T) {
 						Text("renamed_name"),
 						[]DeclarationOption{
 							DeclareIdent("renamed_name", TypeString),
-						})
+						},
+					)
 				},
 			},
 			expected: Equals(Text("renamed_name"), String("value")),

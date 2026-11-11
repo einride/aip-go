@@ -10,7 +10,7 @@ sagefile := $(abspath $(cwd)/.sage/bin/sagefile)
 go := $(shell command -v go 2>/dev/null)
 export GOWORK ?= off
 ifndef go
-SAGE_GO_VERSION ?= 1.25.7
+SAGE_GO_VERSION ?= 1.26.10
 export GOROOT := $(abspath $(cwd)/.sage/tools/go/$(SAGE_GO_VERSION)/go)
 export PATH := $(PATH):$(GOROOT)/bin
 go := $(GOROOT)/bin/go
@@ -66,10 +66,6 @@ git-verify-no-diff: $(sagefile)
 .PHONY: go-generate
 go-generate: $(sagefile)
 	@$(sagefile) GoGenerate
-
-.PHONY: go-lines
-go-lines: $(sagefile)
-	@$(sagefile) GoLines
 
 .PHONY: go-lint
 go-lint: $(sagefile)
