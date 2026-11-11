@@ -120,6 +120,11 @@ func (c *Checker) checkCallExpr(e *expr.Expr) (err error) {
 		}
 	}()
 	callExpr := e.GetCallExpr()
+	// The argument of a scoped function is checked against the scope's declarations, so it must not be checked
+	// against the enclosing declarations first.
+	if scope, ok := c.declarations.lookupScopedFunction(callExpr.GetFunction()); ok {
+		return c.checkScopedCallExpr(e, scope)
+	}
 	for _, arg := range callExpr.GetArgs() {
 		if err := c.checkExpr(arg); err != nil {
 			return err
@@ -137,6 +142,38 @@ func (c *Checker) checkCallExpr(e *expr.Expr) (err error) {
 		return err
 	}
 	return c.setType(e, functionOverload.GetResultType())
+}
+
+// checkScopedCallExpr checks the single boolean argument of a call to a scoped function against the scope's
+// declarations, and types the call as boolean.
+func (c *Checker) checkScopedCallExpr(e *expr.Expr, scope *Declarations) error {
+	callExpr := e.GetCallExpr()
+	if callExpr.GetTarget() != nil || len(callExpr.GetArgs()) != 1 {
+		return c.errorf(e, "scoped function '%s' takes exactly one argument", callExpr.GetFunction())
+	}
+	arg := callExpr.GetArgs()[0]
+	// A separate checker resolves names in the argument against the scope's declarations only, and Check rejects an
+	// argument that isn't boolean.
+	var scopeChecker Checker
+	scopeChecker.Init(arg, c.sourceInfo, scope)
+	checkedArg, err := scopeChecker.Check()
+	if err != nil {
+		return c.wrapf(err, e, "check scoped function '%s' argument", callExpr.GetFunction())
+	}
+	// Transpilers need the type of every expression inside the scope, not only of the argument, so all of them are
+	// added to this checker's type map. Some expressions have no type, such as the operands of a declared select
+	// path like `a.b`, and are skipped.
+	var typeErr error
+	Walk(func(currExpr, _ *expr.Expr) bool {
+		if argType, ok := checkedArg.GetTypeMap()[currExpr.GetId()]; ok {
+			typeErr = c.setType(currExpr, argType)
+		}
+		return typeErr == nil
+	}, arg)
+	if typeErr != nil {
+		return typeErr
+	}
+	return c.setType(e, TypeBool)
 }
 
 func (c *Checker) resolveCallExprFunctionOverload(
