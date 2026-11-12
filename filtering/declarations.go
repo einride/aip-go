@@ -68,6 +68,8 @@ type Declarations struct {
 	idents    map[string]*expr.Decl
 	functions map[string]*expr.Decl
 	enums     map[string]protoreflect.EnumType
+	// scopes holds, per scoped function, the declarations that its argument is checked against.
+	scopes map[string]*Declarations
 }
 
 // DeclarationOption configures Declarations.
@@ -111,6 +113,7 @@ func NewDeclarations(opts ...DeclarationOption) (*Declarations, error) {
 		idents:    make(map[string]*expr.Decl),
 		functions: make(map[string]*expr.Decl),
 		enums:     make(map[string]protoreflect.EnumType),
+		scopes:    make(map[string]*Declarations),
 	}
 	for _, opt := range opts {
 		if err := opt(d); err != nil {
@@ -187,6 +190,9 @@ func (d *Declarations) declareEnumIdent(name string, enumType protoreflect.EnumT
 }
 
 func (d *Declarations) declareFunction(name string, overloads ...*expr.Decl_FunctionDecl_Overload) error {
+	if _, ok := d.scopes[name]; ok {
+		return fmt.Errorf("redeclaration of %s", name)
+	}
 	decl, ok := d.functions[name]
 	if !ok {
 		decl = NewFunctionDeclaration(name)
@@ -228,6 +234,7 @@ func (d *Declarations) clone() *Declarations {
 		idents:    make(map[string]*expr.Decl, len(d.idents)),
 		functions: make(map[string]*expr.Decl, len(d.functions)),
 		enums:     make(map[string]protoreflect.EnumType, len(d.enums)),
+		scopes:    make(map[string]*Declarations, len(d.scopes)),
 	}
 	for k, v := range d.idents {
 		cloned.idents[k] = v
@@ -237,6 +244,9 @@ func (d *Declarations) clone() *Declarations {
 	}
 	for k, v := range d.enums {
 		cloned.enums[k] = v
+	}
+	for k, v := range d.scopes {
+		cloned.scopes[k] = v
 	}
 	return cloned
 }
@@ -256,5 +266,8 @@ func (d *Declarations) merge(decl *Declarations) {
 	}
 	for name, enum := range decl.enums {
 		d.enums[name] = enum
+	}
+	for name, scope := range decl.scopes {
+		d.scopes[name] = scope
 	}
 }

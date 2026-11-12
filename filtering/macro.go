@@ -31,14 +31,31 @@ func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Fi
 	return filter, nil
 }
 
+// applyMacros applies macros to exp, which is the whole filter, and returns the declaration options that the macros
+// added.
 func applyMacros(
 	exp *expr.Expr,
 	sourceInfo *expr.SourceInfo,
 	declarations *Declarations,
 	macros ...Macro,
 ) ([]DeclarationOption, error) {
+	return applyMacrosWithRoot(exp, exp, sourceInfo, declarations, macros...)
+}
+
+// applyMacrosWithRoot applies macros to exp, which is root or a subtree of it, and returns the declaration options
+// that the macros added. Expressions added by macros get IDs after the highest one in root, so that they are unique
+// in the whole filter also when exp is a subtree. declarations are what macros see through Cursor.LookupIdentType,
+// and the scope that exp is in: macros see calls to the scoped functions it declares, but not their arguments, which
+// are in other scopes.
+func applyMacrosWithRoot(
+	root *expr.Expr,
+	exp *expr.Expr,
+	sourceInfo *expr.SourceInfo,
+	declarations *Declarations,
+	macros ...Macro,
+) ([]DeclarationOption, error) {
 	declarationOptions := make([]DeclarationOption, 0, len(macros))
-	nextID := maxID(exp) + 1
+	nextID := maxID(root) + 1
 	decl := declarations
 	if declarations == nil {
 		var err error
@@ -65,7 +82,8 @@ func applyMacros(
 			}
 		}
 		declarationOptions = append(declarationOptions, cursor.declOptions...)
-		return true
+		_, isScopedCall := scopedCall(currExpr, decl)
+		return !isScopedCall
 	}, exp)
 	return declarationOptions, nil
 }
@@ -149,9 +167,9 @@ func (c *Cursor) ReplaceWithDeclarations(newExpr *expr.Expr, opts []DeclarationO
 
 func maxID(exp *expr.Expr) int64 {
 	var maxFound int64
-	Walk(func(_, _ *expr.Expr) bool {
-		if exp.GetId() > maxFound {
-			maxFound = exp.GetId()
+	Walk(func(currExpr, _ *expr.Expr) bool {
+		if currExpr.GetId() > maxFound {
+			maxFound = currExpr.GetId()
 		}
 		return true
 	}, exp)
