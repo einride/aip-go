@@ -236,8 +236,7 @@ const (
 
 // StandardFunctionEquals returns a declaration for the standard '=' function and all its standard overloads.
 func StandardFunctionEquals() *expr.Decl {
-	return NewFunctionDeclaration(
-		FunctionEquals,
+	overloads := []*expr.Decl_FunctionDecl_Overload{
 		NewFunctionOverload(FunctionOverloadEqualsBool, TypeBool, TypeBool, TypeBool),
 		NewFunctionOverload(FunctionOverloadEqualsInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadEqualsFloat, TypeBool, TypeFloat, TypeFloat),
@@ -246,7 +245,21 @@ func StandardFunctionEquals() *expr.Decl {
 		NewFunctionOverload(FunctionOverloadEqualsTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadEqualsTimestampString, TypeBool, TypeTimestamp, TypeString),
 		NewFunctionOverload(FunctionOverloadEqualsDuration, TypeBool, TypeDuration, TypeDuration),
-	)
+	}
+	for _, typedOverload := range []struct {
+		name  string
+		type_ *expr.Type
+	}{
+		{name: "bool", type_: TypeBool},
+		{name: "int", type_: TypeInt},
+		{name: "float", type_: TypeFloat},
+		{name: "string", type_: TypeString},
+		{name: "timestamp", type_: TypeTimestamp},
+		{name: "duration", type_: TypeDuration},
+	} {
+		overloads = append(overloads, nullEqualityOverloads(FunctionEquals, typedOverload.name, typedOverload.type_)...)
+	}
+	return NewFunctionDeclaration(FunctionEquals, overloads...)
 }
 
 // NotEquals overloads.
@@ -263,8 +276,7 @@ const (
 
 // StandardFunctionNotEquals returns a declaration for the standard '!=' function and all its standard overloads.
 func StandardFunctionNotEquals() *expr.Decl {
-	return NewFunctionDeclaration(
-		FunctionNotEquals,
+	overloads := []*expr.Decl_FunctionDecl_Overload{
 		NewFunctionOverload(FunctionOverloadNotEqualsBool, TypeBool, TypeBool, TypeBool),
 		NewFunctionOverload(FunctionOverloadNotEqualsInt, TypeBool, TypeInt, TypeInt),
 		NewFunctionOverload(FunctionOverloadNotEqualsFloat, TypeBool, TypeFloat, TypeFloat),
@@ -273,5 +285,26 @@ func StandardFunctionNotEquals() *expr.Decl {
 		NewFunctionOverload(FunctionOverloadNotEqualsTimestamp, TypeBool, TypeTimestamp, TypeTimestamp),
 		NewFunctionOverload(FunctionOverloadNotEqualsTimestampString, TypeBool, TypeTimestamp, TypeString),
 		NewFunctionOverload(FunctionOverloadNotEqualsDuration, TypeBool, TypeDuration, TypeDuration),
-	)
+	}
+	for _, typedOverload := range []struct {
+		name  string
+		type_ *expr.Type
+	}{
+		{name: "bool", type_: TypeBool},
+		{name: "int", type_: TypeInt},
+		{name: "float", type_: TypeFloat},
+		{name: "string", type_: TypeString},
+		{name: "timestamp", type_: TypeTimestamp},
+		{name: "duration", type_: TypeDuration},
+	} {
+		overloads = append(overloads, nullEqualityOverloads(FunctionNotEquals, typedOverload.name, typedOverload.type_)...)
+	}
+	return NewFunctionDeclaration(FunctionNotEquals, overloads...)
+}
+
+func nullEqualityOverloads(function, typeName string, valueType *expr.Type) []*expr.Decl_FunctionDecl_Overload {
+	return []*expr.Decl_FunctionDecl_Overload{
+		NewFunctionOverload(function+"_"+typeName+"_null", TypeBool, valueType, TypeNull),
+		NewFunctionOverload(function+"_null_"+typeName, TypeBool, TypeNull, valueType),
+	}
 }

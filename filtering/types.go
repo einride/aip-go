@@ -3,6 +3,7 @@ package filtering
 import (
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // Primitive types.
@@ -14,6 +15,11 @@ var (
 	TypeString = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_STRING}}
 	TypeBool   = &expr.Type{TypeKind: &expr.Type_Primitive{Primitive: expr.Type_BOOL}}
 )
+
+// TypeNull is the CEL null type.
+//
+//nolint:gochecknoglobals
+var TypeNull = &expr.Type{TypeKind: &expr.Type_Null{Null: structpb.NullValue_NULL_VALUE}}
 
 // TypeMap returns the type for a map with the provided key and value types.
 func TypeMap(keyType, valueType *expr.Type) *expr.Type {

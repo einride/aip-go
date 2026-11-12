@@ -134,6 +134,63 @@ func TestChecker(t *testing.T) {
 				DeclareIdent("msg", TypeString),
 			},
 		},
+		{
+			filter: `status = null`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("status", TypeString),
+			},
+		},
+		{
+			filter: `NULL != retries`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("retries", TypeInt),
+			},
+		},
+		{
+			filter: `temperature != null`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("temperature", TypeFloat),
+			},
+		},
+		{
+			filter: `enabled = null`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("enabled", TypeBool),
+			},
+		},
+		{
+			filter: `create_time = Null`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("create_time", TypeTimestamp),
+			},
+		},
+		{
+			filter: `null != ttl`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("ttl", TypeDuration),
+			},
+		},
+		{
+			filter: `enum = null`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareEnumIdent("enum", syntaxv1.Enum(0).Type()),
+			},
+		},
+		{
+			filter: `status < null`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareIdent("status", TypeString),
+			},
+			errorContains: "no matching overload found for calling '<'",
+		},
 
 		{
 			filter: `1 > 0`,
