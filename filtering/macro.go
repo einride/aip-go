@@ -30,14 +30,29 @@ func ApplyMacros(filter Filter, declarations *Declarations, macros ...Macro) (Fi
 	return filter, nil
 }
 
+// applyMacros applies macros to exp, which is the whole filter, and returns the declaration options that the macros
+// added.
 func applyMacros(
 	exp *expr.Expr,
 	sourceInfo *expr.SourceInfo,
 	declarations *Declarations,
 	macros ...Macro,
 ) ([]DeclarationOption, error) {
+	return applyMacrosWithRoot(exp, exp, sourceInfo, declarations, macros...)
+}
+
+// applyMacrosWithRoot applies macros to exp, which is root or a subtree of it, and returns the declaration options
+// that the macros added. Expressions added by macros get IDs after the highest one in root, so that they are unique
+// in the whole filter also when exp is a subtree.
+func applyMacrosWithRoot(
+	root *expr.Expr,
+	exp *expr.Expr,
+	sourceInfo *expr.SourceInfo,
+	declarations *Declarations,
+	macros ...Macro,
+) ([]DeclarationOption, error) {
 	declarationOptions := make([]DeclarationOption, 0, len(macros))
-	nextID := maxID(exp) + 1
+	nextID := maxID(root) + 1
 	decl := declarations
 	if declarations == nil {
 		var err error
