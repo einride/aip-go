@@ -483,6 +483,41 @@ func TestChecker(t *testing.T) {
 			},
 			errorContains: "the has operator on timestamp fields only supports the wildcard \"*\" for presence checks",
 		},
+
+		{
+			filter: `NOT message:*`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareMessageIdent("message", (&syntaxv1.Message{}).ProtoReflect().Type()),
+			},
+		},
+
+		{
+			filter: `message:* AND -message2:*`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareMessageIdent("message", (&syntaxv1.Message{}).ProtoReflect().Type()),
+				DeclareMessageIdent("message2", (&syntaxv1.Message{}).ProtoReflect().Type()),
+			},
+		},
+
+		{
+			filter: `message:foo`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareMessageIdent("message", (&syntaxv1.Message{}).ProtoReflect().Type()),
+			},
+			errorContains: "the has operator on message fields only supports the wildcard \"*\" for presence checks",
+		},
+
+		{
+			filter: `message = "foo"`,
+			declarations: []DeclarationOption{
+				DeclareStandardFunctions(),
+				DeclareMessageIdent("message", (&syntaxv1.Message{}).ProtoReflect().Type()),
+			},
+			errorContains: "no matching overload",
+		},
 	} {
 		t.Run(tt.filter, func(t *testing.T) {
 			t.Parallel()
