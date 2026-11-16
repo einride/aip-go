@@ -129,6 +129,11 @@ func messageOptions(
 			case "google.protobuf.Duration":
 				opts = append(opts, DeclareIdent(currPath, TypeDuration))
 			default:
+				// Only allow presence checks on the message itself when it is filterable as a whole,
+				// not when it is merely on the path to a filterable nested field.
+				if isFilterableAsWhole(currPath, options.filterableFields) {
+					opts = append(opts, DeclareMessageIdent(currPath, dynamicpb.NewMessageType(field.Message())))
+				}
 				// For nested messages, recursively process their fields
 				// but pass the same filterable field options so nested fields are filtered correctly
 				fieldOpts := messageOptions(field.Message(), currPath, options)
@@ -142,4 +147,14 @@ func messageOptions(
 		}
 	}
 	return opts
+}
+
+// isFilterableAsWhole reports whether the field at path, or one of its parent fields, is marked as filterable.
+func isFilterableAsWhole(path string, filterableFields []string) bool {
+	for _, filter := range filterableFields {
+		if path == filter || strings.HasPrefix(path, filter+".") {
+			return true
+		}
+	}
+	return false
 }
