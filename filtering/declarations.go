@@ -105,6 +105,14 @@ func DeclareEnumIdent(name string, enumType protoreflect.EnumType) DeclarationOp
 	}
 }
 
+// DeclareMessageIdent is a DeclarationOption that declares a single ident of a protobuf message type.
+// The ident supports presence checks with the has operator and the wildcard, for example `field:*`.
+func DeclareMessageIdent(name string, messageType protoreflect.MessageType) DeclarationOption {
+	return func(declarations *Declarations) error {
+		return declarations.declareMessageIdent(name, messageType)
+	}
+}
+
 // NewDeclarations creates a new set of Declarations for filter expression type-checking.
 func NewDeclarations(opts ...DeclarationOption) (*Declarations, error) {
 	d := &Declarations{
@@ -184,6 +192,22 @@ func (d *Declarations) declareEnumIdent(name string, enumType protoreflect.EnumT
 		}
 	}
 	return nil
+}
+
+func (d *Declarations) declareMessageIdent(name string, messageType protoreflect.MessageType) error {
+	messageIdentType := TypeMessage(messageType)
+	if err := d.declareIdent(name, messageIdentType); err != nil {
+		return err
+	}
+	return d.declareFunction(
+		FunctionHas,
+		NewFunctionOverload(
+			FunctionOverloadHasMessagePrefix+messageIdentType.GetMessageType(),
+			TypeBool,
+			messageIdentType,
+			TypeString,
+		),
+	)
 }
 
 func (d *Declarations) declareFunction(name string, overloads ...*expr.Decl_FunctionDecl_Overload) error {

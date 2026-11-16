@@ -2,6 +2,7 @@ package filtering
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -183,6 +184,9 @@ func (c *Checker) checkCallExprBuiltinFunctionOverloads(
 	functionOverload *expr.Decl_FunctionDecl_Overload,
 ) error {
 	callExpr := e.GetCallExpr()
+	if strings.HasPrefix(functionOverload.GetOverloadId(), FunctionOverloadHasMessagePrefix) {
+		return c.checkHasWildcard(callExpr, "message")
+	}
 	switch functionOverload.GetOverloadId() {
 	case FunctionOverloadTimestampString:
 		if constExpr := callExpr.GetArgs()[0].GetConstExpr(); constExpr != nil {
@@ -208,13 +212,20 @@ func (c *Checker) checkCallExprBuiltinFunctionOverloads(
 			}
 		}
 	case FunctionOverloadHasTimestamp:
-		if constExpr := callExpr.GetArgs()[1].GetConstExpr(); constExpr != nil {
-			if constExpr.GetStringValue() != "*" {
-				return c.errorf(
-					callExpr.GetArgs()[1],
-					"the has operator on timestamp fields only supports the wildcard \"*\" for presence checks",
-				)
-			}
+		return c.checkHasWildcard(callExpr, "timestamp")
+	}
+	return nil
+}
+
+// checkHasWildcard checks that a has operator call is a presence check, i.e. that its argument is the wildcard "*".
+func (c *Checker) checkHasWildcard(callExpr *expr.Expr_Call, fieldKind string) error {
+	if constExpr := callExpr.GetArgs()[1].GetConstExpr(); constExpr != nil {
+		if constExpr.GetStringValue() != "*" {
+			return c.errorf(
+				callExpr.GetArgs()[1],
+				"the has operator on %s fields only supports the wildcard \"*\" for presence checks",
+				fieldKind,
+			)
 		}
 	}
 	return nil

@@ -194,6 +194,40 @@ func TestDeclareProtoMessageIdents(t *testing.T) {
 			),
 			expectError: false,
 		},
+		// Message presence
+		{
+			name:         "ok - message field presence",
+			opts:         []FilterOption{WithFilterableFields("nested_message")},
+			filter:       `nested_message:*`,
+			expectedExpr: Has(Text("nested_message"), String("*")),
+			expectError:  false,
+		},
+		{
+			name:         "ok - message field absence",
+			opts:         []FilterOption{WithFilterableFields("nested_message")},
+			filter:       `NOT nested_message:*`,
+			expectedExpr: Not(Has(Text("nested_message"), String("*"))),
+			expectError:  false,
+		},
+		{
+			name:         "ok - nested message field presence, filter by parent field",
+			opts:         []FilterOption{WithFilterableFields("nested_message")},
+			filter:       `nested_message.deep_nested:*`,
+			expectedExpr: Has(Member(Text("nested_message"), "deep_nested"), String("*")),
+			expectError:  false,
+		},
+		{
+			name:        "error - message field presence, only nested field filterable",
+			opts:        []FilterOption{WithFilterableFields("nested_message.nested_string")},
+			filter:      `nested_message:*`,
+			expectError: true,
+		},
+		{
+			name:        "error - message field has non-wildcard",
+			opts:        []FilterOption{WithFilterableFields("nested_message")},
+			filter:      `nested_message:foo`,
+			expectError: true,
+		},
 		// Complex expressions
 		{
 			name:   "ok - multiple field types",

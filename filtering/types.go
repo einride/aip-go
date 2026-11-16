@@ -47,6 +47,15 @@ func TypeEnum(enumType protoreflect.EnumType) *expr.Type {
 	}
 }
 
+// TypeMessage returns the type of a protobuf message.
+func TypeMessage(messageType protoreflect.MessageType) *expr.Type {
+	return &expr.Type{
+		TypeKind: &expr.Type_MessageType{
+			MessageType: string(messageType.Descriptor().FullName()),
+		},
+	}
+}
+
 // Well-known types.
 //
 //nolint:gochecknoglobals
