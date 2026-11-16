@@ -69,6 +69,9 @@ const (
 	FunctionOverloadHasMapStringString = FunctionHas + "_map_string_string"
 	FunctionOverloadHasListString      = FunctionHas + "_list_string"
 	FunctionOverloadHasTimestamp       = FunctionHas + "_timestamp"
+	// FunctionOverloadHasMessagePrefix is the prefix of the overloads declared by DeclareMessageIdent.
+	// The full overload ID is the prefix followed by the full name of the message type.
+	FunctionOverloadHasMessagePrefix = FunctionHas + "_message_"
 )
 
 // StandardFunctionHas returns a declaration for the standard `:` function and all its standard overloads.
